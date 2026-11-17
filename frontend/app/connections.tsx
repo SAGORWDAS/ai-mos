@@ -2,6 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { api } from "./api";
+import SetupReadiness from "./setup-readiness";
 
 type Connection = {
   id: string;
@@ -34,7 +35,7 @@ const fields: Record<Provider, [string, string, boolean][]> = {
   openrouter: [
     ["api_key", "API key", true],
     ["model_id", "Exact model ID", false],
-    ["embedding_model_id","Embedding model ID (optional)",false],
+    ["embedding_model_id", "Embedding model ID (optional)", false],
   ],
   gmail: [
     ["access_token", "OAuth access token", true],
@@ -79,6 +80,7 @@ export default function Connections({ role }: { role: string }) {
     redirect_uri: string;
   } | null>(null);
   const owner = role === "owner";
+  const [configureOpen, setConfigureOpen] = useState(false);
   const refresh = useCallback(
     async () => setConnections(await api<Connection[]>("/v1/connections")),
     [],
@@ -137,6 +139,14 @@ export default function Connections({ role }: { role: string }) {
   }
   return (
     <section>
+      <SetupReadiness
+        configure={(id) => {
+          setProvider(id as Provider);
+          setCredentials({});
+          setAccount("");
+          setConfigureOpen(true);
+        }}
+      />
       <p className="lede narrow">
         Sandbox is available immediately. Each real provider needs verified
         credentials and a separate owner activation. Saving a configuration does
@@ -299,7 +309,12 @@ export default function Connections({ role }: { role: string }) {
           );
         })}
       </div>
-      <details className="form-disclosure">
+      <details
+        id="provider-configuration"
+        className="form-disclosure"
+        open={configureOpen}
+        onToggle={(event) => setConfigureOpen(event.currentTarget.open)}
+      >
         <summary>Configure a provider</summary>
         <p className="small muted">
           Saving replaces its previous credentials and disables the connection.

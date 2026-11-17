@@ -2,7 +2,7 @@
 
 An agency and SaaS marketing workspace with a black-and-white editorial interface. Manage multiple brands, source prospects, prepare grounded campaigns, review outreach, capture enquiries, book meetings and follow customers from verified payments into onboarding.
 
-**v0.4.0 public beta.** The local sandbox workflow runs without API keys. Connected adapters are implemented and tested against controlled HTTP fixtures; real account verification and production rollout remain separate steps. The original 58-task plan is **not fully accepted**: see [the task-by-task coverage](docs/PLAN-COVERAGE.md) and [build status](docs/BUILD-STATUS.md).
+**v0.5.0 public beta.** The local sandbox workflow runs without API keys. Connected adapters are implemented and tested against controlled HTTP fixtures; real account verification and production rollout remain separate steps. The original 58-task plan is **not fully accepted**: see [the task-by-task coverage](docs/PLAN-COVERAGE.md) and [build status](docs/BUILD-STATUS.md).
 
 ## Start
 
@@ -11,6 +11,12 @@ On Windows, install Python 3.12+ and Node.js 22+, then double-click `Start-AI-MO
 The launcher installs locked dependencies, builds the frontend, starts the API and durable worker on loopback, checks health, and backs up an existing SQLite database before schema changes. Your private data and encryption key stay in `.run/`, excluded from Git and release archives. Initial installation needs internet access.
 
 For Docker/PostgreSQL, follow [SETUP.md](SETUP.md). The Compose stack is a development environment, not public hosting.
+
+## Add business details later; prepare campaigns automatically
+
+The platform installs and runs with no business details. Enter any agency, service or product inside **Operations / Command Center / Autopilot** when needed. A name-only profile can be saved for later. One owner start runs internal planning, research, strategy, content, selected-contact drafts and approval preparation automatically. Optional connected research reads up to three business pages and imports observed contacts for review.
+
+**Integrations / Connect when you are ready** shows optional providers, required fields and exact callback addresses. See [the automation guide](docs/AUTOMATION.md). This automates preparation and configured workflows; recipient-facing execution and financial decisions retain explicit controls. Missing facts pause only the affected campaign. Connecting credentials does not certify production readiness.
 
 ## What works
 

@@ -1,6 +1,10 @@
 # Build status - 17 November 2026
 
-Version 0.4.0 public beta. The local agency workflow is implemented and tested. **The entire original plan is not fully accepted.** [PLAN-COVERAGE.md](PLAN-COVERAGE.md) accounts for all 58 tasks and 14 acceptance areas without treating a manifest or mock test as production evidence.
+Version 0.5.0 public beta. The local agency workflow is implemented and tested. **The entire original plan is not fully accepted.** [PLAN-COVERAGE.md](PLAN-COVERAGE.md) accounts for all 58 tasks and 14 acceptance areas without treating a manifest or mock test as production evidence.
+
+## New in 0.5.0
+
+Business details are entered by workspace owners inside the app when needed, not required to build/install it. Autopilot runs a bounded internal campaign graph from one request, optionally researching/importing observed contacts, drafting selected contacts and preparing exact approvals. Provider setup guidance displays connection requirements and callback addresses. Production remains separately gated. See AUTOMATION.md.
 
 ## Implemented
 
@@ -10,14 +14,14 @@ Real provider adapters are tested using controlled HTTP responses and signed syn
 
 ## Verification evidence
 
-- Full local run: **84 Python tests passed**, including **13 native PostgreSQL tests** with separate restricted API/worker logins. One upstream Starlette/httpx deprecation warning remains.
+- Local regression suites: **90 Python tests passed**, including **14 native PostgreSQL tests** with separate restricted API/worker logins. One upstream Starlette/httpx deprecation warning remains.
 - PostgreSQL 16 backup/restore into a different empty database verified counts, audit content, restricted queue function ownership and RLS. SQLite backup/restore and pre-upgrade data preservation are also checked.
 - PGlite/pgvector regression exercises all **40 tenant tables**, two organizations, missing context, cross-tenant references, immutable payments/audit/provider receipts and vector isolation. Native PostgreSQL tests also exercise fallback retrieval when pgvector is unavailable.
 - Specification checks pass: 23 modules, 20 agents, 18 tools, seven phases, 58 matching capsules, four JSON schemas, dependency and cycle failure paths.
 - Ruff, TypeScript and optimized Next.js build pass. Frontend production-dependency audit reports zero vulnerabilities at verification time.
 - Windows launcher restart, existing QA database upgrade and automatic private pre-upgrade backup succeeded. HTTP smoke verified signup, brand, CRM, background drafting, approval and sandbox send.
 - Browser verification saved sourced contact edits, published an approved local service page, submitted an actual HTML form and observed the enquiry in the private inbox. The form test exposed and fixed a referrer/origin mismatch. Earlier sandbox walkthrough covered planning through customer onboarding. Screenshots contain synthetic fixtures only.
-- All four hosted CI jobs passed, including 84 tests on PostgreSQL/pgvector and the executed Docker Compose HTTP workflow. Exact run evidence is in RELEASE-VERIFICATION.md.
+- All four v0.4.0 hosted CI jobs passed. The v0.5.0 CI result is recorded with its release after push; exact earlier evidence is in RELEASE-VERIFICATION.md.
 
 ## Remaining implementation and evidence
 

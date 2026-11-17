@@ -10,6 +10,7 @@ import {
   useState,
 } from "react";
 import { api } from "./api";
+import Autopilot from "./autopilot";
 import { currencies, currencyFactor, displayMoney } from "./money";
 
 type Item = { id: string; created_at: number; [key: string]: unknown };
@@ -604,6 +605,11 @@ export default function GrowthWorkspace({
 
           {section === "Command Center" && (
             <>
+              <Autopilot
+                owner={owner}
+                paused={identity.organization.emergency_stop}
+                refresh={refresh}
+              />
               <Form
                 label="Create plan →"
                 submit={(form) =>

@@ -429,6 +429,14 @@ class Runtime:
                 )
                 if prior:
                     return {"draft_id": prior.id}
+            if task.type == "prepare_review":
+                from app.growth.autopilot import prepare_review
+
+                return await prepare_review(session, task)
+            if task.type == "autopilot_research":
+                from app.growth.autopilot import research
+
+                return await research(self, session, task)
             if task.type in {
                 "content",
                 "landing_page",
@@ -512,6 +520,8 @@ class Runtime:
                     )
                 )
                 if prior:
+                    if command.parsed.get("auto_execute"):
+                        await self.schedule(session, task.organization_id, prior.id)
                     return {"plan_id": prior.id}
                 brand = await find(session, Brand, task.organization_id, command.brand_id)
                 parsed = command.parsed
@@ -582,10 +592,15 @@ class Runtime:
                         )
                     )
                 command.status = "planned"
+                from app.growth.autopilot import extend_graph
+
+                await extend_graph(session, task, command, plan, mapping.values())
                 await record(
                     session, task.organization_id, task.created_by, "plan.created", plan.id
                 )
                 await session.commit()
+                if command.parsed.get("auto_execute"):
+                    await self.schedule(session, task.organization_id, plan.id)
                 return {"plan_id": plan.id, "mode": self.settings.provider_mode}
 
             if task.type in {"draft", "reply"}:

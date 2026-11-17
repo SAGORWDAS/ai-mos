@@ -16,6 +16,7 @@ from app.accounts import check_otp, install_accounts
 from app.config import Settings, get_settings
 from app.contracts import AcceptInvite, BrandInput, Invite, Login, Signup, Stop
 from app.growth.api import install
+from app.growth.autopilot import install_autopilot
 from app.growth.billing_api import install_billing
 from app.growth.connection_api import install_connections
 from app.growth.contact_api import install_contacts
@@ -84,7 +85,7 @@ def create_app(settings: Settings | None = None):
             if worker_engine:
                 await worker_engine.dispose()
 
-    app = FastAPI(title="AI-MOS", version="0.4.0", lifespan=lifespan)
+    app = FastAPI(title="AI-MOS", version="0.5.0", lifespan=lifespan)
     app.state.runtime = runtime
     app.state.factory = factory
     app.add_middleware(
@@ -572,6 +573,7 @@ def create_app(settings: Settings | None = None):
     install_embeddings(app, runtime, settings, db, identity, require)
     install(app, runtime, settings, db, identity, require)
     install_connections(app, settings, db, identity, require)
+    install_autopilot(app, runtime, settings, db, identity, require)
     install_provider_routes(app, runtime, settings, db, identity, require)
     dummy_password = hash_password(secrets.token_urlsafe(32))
     return app

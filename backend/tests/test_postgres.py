@@ -129,6 +129,12 @@ def test_native_postgres_recovery_and_cache(pg_clients):
     test_validated_cache_cost_lineage_and_clear(pg_clients)
 
 
+def test_native_postgres_autopilot(pg_clients):
+    from test_autopilot import test_autopilot_runs_internal_work_and_prepares_reviews_once
+
+    test_autopilot_runs_internal_work_and_prepares_reviews_once(pg_clients)
+
+
 def test_native_postgres_account_recovery(pg_clients):
     from test_accounts import test_private_recovery_consumed_once_and_all_sessions_revoked
 
