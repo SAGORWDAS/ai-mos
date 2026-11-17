@@ -200,6 +200,7 @@ async def execute(session, settings, org_id, actor_id, approval_id, key, executi
         .where(Organization.id == org_id)
         .values(emergency_stop=Organization.emergency_stop)
     )
+    await session.refresh(budget)
     stopped = await session.scalar(
         select(Organization.emergency_stop).where(Organization.id == org_id)
     )

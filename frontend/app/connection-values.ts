@@ -5,20 +5,27 @@ export function credentialPayload(
   const credentials = Object.fromEntries(
     Object.entries(values).filter(([, value]) => value.trim() !== ""),
   );
-  if (provider === "brave" && credentials.search_price_micros !== undefined) {
-    const dollars = Number(credentials.search_price_micros);
+  const field =
+    provider === "brave"
+      ? "search_price_micros"
+      : provider === "openrouter"
+        ? "max_cost_micros"
+        : null;
+  const maximum = provider === "brave" ? 1000 : 1;
+  if (field && credentials[field] !== undefined) {
+    const dollars = Number(credentials[field]);
     const units = Math.round(dollars * 1000000);
     if (
       !Number.isFinite(dollars) ||
       dollars < 0 ||
-      dollars > 1000 ||
+      dollars > maximum ||
       (dollars > 0 && dollars < 0.000001) ||
       Math.abs(dollars * 1000000 - units) > 0.000001
     )
       throw new Error(
-        "Enter a search price between $0 and $1,000, with at most six decimal places.",
+        `Enter a USD amount between $0 and $${maximum.toLocaleString()}, with at most six decimal places.`,
       );
-    credentials.search_price_micros = String(units);
+    credentials[field] = String(units);
   }
   return credentials;
 }

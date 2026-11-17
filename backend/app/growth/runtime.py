@@ -45,6 +45,7 @@ log = logging.getLogger("ai_mos.runtime")
 
 def public(row):
     result = {column.name: getattr(row, column.name) for column in row.__table__.columns}
+    result.pop("source_fingerprint", None)
     if isinstance(row, Task) and isinstance(result.get("output"), dict):
         result["output"] = {
             key: value for key, value in result["output"].items() if key != "image_base64"
@@ -310,7 +311,15 @@ class Runtime:
                 .where(Task.id == task.id, Task.status == "running", Task.attempt == task.attempt)
                 .values(
                     status="blocked"
-                    if code in {"budget_exhausted", "emergency_stop", "suppressed_recipient"}
+                    if code
+                    in {
+                        "budget_exhausted",
+                        "emergency_stop",
+                        "suppressed_recipient",
+                        "model_registry_verification_required",
+                        "model_request_allowance_exceeded",
+                        "model_connection_changed",
+                    }
                     else "failed",
                     error_code=code,
                     leased_until=None,

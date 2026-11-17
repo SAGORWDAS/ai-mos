@@ -1,11 +1,11 @@
-# Original plan coverage - v0.8.0
+# Original plan coverage - v0.9.0
 
 **Not all original requirements are complete.** Implemented means the listed application behavior exists with local tests; it does not certify real-account acceptance, every clause of the original capsule, business quality or production operation. Partial means additional development or evidence remains. External gate requires actual business/account input.
 
 See BUILD-STATUS.md for test evidence and RELEASE-VERIFICATION.md for the public release CI result.
 
 
-Review totals: **36 Implemented, 16 Partial, 6 External gate**. See [v0.8.0 verification](VERIFICATION-0.8.0.md) and the historical [v0.5.1 review](REVIEW-2026-11-17.md).
+Review totals: **37 Implemented, 15 Partial, 6 External gate**. See [v0.9.0 verification](VERIFICATION-0.9.0.md) and the historical [v0.5.1 review](REVIEW-2026-11-17.md).
 
 ## PH-0 - Decisions and spikes
 
@@ -29,7 +29,7 @@ Review totals: **36 Implemented, 16 Partial, 6 External gate**. See [v0.8.0 veri
 | T-1.1 | repo CI compose stack | Implemented | Public repository and all four CI jobs passed, including executed Compose HTTP workflow; see RELEASE-VERIFICATION.md. |
 | T-1.2 | auth orgs memberships | Implemented | Signup, owner, roles, invitations, workspace switching, recovery and TOTP tested. |
 | T-1.3 | migrations 01-06 with RLS | Implemented | Versioned migrations and forced RLS cover all current tenant tables. |
-| T-1.4 | ai gateway registry ledger | Partial | Gateway, validation, cost ledger, timeout holds and reconciliation tested. Review found the original verified model/price registry is still missing; configurable model IDs do not substitute for it (ADR-06). |
+| T-1.4 | ai gateway registry ledger | Implemented | Tenant-scoped verified model IDs, advertised-price snapshots and dates bind to the connection version. Stale verification refreshes automatically; missing/expired verification refuses connected generation. Every attempt stores its historical snapshot; cost/refusal/timeout/reconciliation paths are tested. Catalog verification does not claim model quality (ADR-06). |
 | T-1.5 | task runtime and scheduler | Implemented | Durable claims, DAG scheduling, retries and cancellation tested. |
 | T-1.6 | tool gateway and read tools | Implemented | All 18 IDs route through schema, permission, policy, budget, approval, idempotency, execution and receipt workflows. Unknown calls, argument/schema failures and guard refusals are durably audited; cross-tenant failure tests pass. |
 | T-1.7 | brand brain | Implemented | Text/PDF/website ingestion and cited keyword/embedding retrieval implemented. |
@@ -104,7 +104,7 @@ Review totals: **36 Implemented, 16 Partial, 6 External gate**. See [v0.8.0 veri
 
 | Area | Implemented evidence and limit |
 |---|---|
-| AC-01/02 | 42 tenant tables; native PostgreSQL restricted-role and PGlite RLS/foreign-key tests. Independent exhaustive audit remains. |
+| AC-01/02 | 43 tenant tables; native PostgreSQL restricted-role and PGlite RLS/foreign-key tests. Independent exhaustive audit remains. |
 | AC-03 | Suppression blocks sandbox/live dispatch; signed bounce/complaint handling tested. |
 | AC-04 | Unique tenant idempotency, task identity and effect receipt/replay tests; large-load certification remains. |
 | AC-05 | Frozen payload, version invalidation, expiry and single-use approval tests. |

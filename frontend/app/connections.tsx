@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useEffect, useState } from "react";
 import { api } from "./api";
 import SetupReadiness from "./setup-readiness";
 import { credentialPayload } from "./connection-values";
+import ModelCatalog from "./model-catalog";
 
 type Connection = {
   id: string;
@@ -66,6 +67,11 @@ const fields: Record<Provider, [string, string, boolean][]> = {
     ["model_id", "Exact model ID", false],
     ["embedding_model_id", "Embedding model ID (optional)", false],
     ["image_model_id", "Image API model ID (optional)", false],
+    [
+      "max_cost_micros",
+      "Per-request AI allowance (USD, optional; default $0.02)",
+      false,
+    ],
   ],
   gmail: [
     ["access_token", "OAuth access token", true],
@@ -114,6 +120,7 @@ export default function Connections({ role }: { role: string }) {
   } | null>(null);
   const owner = role === "owner";
   const [configureOpen, setConfigureOpen] = useState(false);
+  const [modelRevision, setModelRevision] = useState(0);
   const refresh = useCallback(
     async () => setConnections(await api<Connection[]>("/v1/connections")),
     [],
@@ -128,6 +135,7 @@ export default function Connections({ role }: { role: string }) {
     try {
       await action();
       await refresh();
+      setModelRevision((v) => v + 1);
       setNotice(message);
       return true;
     } catch (e) {
@@ -184,6 +192,13 @@ export default function Connections({ role }: { role: string }) {
         credentials and a separate owner activation. Saving a configuration does
         not enable it.
       </p>
+      <ModelCatalog
+        owner={owner}
+        canRefresh={connections.some(
+          (c) => c.provider === "openrouter" && c.status === "verified",
+        )}
+        revision={modelRevision}
+      />
       <div className="sandbox-note">
         <b>Placeholder credentials stay local.</b> They can be saved for setup
         testing, but cannot enable provider calls. Email and bookings also
@@ -426,14 +441,27 @@ export default function Connections({ role }: { role: string }) {
                     type={
                       secret
                         ? "password"
-                        : key === "search_price_micros"
+                        : key === "search_price_micros" ||
+                            key === "max_cost_micros"
                           ? "number"
                           : "text"
                     }
-                    min={key === "search_price_micros" ? 0 : undefined}
-                    max={key === "search_price_micros" ? 1000 : undefined}
+                    min={
+                      key === "search_price_micros" || key === "max_cost_micros"
+                        ? 0
+                        : undefined
+                    }
+                    max={
+                      key === "search_price_micros"
+                        ? 1000
+                        : key === "max_cost_micros"
+                          ? 1
+                          : undefined
+                    }
                     step={
-                      key === "search_price_micros" ? "0.000001" : undefined
+                      key === "search_price_micros" || key === "max_cost_micros"
+                        ? "0.000001"
+                        : undefined
                     }
                     autoComplete="off"
                     value={credentials[key] || ""}

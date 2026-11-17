@@ -289,6 +289,8 @@ def install(app, runtime, settings, db, identity, require, tool_services=None):
     ):
         await write(request, who, session, owner=True)
         item = await ensure_budget(session, who["organization"].id)
+        await write(request, who, session, owner=True)
+        await session.refresh(item)
         if data.limit_micros < item.spent_micros + item.reserved_micros:
             raise HTTPException(409, "limit_below_committed_spend")
         item.limit_micros, item.daily_send_cap = data.limit_micros, data.daily_send_cap

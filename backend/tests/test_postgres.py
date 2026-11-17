@@ -199,6 +199,8 @@ def pg_clients():
         Settings(
             database_url=api_url,
             worker_database_url=worker_url,
+            # Controlled legacy contracts; registry tests explicitly enable the strict gate.
+            allow_unverified_models=True,
             worker_enabled=False,
             token_encryption_key=Fernet.generate_key().decode(),
         )
@@ -321,6 +323,22 @@ def test_native_postgres_bulk_events(pg_clients, monkeypatch):
     from test_bulk_discovery import test_live_bulk_dispatch_and_verified_delivery_bounce_webhooks
 
     test_live_bulk_dispatch_and_verified_delivery_bounce_webhooks(pg_clients, monkeypatch)
+
+
+@pytest.mark.parametrize(
+    "scenario",
+    [
+        "test_verified_catalog_and_usage_price_snapshots_are_scoped_and_historical",
+        "test_concurrent_jobs_share_one_expired_catalog_refresh",
+        "test_request_allowance_refuses_without_a_charge_and_sends_price_ceiling",
+        "test_verified_rates_bound_chat_routing_and_oversized_estimates_are_refused",
+        "test_budget_policy_carries_to_next_month_without_carrying_spend",
+    ],
+)
+def test_native_postgres_model_registry(pg_clients, monkeypatch, scenario):
+    import test_model_registry
+
+    getattr(test_model_registry, scenario)(pg_clients, monkeypatch)
 
 
 def test_native_postgres_backup_restore(pg_clients, tmp_path):

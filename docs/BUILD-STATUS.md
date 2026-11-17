@@ -1,6 +1,10 @@
 # Build status - 18 November 2026
 
-Version 0.8.0 public beta. The local agency workflow is implemented and tested. **The entire original plan is not fully accepted.** [PLAN-COVERAGE.md](PLAN-COVERAGE.md) accounts for all 58 tasks and 14 acceptance areas without treating a manifest or mock test as production evidence.
+Version 0.9.0 public beta. The local agency workflow is implemented and tested. **The entire original plan is not fully accepted.** [PLAN-COVERAGE.md](PLAN-COVERAGE.md) accounts for all 58 tasks and 14 acceptance areas without treating a manifest or mock test as production evidence.
+
+## New in 0.9.0
+
+Tenant model catalog verification, historical per-attempt price snapshots, automatic stale-catalog refresh, owner-configured USD request allowances, advertised chat provider-price ceilings, atomic stop/connection/lease rechecks and persistent monthly budget policy. See [verification](VERIFICATION-0.9.0.md) and [model setup](MODEL-SETUP.md). Coverage now counts 37 Implemented, 15 Partial and 6 External gate.
 
 ## New in 0.8.0
 
@@ -43,7 +47,7 @@ Real provider adapters are tested using controlled HTTP responses and signed syn
 
 ## Remaining implementation and evidence
 
-Verified model/price catalog rows and promotion gates, model-assisted feature/intent extraction, company-page/other-network publication, attachments/OCR, managed identity/email verification and automatic password-reset email, provider-level global calendar slot locking, automated search-price reconciliation, cross-device/third-party attribution and large-scale monitoring/load/failure certification remain outside this beta. Meta ordinary-commercial ads, private raster images, owned-enquiry tracking, cost/refund/funnel attribution and the controlled tenfold worker/provider burst now have implemented fixture-tested paths. The original qualification/model accuracy benchmarks and per-role golden sets are not complete. Three supplied labelled reply examples, 44 additional synthetic cases and focused boundary regressions are evaluated; these are not a representative live-model benchmark.
+Representative model/prompt promotion gates, model-assisted feature/intent extraction, company-page/other-network publication, attachments/OCR, managed identity/email verification and automatic password-reset email, provider-level global calendar slot locking, automated search-price reconciliation, cross-device/third-party attribution and large-scale monitoring/load/failure certification remain outside this beta. Meta ordinary-commercial ads, private raster images, owned-enquiry tracking, cost/refund/funnel attribution and the controlled tenfold worker/provider burst now have implemented fixture-tested paths. The original qualification/model accuracy benchmarks and per-role golden sets are not complete. Three supplied labelled reply examples, 44 additional synthetic cases and focused boundary regressions are evaluated; these are not a representative live-model benchmark.
 
 Some specialized agent roles share constrained templates and internal tools rather than independent production services. Copy is deliberately restricted to approved facts and reviewed prospect observations. A broad creative agency writing system still needs representative quality evaluation and richer evidence-aware generation.
 

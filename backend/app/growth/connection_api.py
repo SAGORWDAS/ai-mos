@@ -59,6 +59,10 @@ def install_connections(app, settings, db, identity, require):
             price = data.credentials["search_price_micros"]
             if not re.fullmatch(r"[0-9]{1,10}", price) or int(price) > 1_000_000_000:
                 raise HTTPException(422, "search_price_must_be_nonnegative_USD_micro_units")
+        if provider == "openrouter" and data.credentials.get("max_cost_micros"):
+            cap = data.credentials["max_cost_micros"]
+            if not re.fullmatch(r"[0-9]{1,7}", cap) or int(cap) > 1_000_000:
+                raise HTTPException(422, "model_request_allowance_must_be_between_zero_and_one_USD")
         item = await session.scalar(
             select(Integration).where(
                 Integration.organization_id == who["organization"].id,
@@ -107,6 +111,20 @@ def install_connections(app, settings, db, identity, require):
             raise HTTPException(409, "connection_changed_during_verification")
         item.token_ciphertext = snapshot.token_ciphertext
         item.status, item.account_ref = result["status"], result["account_ref"]
+        if "model_catalog" in result:
+            from app.growth.model_registry import record_catalog
+
+            await record_catalog(
+                session,
+                settings,
+                who["organization"].id,
+                {
+                    "id": item.id,
+                    "version": item.version,
+                    "credentials": connections.unseal(settings, item),
+                },
+                result["model_catalog"],
+            )
         await audit(session, who, request, "connection.verified", item.id)
         await session.commit()
         return connections.public_connection(item)

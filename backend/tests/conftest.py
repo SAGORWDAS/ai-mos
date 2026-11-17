@@ -14,6 +14,8 @@ def clients(tmp_path):
         Settings(
             database_url=f"sqlite+aiosqlite:///{tmp_path / 'test.db'}",
             worker_enabled=False,
+            # Legacy HTTP contracts use fixture models; registry enforcement has its own tests.
+            allow_unverified_models=True,
             token_encryption_key=Fernet.generate_key().decode(),
         )
     )

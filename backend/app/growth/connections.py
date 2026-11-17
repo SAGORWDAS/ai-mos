@@ -26,7 +26,13 @@ FIELDS = {
     "linkedin": {"access_token", "author_urn"},
     "resend": {"api_key", "sender", "webhook_secret"},
     "brave": {"api_key", "search_price_micros"},
-    "openrouter": {"api_key", "model_id", "embedding_model_id", "image_model_id"},
+    "openrouter": {
+        "api_key",
+        "model_id",
+        "embedding_model_id",
+        "image_model_id",
+        "max_cost_micros",
+    },
     "gmail": {"access_token", "sender", "refresh_token", "client_id", "client_secret"},
     "calendar": {"access_token", "calendar_id", "refresh_token", "client_id", "client_secret"},
     "stripe": {"secret_key", "webhook_secret", "success_url", "cancel_url"},
@@ -103,6 +109,7 @@ def is_placeholder(credentials):
 
 async def verify(settings, item, transport=None):
     credentials = unseal(settings, item)
+    catalog = None
     if is_placeholder(credentials):
         return {"status": "placeholder", "account_ref": item.account_ref}
     try:
@@ -207,7 +214,15 @@ async def verify(settings, item, transport=None):
                     raise ProviderError("provider_credentials_not_verified")
                 if item.provider == "stripe" and not response.json().get("charges_enabled"):
                     raise ProviderError("merchant_charges_not_enabled")
-        return {"status": "verified", "account_ref": identity or item.account_ref}
+                if item.provider == "openrouter":
+                    from app.growth.model_registry import catalog_candidates
+
+                    catalog = await catalog_candidates(client, credentials)
+        return {
+            "status": "verified",
+            "account_ref": identity or item.account_ref,
+            **({"model_catalog": catalog} if catalog is not None else {}),
+        }
     except (httpx.HTTPError, ValueError):
         raise HTTPException(502, "provider_verification_failed") from None
     except ProviderError as error:

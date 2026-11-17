@@ -2,11 +2,11 @@
 
 An agency and SaaS marketing workspace with a black-and-white editorial interface. Manage multiple brands, source prospects, prepare grounded campaigns, review outreach, capture enquiries, book meetings and follow customers from verified payments into onboarding.
 
-**v0.8.0 public beta.** The local sandbox workflow runs without API keys. Connected adapters are implemented and tested against controlled HTTP fixtures; real account verification and production rollout remain separate steps. The original 58-task plan is **not fully accepted**: see [the task-by-task coverage](docs/PLAN-COVERAGE.md) and [build status](docs/BUILD-STATUS.md).
+**v0.9.0 public beta.** The local sandbox workflow runs without API keys. Connected adapters are implemented and tested against controlled HTTP fixtures; real account verification and production rollout remain separate steps. The original 58-task plan is **not fully accepted**: see [the task-by-task coverage](docs/PLAN-COVERAGE.md) and [build status](docs/BUILD-STATUS.md).
 
 See the [17 November system review](docs/REVIEW-2026-11-17.md) for fixes, responsive coverage and remaining work, and the [public SEO guide](docs/SEO.md) for later domain setup.
 
-For minimal setup, follow the [day-one guide](docs/DAY-ONE.md): one short business brief starts campaign preparation. Try a fictional sample without credentials. [Current verification](docs/VERIFICATION-0.8.0.md) records what passed and what remains.
+For minimal setup, follow the [day-one guide](docs/DAY-ONE.md): one short business brief starts campaign preparation. Try a fictional sample without credentials. [Current verification](docs/VERIFICATION-0.9.0.md) records what passed and what remains.
 
 ## Start
 

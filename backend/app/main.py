@@ -32,6 +32,7 @@ from app.growth.embeddings import install_embeddings
 from app.growth.esp_api import install_esp
 from app.growth.inbox_schedule import install_inbox_schedule
 from app.growth.knowledge_api import install_knowledge
+from app.growth.model_registry import install_model_registry
 from app.growth.models import (
     Approval,
     Campaign,
@@ -106,7 +107,7 @@ def create_app(settings: Settings | None = None):
             if worker_engine:
                 await worker_engine.dispose()
 
-    app = FastAPI(title="AI-MOS", version="0.8.0", lifespan=lifespan)
+    app = FastAPI(title="AI-MOS", version="0.9.0", lifespan=lifespan)
     app.state.runtime = runtime
     app.state.factory = factory
     app.add_middleware(
@@ -715,6 +716,7 @@ def create_app(settings: Settings | None = None):
     install_creative(app, runtime, settings, db, identity, require)
     install_advertising(app, settings, runtime, db, identity, require)
     install_usage(app, db, identity)
+    install_model_registry(app, runtime, settings, db, identity, require)
     install_qualification(app, db, identity, require)
     install_reply_policy(app, settings, db, identity, require)
     install_publishing(app, settings, db, identity, require)

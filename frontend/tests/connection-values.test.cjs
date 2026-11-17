@@ -49,3 +49,22 @@ test("invalid or fractional-micro prices cannot silently change recorded campaig
       credentialPayload("brave", { search_price_micros: value }),
     );
 });
+test("AI request allowances use dollars and preserve a zero allowance", () => {
+  assert.equal(
+    credentialPayload("openrouter", { max_cost_micros: "0.05" })
+      .max_cost_micros,
+    "50000",
+  );
+  assert.equal(
+    credentialPayload("openrouter", { max_cost_micros: "0" }).max_cost_micros,
+    "0",
+  );
+  assert.equal(
+    credentialPayload("openrouter", { max_cost_micros: "" }).max_cost_micros,
+    undefined,
+  );
+  for (const value of ["1.01", "-1", "Infinity", "0.0000001"])
+    assert.throws(() =>
+      credentialPayload("openrouter", { max_cost_micros: value }),
+    );
+});

@@ -37,6 +37,8 @@ def upgrade_local(connection):
             ("sync_error", "VARCHAR(120) NOT NULL DEFAULT ''"),
         ],
         "model_usage": [
+            ("model_registry_id", "VARCHAR(36) REFERENCES model_registry(id)"),
+            ("model_price_snapshot", "JSON NOT NULL DEFAULT '{}'"),
             ("cache_source_id", "VARCHAR(36) REFERENCES model_usage(id)"),
             ("reserved_micros", "INTEGER NOT NULL DEFAULT 0"),
             ("reservation_period", "VARCHAR(10) NOT NULL DEFAULT ''"),

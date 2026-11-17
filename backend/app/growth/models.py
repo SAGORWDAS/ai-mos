@@ -54,12 +54,29 @@ class Agent(Row, Tenant, Base):
     config: Mapped[dict] = mapped_column(JSON, default=dict)
 
 
+class ModelRegistry(Row, Tenant, Base):
+    __tablename__ = "model_registry"
+    __table_args__ = (UniqueConstraint("organization_id", "operation", "model_id"),)
+    operation: Mapped[str] = mapped_column(String(16))
+    model_id: Mapped[str] = mapped_column(String(200))
+    status: Mapped[str] = mapped_column(String(24), default="unverified")
+    price_snapshot: Mapped[dict] = mapped_column(JSON, default=dict)
+    verified_at: Mapped[float | None] = mapped_column(Float)
+    source_connection_id: Mapped[str | None] = mapped_column(ForeignKey("integrations.id"))
+    source_connection_version: Mapped[int] = mapped_column(Integer, default=0)
+    source_fingerprint: Mapped[str] = mapped_column(String(64))
+    verification_error: Mapped[str] = mapped_column(String(80), default="")
+    last_checked_at: Mapped[float] = mapped_column(Float, default=0)
+
+
 class ModelUsage(Row, Tenant, Base):
     __tablename__ = "model_usage"
     request_id: Mapped[str] = mapped_column(String(36), unique=True)
     task_id: Mapped[str] = mapped_column(ForeignKey("tasks.id"))
     agent_id: Mapped[str] = mapped_column(String(16))
     model_id: Mapped[str] = mapped_column(String(200))
+    model_registry_id: Mapped[str | None] = mapped_column(ForeignKey("model_registry.id"))
+    model_price_snapshot: Mapped[dict] = mapped_column(JSON, default=dict)
     status: Mapped[str] = mapped_column(String(40))
     input_tokens: Mapped[int] = mapped_column(Integer, default=0)
     output_tokens: Mapped[int] = mapped_column(Integer, default=0)
@@ -433,6 +450,7 @@ RESOURCES = {
         Task,
         Agent,
         ModelUsage,
+        ModelRegistry,
         Budget,
         BrandDocument,
         BrandChunk,
