@@ -10,14 +10,14 @@ Real provider adapters are tested using controlled HTTP responses and signed syn
 
 ## Verification evidence
 
-- Full local run: **82 Python tests passed**, including **13 native PostgreSQL tests** with separate restricted API/worker logins. One upstream Starlette/httpx deprecation warning remains.
+- Full local run: **84 Python tests passed**, including **13 native PostgreSQL tests** with separate restricted API/worker logins. One upstream Starlette/httpx deprecation warning remains.
 - PostgreSQL 16 backup/restore into a different empty database verified counts, audit content, restricted queue function ownership and RLS. SQLite backup/restore and pre-upgrade data preservation are also checked.
 - PGlite/pgvector regression exercises all **40 tenant tables**, two organizations, missing context, cross-tenant references, immutable payments/audit/provider receipts and vector isolation. Native PostgreSQL tests also exercise fallback retrieval when pgvector is unavailable.
 - Specification checks pass: 23 modules, 20 agents, 18 tools, seven phases, 58 matching capsules, four JSON schemas, dependency and cycle failure paths.
 - Ruff, TypeScript and optimized Next.js build pass. Frontend production-dependency audit reports zero vulnerabilities at verification time.
 - Windows launcher restart, existing QA database upgrade and automatic private pre-upgrade backup succeeded. HTTP smoke verified signup, brand, CRM, background drafting, approval and sandbox send.
 - Browser verification saved sourced contact edits, published an approved local service page, submitted an actual HTML form and observed the enquiry in the private inbox. The form test exposed and fixed a referrer/origin mismatch. Earlier sandbox walkthrough covered planning through customer onboarding. Screenshots contain synthetic fixtures only.
-- Hosted CI and Docker execution are recorded separately in RELEASE-VERIFICATION.md after the public push. Do not infer those results from the workflow configuration alone.
+- All four hosted CI jobs passed, including 84 tests on PostgreSQL/pgvector and the executed Docker Compose HTTP workflow. Exact run evidence is in RELEASE-VERIFICATION.md.
 
 ## Remaining implementation and evidence
 

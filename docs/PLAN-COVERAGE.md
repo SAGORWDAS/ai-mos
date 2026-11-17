@@ -24,7 +24,7 @@ See BUILD-STATUS.md for test evidence and RELEASE-VERIFICATION.md for the public
 
 | Task | Original deliverable | Status | Evidence or remaining work |
 |---|---|---|---|
-| T-1.1 | repo CI compose stack | Verification pending | Repo/CI/Compose prepared; executed release evidence is linked separately. |
+| T-1.1 | repo CI compose stack | Implemented | Public repository and all four CI jobs passed, including executed Compose HTTP workflow; see RELEASE-VERIFICATION.md. |
 | T-1.2 | auth orgs memberships | Implemented | Signup, owner, roles, invitations, workspace switching, recovery and TOTP tested. |
 | T-1.3 | migrations 01-06 with RLS | Implemented | Versioned migrations and forced RLS cover all current tenant tables. |
 | T-1.4 | ai gateway registry ledger | Implemented | Gateway, schema validation, cost ledger, timeout holds and reconciliation tested. |
