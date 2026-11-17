@@ -32,6 +32,7 @@ h1{font-size:clamp(40px,8vw,76px);max-width:900px;margin:40px 0}.copy{white-spac
 <h2>Discuss your project</h2>
 <p>Your enquiry is saved privately for this business. It does not subscribe you to a marketing list.</p>
 <form method="post" action="./$id/enquire">
+<input type="hidden" name="campaign_token" value="$campaign_token">
 <label>Your name<input name="name" required maxlength="120" autocomplete="name">
 </label>
 <label>Email<input name="email" type="email" required autocomplete="email">

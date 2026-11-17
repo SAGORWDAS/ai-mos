@@ -49,6 +49,69 @@ def test_native_automatic_reply_policy(pg_clients, monkeypatch):
     test_owner_opt_in_prepares_safe_reply_once_and_escalates_ambiguous(pg_clients, monkeypatch)
 
 
+def test_native_standing_reply_caps(pg_clients):
+    from test_reply_policy import test_explicit_template_standing_policy_caps_safe_sandbox_replies
+
+    test_explicit_template_standing_policy_caps_safe_sandbox_replies(pg_clients)
+
+
+def test_native_standing_reply_contactability(pg_clients):
+    from test_reply_policy import (
+        test_contactability_guard_holds_automatic_reply_without_failing_task,
+    )
+
+    test_contactability_guard_holds_automatic_reply_without_failing_task(pg_clients)
+
+
+def test_native_image_asset_scope(pg_clients):
+    from test_creative_ads import (
+        test_private_raster_generation_is_costed_scoped_and_not_in_task_lists,
+    )
+
+    test_private_raster_generation_is_costed_scoped_and_not_in_task_lists(pg_clients)
+
+
+def test_native_standing_reply_revocation(pg_clients, monkeypatch):
+    from test_reply_policy import test_disabling_standing_policy_blocks_queued_live_dispatch
+
+    test_disabling_standing_policy_blocks_queued_live_dispatch(pg_clients, monkeypatch)
+
+
+def test_native_usage_breakdown(pg_clients):
+    from test_reply_policy import test_usage_day_agent_type_filters_are_scoped
+
+    test_usage_day_agent_type_filters_are_scoped(pg_clients)
+
+
+@pytest.mark.parametrize("fail_partial", [False, True])
+def test_native_meta_receipts_and_cap(pg_clients, monkeypatch, fail_partial):
+    from test_creative_ads import test_meta_full_contract_cap_approval_partial_receipts_and_replay
+
+    test_meta_full_contract_cap_approval_partial_receipts_and_replay(
+        pg_clients, monkeypatch, fail_partial
+    )
+
+
+def test_native_measurement_net_and_cost_lineage(pg_clients):
+    from test_measurement_tracking import (
+        test_model_costs_customer_credit_and_refund_net_preserve_lineage,
+    )
+
+    test_model_costs_customer_credit_and_refund_net_preserve_lineage(pg_clients)
+
+
+def test_native_signed_campaign_enquiry(pg_clients):
+    from test_measurement_tracking import test_signed_enquiry_source_is_scoped_and_replay_safe
+
+    test_signed_enquiry_source_is_scoped_and_replay_safe(pg_clients)
+
+
+def test_native_tenfold_worker_burst(pg_clients, monkeypatch):
+    from test_burst_acceptance import test_tenfold_draft_burst_under_four_workers_preserves_jobs
+
+    test_tenfold_draft_burst_under_four_workers_preserves_jobs(pg_clients, monkeypatch)
+
+
 @pytest.fixture
 def pg_clients():
     name = "ai_mos_test_" + uuid4().hex

@@ -173,6 +173,7 @@ async def lifecycle(session, org_id, event, provider="stripe"):
             else None
         )
         paid_total = None
+        invoice_receipt = None
         if not checkout and payment_ref:
             invoice_receipt = await session.scalar(
                 select(ProviderEvent).where(
@@ -209,7 +210,12 @@ async def lifecycle(session, org_id, event, provider="stripe"):
             previous = -sum(row.amount_minor for row in prior_refunds)
             receipt.amount_minor = -max(0, amount - previous)
             receipt.currency = checkout.currency
-            receipt.evidence = {"checkout_id": checkout.id, "cumulative_refund_minor": amount}
+            receipt.evidence = {
+                "checkout_id": checkout.id,
+                "cumulative_refund_minor": amount,
+                "payment_ref": payment_ref,
+                "invoice_object_ref": invoice_receipt.object_ref if invoice_receipt else None,
+            }
         else:
             receipt.evidence = {
                 "checkout_id": checkout.id,

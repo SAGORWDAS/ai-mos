@@ -10,6 +10,7 @@ def upgrade_local(connection):
     # Own the SQLite DDL transaction so a failed upgrade rolls back the entire change.
     connection.exec_driver_sql("BEGIN IMMEDIATE")
     additions = {
+        "approvals": [("decision_basis", "VARCHAR(200) NOT NULL DEFAULT 'human'")],
         "expenses": [("campaign_id", "VARCHAR(36) REFERENCES campaigns(id)")],
         "leads": [
             ("version", "INTEGER NOT NULL DEFAULT 1"),

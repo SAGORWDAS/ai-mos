@@ -2,12 +2,38 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { api } from "./api";
+import { displayMoney } from "./money";
 
 type Entity = { id: string; name: string };
+type Revenue = {
+  campaign_id: string | null;
+  currency: string;
+  simulated: boolean;
+  amount_minor: number;
+};
 type Report = {
   model: string;
   touches: number;
   note: string;
+  net_revenue: Revenue[];
+  unresolved_refunds: number;
+  ad_spend: {
+    campaign_id: string;
+    spend: string;
+    currency: string;
+    clicks: number;
+    impressions: number;
+  }[];
+  outcomes: {
+    campaign_id: string | null;
+    simulated: boolean;
+    contact_credit: number;
+    qualified_credit: number;
+    meeting_credit: number;
+    customer_credit: number;
+    recorded_cpl_micros: number | null;
+    recorded_cac_micros: number | null;
+  }[];
   revenue: {
     campaign_id: string | null;
     currency: string;
@@ -19,11 +45,24 @@ type Report = {
     campaign_id: string | null;
     simulated: boolean;
     amount_micros: number;
+    model_micros: number;
+    expense_micros: number;
+    held_micros: number;
   }[];
 };
-export default function Attribution({ writable }: { writable: boolean }) {
+export default function Attribution({
+  writable,
+  revision = 0,
+}: {
+  writable: boolean;
+  revision?: number;
+}) {
   const [campaigns, setCampaigns] = useState<Entity[]>([]);
   const [leads, setLeads] = useState<Entity[]>([]);
+  const [pages, setPages] = useState<
+    { id: string; title: string; status: string }[]
+  >([]);
+  const [trackingLink, setTrackingLink] = useState("");
   const [model, setModel] = useState("last_touch");
   const [report, setReport] = useState<Report | null>(null);
   const [busy, setBusy] = useState(false);
@@ -38,12 +77,16 @@ export default function Attribution({ writable }: { writable: boolean }) {
       api<{ items: Entity[] }>("/v1/data/campaigns"),
       api<{ items: Entity[] }>("/v1/data/leads"),
       api<Report>(`/v1/attribution/report?model=${model}`),
+      api<{ items: { id: string; title: string; status: string }[] }>(
+        "/v1/data/content_items",
+      ),
     ])
-      .then(([c, l, r]) => {
+      .then(([c, l, r, p]) => {
         if (active) {
           setCampaigns(c.items);
           setLeads(l.items);
           setReport(r);
+          setPages(p.items.filter((item) => item.status === "published_local"));
         }
       })
       .catch((e) => {
@@ -52,7 +95,7 @@ export default function Attribution({ writable }: { writable: boolean }) {
     return () => {
       active = false;
     };
-  }, [model]);
+  }, [model, revision]);
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const f = new FormData(event.currentTarget);
@@ -119,16 +162,16 @@ export default function Attribution({ writable }: { writable: boolean }) {
               <th>Campaign</th>
               <th>Mode</th>
               <th>Currency</th>
-              <th>Attributed gross revenue (minor units)</th>
+              <th>Attributed net revenue</th>
             </tr>
           </thead>
           <tbody>
-            {report?.revenue.map((r, i) => (
+            {report?.net_revenue.map((r, i) => (
               <tr key={i}>
                 <td>{name(r.campaign_id)}</td>
                 <td>{r.simulated ? "Sandbox" : "Live"}</td>
                 <td>{r.currency}</td>
-                <td>{r.amount_minor}</td>
+                <td>{displayMoney(r.amount_minor, r.currency)}</td>
               </tr>
             ))}
           </tbody>
@@ -140,10 +183,142 @@ export default function Attribution({ writable }: { writable: boolean }) {
       {report?.costs.map((c, i) => (
         <p key={i}>
           {name(c.campaign_id)} · {c.simulated ? "Sandbox" : "Live"} recorded
-          expense · ${(c.amount_micros / 1000000).toFixed(6)} USD
+          known cost · ${(c.amount_micros / 1000000).toFixed(6)} USD
+          {` (models $${(c.model_micros / 1000000).toFixed(6)}, expenses $${(c.expense_micros / 1000000).toFixed(6)}, held $${(c.held_micros / 1000000).toFixed(6)})`}
         </p>
       ))}
+      {!!report?.unresolved_refunds && (
+        <p role="status">
+          {report.unresolved_refunds} legacy refund receipts need review; their
+          value is shown as unassigned.
+        </p>
+      )}
+      <div className="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Campaign / mode</th>
+              <th>Contact credit</th>
+              <th>Qualified</th>
+              <th>Meetings</th>
+              <th>Customers</th>
+              <th>Recorded CPL / CAC (USD)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {report?.outcomes.map((r, i) => (
+              <tr key={i}>
+                <td>
+                  {name(r.campaign_id)} · {r.simulated ? "Sandbox" : "Live"}
+                </td>
+                <td>{r.contact_credit.toFixed(2)}</td>
+                <td>{r.qualified_credit.toFixed(2)}</td>
+                <td>{r.meeting_credit.toFixed(2)}</td>
+                <td>{r.customer_credit.toFixed(2)}</td>
+                <td>
+                  {r.recorded_cpl_micros === null
+                    ? "—"
+                    : `$${(r.recorded_cpl_micros / 1000000).toFixed(2)}`}{" "}
+                  /{" "}
+                  {r.recorded_cac_micros === null
+                    ? "—"
+                    : `$${(r.recorded_cac_micros / 1000000).toFixed(2)}`}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       <p className="small muted">{report?.note}</p>
+      {report?.ad_spend.map((row, i) => (
+        <p key={i}>
+          {name(row.campaign_id)} · Provider ad spend: {row.spend}{" "}
+          {row.currency} · {row.clicks} clicks / {row.impressions} impressions
+          {row.currency !== "USD"
+            ? " (not converted into USD cost ratios)"
+            : ""}
+        </p>
+      ))}
+      <details className="form-disclosure">
+        <summary>Create a campaign enquiry link</summary>
+        <p>
+          Use a published owned page. Enquiries keep the signed campaign source;
+          the link does not set tracking cookies or grant marketing permission.
+        </p>
+        <form
+          className="operation-form"
+          onSubmit={async (event) => {
+            event.preventDefault();
+            const data = new FormData(event.currentTarget);
+            setBusy(true);
+            setError("");
+            try {
+              const result = await api<{ url: string }>(
+                `/v1/campaigns/${data.get("campaign")}/tracking-link`,
+                { content_id: data.get("page"), channel: data.get("channel") },
+              );
+              setTrackingLink(result.url);
+            } catch (e) {
+              setError(
+                e instanceof Error ? e.message : "Could not create link",
+              );
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          <fieldset disabled={!writable || busy}>
+            <label>
+              Campaign
+              <select name="campaign" required>
+                <option value="">Choose campaign</option>
+                {campaigns.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Published page
+              <select name="page" required>
+                <option value="">Choose a published page</option>
+                {pages.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Source
+              <select name="channel">
+                {[
+                  "email",
+                  "website",
+                  "social",
+                  "paid_ad",
+                  "referral",
+                  "other",
+                ].map((c) => (
+                  <option key={c}>{c}</option>
+                ))}
+              </select>
+            </label>
+            <button>Create 30-day campaign link</button>
+          </fieldset>
+        </form>
+        {trackingLink && (
+          <label>
+            Campaign link
+            <input
+              readOnly
+              value={trackingLink}
+              onClick={(e) => e.currentTarget.select()}
+            />
+          </label>
+        )}
+      </details>
       <details className="form-disclosure">
         <summary>Record an evidenced touchpoint</summary>
         <p>

@@ -62,16 +62,25 @@ class ModelGateway:
         model_id = (
             self.settings.embedding_model_id if operation == "embedding" else self.settings.model_id
         )
+        if operation == "image":
+            model_id = self.settings.image_model_id
         api_key = self.settings.openrouter_api_key
         if connection:
             model_id = connection["credentials"].get(
-                "embedding_model_id" if operation == "embedding" else "model_id", ""
+                {"embedding": "embedding_model_id", "image": "image_model_id"}.get(
+                    operation, "model_id"
+                ),
+                "",
             )
             api_key = connection["credentials"].get("api_key", "")
         sandbox = sandbox_only or (not connection and self.settings.provider_mode == "sandbox")
         if sandbox:
             model_id = (
-                "sandbox/hash-embedding-v1" if operation == "embedding" else "sandbox/template-v1"
+                "sandbox/hash-embedding-v1"
+                if operation == "embedding"
+                else "sandbox/checkerboard-v1"
+                if operation == "image"
+                else "sandbox/template-v1"
             )
         reserve = (
             self.settings.sandbox_model_cost_micros
@@ -179,13 +188,16 @@ class ModelGateway:
                             "input": instruction,
                             "encoding_format": "float",
                         }
+                    if operation == "image":
+                        payload = {"model": model_id, "prompt": instruction}
                     async with (
                         asyncio.timeout(55),
                         client.stream(
                             "POST",
-                            "https://openrouter.ai/api/v1/embeddings"
-                            if operation == "embedding"
-                            else "https://openrouter.ai/api/v1/chat/completions",
+                            "https://openrouter.ai/api/v1/"
+                            + {"embedding": "embeddings", "image": "images"}.get(
+                                operation, "chat/completions"
+                            ),
                             headers={"Authorization": f"Bearer {api_key}"},
                             json=payload,
                         ) as response,
@@ -204,7 +216,7 @@ class ModelGateway:
                     provider_ref = data["id"][:200]
                 usage_data = data.get("usage", {})
                 if "cost" not in usage_data:
-                    if operation != "embedding":
+                    if operation not in {"embedding", "image"}:
                         raise GatewayError("provider_cost_unknown")
                     # Embedding responses can omit cost. Preserve the reservation and evidence.
                     state = "provider_cost_unknown"
@@ -221,11 +233,17 @@ class ModelGateway:
                     if [entry["index"] for entry in entries] != list(range(len(instruction))):
                         raise ValueError("embedding_indexes_invalid")
                     result = {"vectors": [entry["embedding"] for entry in entries]}
+                elif operation == "image":
+                    entry = data["data"][0]
+                    result = {
+                        "image_base64": entry["b64_json"],
+                        "mime": entry.get("media_type", ""),
+                    }
                 else:
                     result = json.loads(data["choices"][0]["message"]["content"])
             if not isinstance(result, dict):
                 raise ValueError("provider output must be an object")
-            if operation == "embedding":
+            if operation in {"embedding", "image"}:
                 result = {**result, "model_id": model_id, "simulated": sandbox}
             return result
         except (TimeoutError, httpx.TimeoutException):

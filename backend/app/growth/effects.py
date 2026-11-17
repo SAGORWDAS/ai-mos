@@ -35,7 +35,7 @@ from app.growth.models import (
     Suppression,
 )
 from app.growth.runtime import find, public, record
-from app.models import Brand, Organization
+from app.models import Brand, Membership, Organization
 from app.tenancy import tenant_scope
 
 
@@ -215,12 +215,25 @@ async def execute(session, settings, org_id, actor_id, approval_id, key, executi
             raise HTTPException(409, "idempotency_key_payload_conflict")
         return existing.result
     approval = await find(session, Approval, org_id, approval_id)
+    if approval.decision_basis.startswith("standing_policy:"):
+        from app.growth.reply_policy import authority
+
+        await authority(session, settings, org_id, approval, execution_mode)
+    if approval.action_class == "launch_paid_ads":
+        role = await session.scalar(
+            select(Membership.role).where(
+                Membership.organization_id == org_id, Membership.user_id == actor_id
+            )
+        )
+        if role != "owner":
+            raise HTTPException(403, "owner_required")
     if execution_mode == "local" and approval.action_class != "publish_content":
         raise HTTPException(422, "local_execution_only_for_publication")
     provider_name = {
         "send_email": "gmail",
         "send_bulk_campaign": "resend",
         "book_meeting": "calendar",
+        "launch_paid_ads": "meta_ads",
     }.get(approval.action_class)
     if approval.action_class == "publish_channel":
         provider_name = approval.payload.get("channel")
@@ -349,6 +362,26 @@ async def execute(session, settings, org_id, actor_id, approval_id, key, executi
         result = {**public(item), "simulated": simulated}
         if not simulated:
             result["url"] = f"/api/v1/public/{org_id}/{item.id}"
+    elif approval.action_class == "launch_paid_ads":
+        from app.growth.advertising import check_ad
+
+        brand, image = await check_ad(session, org_id, approval.payload)
+        if connection:
+            if brand.voice.get("sandbox_only") or image.output.get("simulated", True):
+                raise HTTPException(409, "sample_assets_cannot_run_paid_ads")
+            if (connection["id"], connection["version"]) != (
+                approval.payload.get("connection_id"),
+                approval.payload.get("connection_version"),
+            ):
+                raise HTTPException(409, "ads_connection_changed_request_new_approval")
+            if connection["credentials"].get("currency") != approval.payload["currency"]:
+                raise HTTPException(409, "ad_account_currency_mismatch")
+        result = {
+            "simulated": simulated,
+            "status": "simulated" if simulated else "queued",
+            "budget_minor": approval.payload["lifetime_budget_minor"],
+            "currency": approval.payload["currency"],
+        }
     elif approval.action_class == "publish_channel":
         from app.growth.publishing import check_publication
 

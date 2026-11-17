@@ -20,6 +20,8 @@ test('AC01/AC02: PostgreSQL forced RLS covers every tenant table and rejects cro
     const fixtures=JSON.parse(fs.readFileSync(path.join(root,'isolation-fixtures.json'),'utf8'));
     await db.exec(fs.readFileSync(path.join(root,'0016_campaign_attribution.sql'),'utf8'));
     await db.exec(fs.readFileSync(path.join(root,'0017_automatic_reply_drafts.sql'),'utf8'));
+    await db.exec(fs.readFileSync(path.join(root,'0018_standing_reply_policy.sql'),'utf8'));
+    fixtures.tenants.forEach((tenant,index)=>fixtures.rows.push({table:'reply_policies',values:{id:'policy-'+index,created_at:1,organization_id:tenant.organization_id,brand_id:fixtures.rows.find(row=>row.table==='brands'&&row.values.organization_id===tenant.organization_id).values.id,owner_id:tenant.user_id,brand_hash:'a'.repeat(64),template_hash:'b'.repeat(64),expires_at:9999999999}}));
     fixtures.tenants.forEach((tenant,index)=>fixtures.rows.push({table:'attribution_touches',values:{id:'touch-'+index,created_at:1,organization_id:tenant.organization_id,lead_id:fixtures.rows.find(row=>row.table==='leads'&&row.values.organization_id===tenant.organization_id).values.id,campaign_id:fixtures.rows.find(row=>row.table==='campaigns'&&row.values.organization_id===tenant.organization_id).values.id,channel:'email',evidence:'synthetic fixture',occurred_at:1,simulated:true,idempotency_key:'touch-key-'+index}}));
     fixtures.tenants.forEach((tenant,index)=>fixtures.rows.push({table:'model_cache',values:{id:'cache-'+index,created_at:1,organization_id:tenant.organization_id,cache_key:'cache-key-'+index,model_id:'fixture',source_usage_id:fixtures.rows.find(row=>row.table==='model_usage'&&row.values.organization_id===tenant.organization_id).values.id,output:'{}',expires_at:9999999999}}));
     fixtures.tenants.forEach((tenant,index)=>fixtures.rows.push({table:'provider_events',values:{id:'provider-event-'+index,created_at:1,organization_id:tenant.organization_id,provider:'stripe',event_id:'event-'+index,kind:'test',object_ref:'object-'+index,occurred_at:1,amount_minor:0,currency:'USD',simulated:true,evidence:'{}'}}));
@@ -28,7 +30,7 @@ test('AC01/AC02: PostgreSQL forced RLS covers every tenant table and rejects cro
       await db.query(`INSERT INTO ${row.table} (${columns.join(',')}) VALUES (${columns.map((_,i)=>'$'+(i+1)).join(',')})`,Object.values(row.values));
     }
     const policies=(await db.query("SELECT tablename FROM pg_tables WHERE schemaname='public' AND rowsecurity ORDER BY tablename")).rows;
-    assert.equal(policies.length,41);
+    assert.equal(policies.length,42);
     const flags=(await db.query("SELECT rolsuper,rolbypassrls FROM pg_roles WHERE rolname='ai_mos_app'")).rows[0];
     assert.equal(flags.rolsuper,false);assert.equal(flags.rolbypassrls,false);
     await db.exec('SET ROLE ai_mos_app');

@@ -78,11 +78,12 @@ def allocate(payments, touches, model, window_days):
             campaigns = [eligible[-1].campaign_id] if eligible else [None]
         else:
             campaigns = sorted({t.campaign_id for t in eligible}) or [None]
-        share, remainder = divmod(payment.amount_minor, len(campaigns))
+        sign = -1 if payment.amount_minor < 0 else 1
+        share, remainder = divmod(abs(payment.amount_minor), len(campaigns))
         for index, campaign_id in enumerate(campaigns):
             bucket = buckets[(campaign_id, payment.currency, payment.simulated)]
             bucket["payments"] += 1
-            bucket["amount_minor"] += share + (1 if index < remainder else 0)
+            bucket["amount_minor"] += sign * (share + (1 if index < remainder else 0))
     return [
         {"campaign_id": campaign, "currency": currency, "simulated": simulated, **values}
         for (campaign, currency, simulated), values in buckets.items()
@@ -148,21 +149,21 @@ def install_attribution(app, db, identity, require):
         expenses = (
             await session.scalars(select(Expense).where(Expense.organization_id == org_id))
         ).all()
-        costs = defaultdict(int)
-        for expense in expenses:
-            costs[(expense.campaign_id, expense.simulated)] += expense.amount_micros
+        from app.growth.measurement import complete_report
+
+        measured = await complete_report(
+            session, org_id, payments, touches, expenses, model, window_days
+        )
         return {
             "model": model,
             "window_days": window_days,
             "revenue": allocate(payments, touches, model, window_days),
-            "costs": [
-                {"campaign_id": key[0], "simulated": key[1], "amount_micros": value}
-                for key, value in costs.items()
-            ],
+            **measured,
             "touches": len(touches),
-            "note": "Gross payment attribution to recorded evidence; equal credit per distinct "
-            "campaign in linear mode. Unassigned value stays visible. Refunds, model charges and "
-            "unrecorded expenses are not allocated here; see Analytics for workspace net totals.",
+            "note": "Recorded evidence, known model charges and recorded USD expenses only. "
+            "Unknown charges remain held; missing costs are not estimated. Linear credit is equal "
+            "per distinct campaign. Unassigned value stays visible. Currencies and test/live "
+            "outcomes never mix. Ambiguous refunds stay unassigned. Attribution is not causation.",
         }
 
     app.include_router(router)

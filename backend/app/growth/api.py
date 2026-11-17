@@ -44,6 +44,7 @@ from app.growth.models import (
     Payment,
     Plan,
     ProviderEvent,
+    ReplyPolicy,
     Sequence,
     SupportThread,
     Task,
@@ -484,7 +485,10 @@ def install(app, runtime, settings, db, identity, require, tool_services=None):
     ):
         await require(session, request, who, {"owner", "admin"})
         item = await find(session, Approval, who["organization"].id, approval_id)
-        if item.action_class == "send_bulk_campaign" and who["role"] != "owner":
+        if (
+            item.action_class in {"send_bulk_campaign", "launch_paid_ads"}
+            and who["role"] != "owner"
+        ):
             raise HTTPException(403, "owner_required")
         changed = await session.execute(
             update(Approval)
@@ -493,7 +497,12 @@ def install(app, runtime, settings, db, identity, require, tool_services=None):
                 Approval.status == "pending",
                 Approval.expires_at > time.time(),
             )
-            .values(status=data.decision, decided_by=who["user"].id, decided_at=time.time())
+            .values(
+                status=data.decision,
+                decided_by=who["user"].id,
+                decided_at=time.time(),
+                decision_basis="human",
+            )
         )
         if not changed.rowcount:
             raise HTTPException(409, "approval_not_pending_or_expired")
@@ -554,10 +563,10 @@ def install(app, runtime, settings, db, identity, require, tool_services=None):
                 lead.email,
                 "opt_out" if classification["label"] == "unsubscribe" else "complaint",
             )
-        elif (
-            classification["label"] not in {"auto_reply", "bounce_notice"}
-            and lead.status != "suppressed"
-        ):
+        elif classification["label"] not in {"auto_reply", "bounce_notice"} and lead.status not in {
+            "suppressed",
+            "converted",
+        }:
             lead.status = "replied"
         item = Message(
             organization_id=who["organization"].id,
@@ -584,6 +593,18 @@ def install(app, runtime, settings, db, identity, require, tool_services=None):
                 .values(status="stopped")
             )
         await dispatch(session, who["organization"].id, "message.received", item, item.id)
+        policy = await session.scalar(
+            select(ReplyPolicy.id).where(
+                ReplyPolicy.organization_id == who["organization"].id,
+                ReplyPolicy.brand_id == lead.brand_id,
+                ReplyPolicy.enabled.is_(True),
+                ReplyPolicy.execution_mode == "sandbox",
+            )
+        )
+        if policy:
+            from app.growth.inbox import queue_safe_reply
+
+            await queue_safe_reply(session, who["organization"].id, lead, item, who["user"].id)
         await session.commit()
         return public(item)
 

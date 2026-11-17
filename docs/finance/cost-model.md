@@ -1,5 +1,7 @@
 # Cost model — T-0.9
 
+The interactive worksheet is available in **Operations / Usage & cost / Campaign cost planner**. It computes variable/fixed cost, projected funnel counts, CPL and CAC from your entered prices/rates. Assumptions remain separate from recorded ledgers and reset on leaving the screen.
+
 Fill with **real prices**, then read the answer at the bottom. Every figure is per 100 discovered prospects unless stated.
 
 ## 1. Direct cost lines

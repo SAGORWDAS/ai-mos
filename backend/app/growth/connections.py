@@ -10,6 +10,7 @@ from app.growth.providers import GoogleProvider, ProviderError, require_secret
 from app.tenancy import tenant_scope
 
 PROVIDERS = {
+    "meta_ads",
     "openrouter",
     "gmail",
     "calendar",
@@ -20,11 +21,12 @@ PROVIDERS = {
     "linkedin",
 }
 FIELDS = {
+    "meta_ads": {"access_token", "ad_account_id", "page_id", "currency"},
     "wordpress": {"access_token", "site_id"},
     "linkedin": {"access_token", "author_urn"},
     "resend": {"api_key", "sender", "webhook_secret"},
     "brave": {"api_key"},
-    "openrouter": {"api_key", "model_id", "embedding_model_id"},
+    "openrouter": {"api_key", "model_id", "embedding_model_id", "image_model_id"},
     "gmail": {"access_token", "sender", "refresh_token", "client_id", "client_secret"},
     "calendar": {"access_token", "calendar_id", "refresh_token", "client_id", "client_secret"},
     "stripe": {"secret_key", "webhook_secret", "success_url", "cancel_url"},
@@ -104,7 +106,12 @@ async def verify(settings, item, transport=None):
     if is_placeholder(credentials):
         return {"status": "placeholder", "account_ref": item.account_ref}
     try:
-        if item.provider in {"wordpress", "linkedin"}:
+        if item.provider == "meta_ads":
+            from app.growth.advertising import MetaProvider
+
+            identity = await MetaProvider(credentials, transport).verify()
+            item.token_ciphertext = seal(settings, item.provider, item.organization_id, credentials)
+        elif item.provider in {"wordpress", "linkedin"}:
             from app.growth.publishing import PublishingProvider
 
             provider = PublishingProvider(item.provider, credentials, transport)

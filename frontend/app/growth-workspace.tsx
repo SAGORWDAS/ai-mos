@@ -14,6 +14,10 @@ import { api } from "./api";
 import Autopilot from "./autopilot";
 import Attribution from "./attribution";
 import Publisher from "./publisher";
+import { CreativeAssets, Advertising } from "./growth-extras";
+import UsageBreakdown from "./usage-breakdown";
+import ReplyPolicy from "./reply-policy";
+import CostPlanner from "./cost-planner";
 import { currencies, currencyFactor, displayMoney } from "./money";
 
 type Item = { id: string; created_at: number; [key: string]: unknown };
@@ -39,6 +43,7 @@ const sections = [
   "Learning",
   "Analytics",
   "Attribution",
+  "Advertising",
   "Agents",
   "Usage & cost",
   "Knowledge",
@@ -64,6 +69,7 @@ const resources: Record<Section, string[]> = {
   Learning: ["learning_records"],
   Analytics: [],
   Attribution: [],
+  Advertising: ["campaigns", "content_items", "tasks", "effects", "approvals"],
   Agents: [],
   "Usage & cost": ["model_usage"],
   Knowledge: ["brand_documents", "tasks"],
@@ -110,6 +116,8 @@ const descriptions: Record<Section, string> = {
     "Inspect recorded results. Sandbox deliveries and revenue are labelled separately from real outcomes.",
   Attribution:
     "Connect evidenced campaign interactions with payment outcomes using first-touch, last-touch or equal campaign credit.",
+  Advertising:
+    "Review a fixed-budget paid campaign. Test with sandbox receipts before connecting a real ad account.",
   Agents:
     "One shared runtime with twenty role manifests. Permissions come from the registry; disabling a role blocks its jobs.",
   "Usage & cost":
@@ -436,6 +444,7 @@ export default function GrowthWorkspace({
   const owner = identity.role === "owner";
   const admin = ["owner", "admin"].includes(identity.role);
   const refreshEpoch = useRef(0);
+  const [reportRevision, setReportRevision] = useState(0);
 
   const refresh = useCallback(async () => {
     const epoch = ++refreshEpoch.current;
@@ -597,7 +606,12 @@ export default function GrowthWorkspace({
             <button
               className="secondary"
               disabled={busy}
-              onClick={() => act(refresh, "Updated.")}
+              onClick={() =>
+                act(async () => {
+                  await refresh();
+                  setReportRevision((v) => v + 1);
+                }, "Updated.")
+              }
             >
               Refresh
             </button>
@@ -1228,6 +1242,13 @@ export default function GrowthWorkspace({
                 <article key={approval.id} className="operation-card">
                   <div className="row-between">
                     <h3>{clean(approval.action_class)}</h3>
+                    {String(approval.decision_basis || "").startsWith(
+                      "standing_policy:",
+                    ) && (
+                      <span className="small">
+                        Approved by exact-template policy
+                      </span>
+                    )}
                     <Status
                       value={
                         number(approval, "expires_at") < Date.now() / 1000 &&
@@ -1504,6 +1525,12 @@ export default function GrowthWorkspace({
 
           {section === "Content" && (
             <>
+              <CreativeAssets
+                brands={brands}
+                tasks={rows("tasks")}
+                disabled={!writable}
+                refresh={refresh}
+              />
               <Form
                 label="Generate grounded draft"
                 submit={(form) =>
@@ -2096,6 +2123,7 @@ export default function GrowthWorkspace({
 
           {section === "Automation" && (
             <>
+              <ReplyPolicy owner={owner} disabled={!writable || busy} />
               <Form
                 label="Create automation rule"
                 submit={(form) =>
@@ -2322,6 +2350,8 @@ export default function GrowthWorkspace({
 
           {section === "Usage & cost" && (
             <>
+              <CostPlanner />
+              <UsageBreakdown revision={reportRevision} />
               <article className="operation-card">
                 <h3>Reuse validated responses</h3>
                 <p>
@@ -2511,7 +2541,18 @@ export default function GrowthWorkspace({
             </>
           )}
 
-          {section === "Attribution" && <Attribution writable={writable} />}
+          {section === "Attribution" && (
+            <Attribution writable={writable} revision={reportRevision} />
+          )}
+          {section === "Advertising" && (
+            <Advertising
+              data={data}
+              disabled={!owner || identity.organization.emergency_stop}
+              connected={connected("meta_ads")}
+              canPause={owner}
+              refresh={refresh}
+            />
+          )}
           {section === "Knowledge" && (
             <>
               <details className="form-disclosure">

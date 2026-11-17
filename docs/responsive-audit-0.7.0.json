@@ -1,0 +1,1575 @@
+{
+  "version": "0.7.0",
+  "date": "2026-11-17",
+  "source": "Rendered Chromium browser DOM through computer-use controls",
+  "scope": "29 workspace views at six viewport widths; synthetic QA data only",
+  "limits": "Overflow and visible form labels only; not WCAG, all-device or performance certification",
+  "checks": [
+    {
+      "documentWidth": 305,
+      "heading": "A foundation for growth.",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Overview",
+      "viewport": 320,
+      "width": 320
+    },
+    {
+      "documentWidth": 305,
+      "heading": "Brand Brain",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Brand Brain",
+      "viewport": 320,
+      "width": 320
+    },
+    {
+      "documentWidth": 305,
+      "heading": "Activity",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Activity",
+      "viewport": 320,
+      "width": 320
+    },
+    {
+      "documentWidth": 305,
+      "heading": "Integrations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Integrations",
+      "viewport": 320,
+      "width": 320
+    },
+    {
+      "documentWidth": 305,
+      "heading": "Team & settings",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Team & settings",
+      "viewport": 320,
+      "width": 320
+    },
+    {
+      "documentWidth": 305,
+      "heading": "Build roadmap",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Build roadmap",
+      "viewport": 320,
+      "width": 320
+    },
+    {
+      "documentWidth": 305,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Command Center",
+      "viewport": 320,
+      "width": 320
+    },
+    {
+      "documentWidth": 305,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Plans & tasks",
+      "viewport": 320,
+      "width": 320
+    },
+    {
+      "documentWidth": 305,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Leads & CRM",
+      "viewport": 320,
+      "width": 320
+    },
+    {
+      "documentWidth": 305,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Outreach",
+      "viewport": 320,
+      "width": 320
+    },
+    {
+      "documentWidth": 305,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Inbox",
+      "viewport": 320,
+      "width": 320
+    },
+    {
+      "documentWidth": 305,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Content",
+      "viewport": 320,
+      "width": 320
+    },
+    {
+      "documentWidth": 305,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Campaigns",
+      "viewport": 320,
+      "width": 320
+    },
+    {
+      "documentWidth": 305,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Approvals",
+      "viewport": 320,
+      "width": 320
+    },
+    {
+      "documentWidth": 305,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Meetings",
+      "viewport": 320,
+      "width": 320
+    },
+    {
+      "documentWidth": 305,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Revenue",
+      "viewport": 320,
+      "width": 320
+    },
+    {
+      "documentWidth": 305,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Customers",
+      "viewport": 320,
+      "width": 320
+    },
+    {
+      "documentWidth": 305,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Support",
+      "viewport": 320,
+      "width": 320
+    },
+    {
+      "documentWidth": 305,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Automation",
+      "viewport": 320,
+      "width": 320
+    },
+    {
+      "documentWidth": 305,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Learning",
+      "viewport": 320,
+      "width": 320
+    },
+    {
+      "documentWidth": 305,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Analytics",
+      "viewport": 320,
+      "width": 320
+    },
+    {
+      "documentWidth": 305,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Advertising",
+      "viewport": 320,
+      "width": 320
+    },
+    {
+      "documentWidth": 305,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Agents",
+      "viewport": 320,
+      "width": 320
+    },
+    {
+      "documentWidth": 305,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Knowledge",
+      "viewport": 320,
+      "width": 320
+    },
+    {
+      "documentWidth": 305,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Sequences",
+      "viewport": 320,
+      "width": 320
+    },
+    {
+      "documentWidth": 305,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Notifications",
+      "viewport": 320,
+      "width": 320
+    },
+    {
+      "documentWidth": 305,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Expenses",
+      "viewport": 320,
+      "width": 320
+    },
+    {
+      "documentWidth": 375,
+      "heading": "A foundation for growth.",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Overview",
+      "viewport": 390,
+      "width": 390
+    },
+    {
+      "documentWidth": 390,
+      "heading": "Brand Brain",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Brand Brain",
+      "viewport": 390,
+      "width": 390
+    },
+    {
+      "documentWidth": 375,
+      "heading": "Activity",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Activity",
+      "viewport": 390,
+      "width": 390
+    },
+    {
+      "documentWidth": 375,
+      "heading": "Integrations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Integrations",
+      "viewport": 390,
+      "width": 390
+    },
+    {
+      "documentWidth": 375,
+      "heading": "Team & settings",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Team & settings",
+      "viewport": 390,
+      "width": 390
+    },
+    {
+      "documentWidth": 375,
+      "heading": "Build roadmap",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Build roadmap",
+      "viewport": 390,
+      "width": 390
+    },
+    {
+      "documentWidth": 375,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Command Center",
+      "viewport": 390,
+      "width": 390
+    },
+    {
+      "documentWidth": 375,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Plans & tasks",
+      "viewport": 390,
+      "width": 390
+    },
+    {
+      "documentWidth": 375,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Leads & CRM",
+      "viewport": 390,
+      "width": 390
+    },
+    {
+      "documentWidth": 375,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Outreach",
+      "viewport": 390,
+      "width": 390
+    },
+    {
+      "documentWidth": 375,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Inbox",
+      "viewport": 390,
+      "width": 390
+    },
+    {
+      "documentWidth": 375,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Content",
+      "viewport": 390,
+      "width": 390
+    },
+    {
+      "documentWidth": 375,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Campaigns",
+      "viewport": 390,
+      "width": 390
+    },
+    {
+      "documentWidth": 375,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Approvals",
+      "viewport": 390,
+      "width": 390
+    },
+    {
+      "documentWidth": 375,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Meetings",
+      "viewport": 390,
+      "width": 390
+    },
+    {
+      "documentWidth": 375,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Revenue",
+      "viewport": 390,
+      "width": 390
+    },
+    {
+      "documentWidth": 375,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Customers",
+      "viewport": 390,
+      "width": 390
+    },
+    {
+      "documentWidth": 375,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Support",
+      "viewport": 390,
+      "width": 390
+    },
+    {
+      "documentWidth": 375,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Automation",
+      "viewport": 390,
+      "width": 390
+    },
+    {
+      "documentWidth": 375,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Learning",
+      "viewport": 390,
+      "width": 390
+    },
+    {
+      "documentWidth": 375,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Analytics",
+      "viewport": 390,
+      "width": 390
+    },
+    {
+      "documentWidth": 375,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Advertising",
+      "viewport": 390,
+      "width": 390
+    },
+    {
+      "documentWidth": 375,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Agents",
+      "viewport": 390,
+      "width": 390
+    },
+    {
+      "documentWidth": 375,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Knowledge",
+      "viewport": 390,
+      "width": 390
+    },
+    {
+      "documentWidth": 375,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Sequences",
+      "viewport": 390,
+      "width": 390
+    },
+    {
+      "documentWidth": 375,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Notifications",
+      "viewport": 390,
+      "width": 390
+    },
+    {
+      "documentWidth": 375,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Expenses",
+      "viewport": 390,
+      "width": 390
+    },
+    {
+      "documentWidth": 753,
+      "heading": "A foundation for growth.",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Overview",
+      "viewport": 768,
+      "width": 768
+    },
+    {
+      "documentWidth": 768,
+      "heading": "Brand Brain",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Brand Brain",
+      "viewport": 768,
+      "width": 768
+    },
+    {
+      "documentWidth": 753,
+      "heading": "Activity",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Activity",
+      "viewport": 768,
+      "width": 768
+    },
+    {
+      "documentWidth": 753,
+      "heading": "Integrations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Integrations",
+      "viewport": 768,
+      "width": 768
+    },
+    {
+      "documentWidth": 753,
+      "heading": "Team & settings",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Team & settings",
+      "viewport": 768,
+      "width": 768
+    },
+    {
+      "documentWidth": 753,
+      "heading": "Build roadmap",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Build roadmap",
+      "viewport": 768,
+      "width": 768
+    },
+    {
+      "documentWidth": 753,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Command Center",
+      "viewport": 768,
+      "width": 768
+    },
+    {
+      "documentWidth": 753,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Plans & tasks",
+      "viewport": 768,
+      "width": 768
+    },
+    {
+      "documentWidth": 753,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Leads & CRM",
+      "viewport": 768,
+      "width": 768
+    },
+    {
+      "documentWidth": 753,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Outreach",
+      "viewport": 768,
+      "width": 768
+    },
+    {
+      "documentWidth": 753,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Inbox",
+      "viewport": 768,
+      "width": 768
+    },
+    {
+      "documentWidth": 753,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Content",
+      "viewport": 768,
+      "width": 768
+    },
+    {
+      "documentWidth": 753,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Campaigns",
+      "viewport": 768,
+      "width": 768
+    },
+    {
+      "documentWidth": 753,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Approvals",
+      "viewport": 768,
+      "width": 768
+    },
+    {
+      "documentWidth": 753,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Meetings",
+      "viewport": 768,
+      "width": 768
+    },
+    {
+      "documentWidth": 753,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Revenue",
+      "viewport": 768,
+      "width": 768
+    },
+    {
+      "documentWidth": 753,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Customers",
+      "viewport": 768,
+      "width": 768
+    },
+    {
+      "documentWidth": 753,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Support",
+      "viewport": 768,
+      "width": 768
+    },
+    {
+      "documentWidth": 753,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Automation",
+      "viewport": 768,
+      "width": 768
+    },
+    {
+      "documentWidth": 753,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Learning",
+      "viewport": 768,
+      "width": 768
+    },
+    {
+      "documentWidth": 753,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Analytics",
+      "viewport": 768,
+      "width": 768
+    },
+    {
+      "documentWidth": 753,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Advertising",
+      "viewport": 768,
+      "width": 768
+    },
+    {
+      "documentWidth": 753,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Agents",
+      "viewport": 768,
+      "width": 768
+    },
+    {
+      "documentWidth": 753,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Knowledge",
+      "viewport": 768,
+      "width": 768
+    },
+    {
+      "documentWidth": 753,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Sequences",
+      "viewport": 768,
+      "width": 768
+    },
+    {
+      "documentWidth": 753,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Notifications",
+      "viewport": 768,
+      "width": 768
+    },
+    {
+      "documentWidth": 753,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Expenses",
+      "viewport": 768,
+      "width": 768
+    },
+    {
+      "documentWidth": 1009,
+      "heading": "A foundation for growth.",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Overview",
+      "viewport": 1024,
+      "width": 1024
+    },
+    {
+      "documentWidth": 1024,
+      "heading": "Brand Brain",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Brand Brain",
+      "viewport": 1024,
+      "width": 1024
+    },
+    {
+      "documentWidth": 1009,
+      "heading": "Activity",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Activity",
+      "viewport": 1024,
+      "width": 1024
+    },
+    {
+      "documentWidth": 1009,
+      "heading": "Integrations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Integrations",
+      "viewport": 1024,
+      "width": 1024
+    },
+    {
+      "documentWidth": 1009,
+      "heading": "Team & settings",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Team & settings",
+      "viewport": 1024,
+      "width": 1024
+    },
+    {
+      "documentWidth": 1009,
+      "heading": "Build roadmap",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Build roadmap",
+      "viewport": 1024,
+      "width": 1024
+    },
+    {
+      "documentWidth": 1009,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Command Center",
+      "viewport": 1024,
+      "width": 1024
+    },
+    {
+      "documentWidth": 1009,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Plans & tasks",
+      "viewport": 1024,
+      "width": 1024
+    },
+    {
+      "documentWidth": 1009,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Leads & CRM",
+      "viewport": 1024,
+      "width": 1024
+    },
+    {
+      "documentWidth": 1009,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Outreach",
+      "viewport": 1024,
+      "width": 1024
+    },
+    {
+      "documentWidth": 1009,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Inbox",
+      "viewport": 1024,
+      "width": 1024
+    },
+    {
+      "documentWidth": 1009,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Content",
+      "viewport": 1024,
+      "width": 1024
+    },
+    {
+      "documentWidth": 1009,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Campaigns",
+      "viewport": 1024,
+      "width": 1024
+    },
+    {
+      "documentWidth": 1009,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Approvals",
+      "viewport": 1024,
+      "width": 1024
+    },
+    {
+      "documentWidth": 1009,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Meetings",
+      "viewport": 1024,
+      "width": 1024
+    },
+    {
+      "documentWidth": 1009,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Revenue",
+      "viewport": 1024,
+      "width": 1024
+    },
+    {
+      "documentWidth": 1009,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Customers",
+      "viewport": 1024,
+      "width": 1024
+    },
+    {
+      "documentWidth": 1009,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Support",
+      "viewport": 1024,
+      "width": 1024
+    },
+    {
+      "documentWidth": 1009,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Automation",
+      "viewport": 1024,
+      "width": 1024
+    },
+    {
+      "documentWidth": 1009,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Learning",
+      "viewport": 1024,
+      "width": 1024
+    },
+    {
+      "documentWidth": 1009,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Analytics",
+      "viewport": 1024,
+      "width": 1024
+    },
+    {
+      "documentWidth": 1009,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Advertising",
+      "viewport": 1024,
+      "width": 1024
+    },
+    {
+      "documentWidth": 1009,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Agents",
+      "viewport": 1024,
+      "width": 1024
+    },
+    {
+      "documentWidth": 1009,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Knowledge",
+      "viewport": 1024,
+      "width": 1024
+    },
+    {
+      "documentWidth": 1009,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Sequences",
+      "viewport": 1024,
+      "width": 1024
+    },
+    {
+      "documentWidth": 1009,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Notifications",
+      "viewport": 1024,
+      "width": 1024
+    },
+    {
+      "documentWidth": 1009,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Expenses",
+      "viewport": 1024,
+      "width": 1024
+    },
+    {
+      "documentWidth": 1265,
+      "heading": "A foundation for growth.",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Overview",
+      "viewport": 1280,
+      "width": 1280
+    },
+    {
+      "documentWidth": 1280,
+      "heading": "Brand Brain",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Brand Brain",
+      "viewport": 1280,
+      "width": 1280
+    },
+    {
+      "documentWidth": 1265,
+      "heading": "Activity",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Activity",
+      "viewport": 1280,
+      "width": 1280
+    },
+    {
+      "documentWidth": 1265,
+      "heading": "Integrations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Integrations",
+      "viewport": 1280,
+      "width": 1280
+    },
+    {
+      "documentWidth": 1265,
+      "heading": "Team & settings",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Team & settings",
+      "viewport": 1280,
+      "width": 1280
+    },
+    {
+      "documentWidth": 1265,
+      "heading": "Build roadmap",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Build roadmap",
+      "viewport": 1280,
+      "width": 1280
+    },
+    {
+      "documentWidth": 1265,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Command Center",
+      "viewport": 1280,
+      "width": 1280
+    },
+    {
+      "documentWidth": 1265,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Plans & tasks",
+      "viewport": 1280,
+      "width": 1280
+    },
+    {
+      "documentWidth": 1265,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Leads & CRM",
+      "viewport": 1280,
+      "width": 1280
+    },
+    {
+      "documentWidth": 1265,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Outreach",
+      "viewport": 1280,
+      "width": 1280
+    },
+    {
+      "documentWidth": 1265,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Inbox",
+      "viewport": 1280,
+      "width": 1280
+    },
+    {
+      "documentWidth": 1265,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Content",
+      "viewport": 1280,
+      "width": 1280
+    },
+    {
+      "documentWidth": 1265,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Campaigns",
+      "viewport": 1280,
+      "width": 1280
+    },
+    {
+      "documentWidth": 1265,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Approvals",
+      "viewport": 1280,
+      "width": 1280
+    },
+    {
+      "documentWidth": 1265,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Meetings",
+      "viewport": 1280,
+      "width": 1280
+    },
+    {
+      "documentWidth": 1265,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Revenue",
+      "viewport": 1280,
+      "width": 1280
+    },
+    {
+      "documentWidth": 1265,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Customers",
+      "viewport": 1280,
+      "width": 1280
+    },
+    {
+      "documentWidth": 1265,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Support",
+      "viewport": 1280,
+      "width": 1280
+    },
+    {
+      "documentWidth": 1265,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Automation",
+      "viewport": 1280,
+      "width": 1280
+    },
+    {
+      "documentWidth": 1265,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Learning",
+      "viewport": 1280,
+      "width": 1280
+    },
+    {
+      "documentWidth": 1265,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Analytics",
+      "viewport": 1280,
+      "width": 1280
+    },
+    {
+      "documentWidth": 1265,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Advertising",
+      "viewport": 1280,
+      "width": 1280
+    },
+    {
+      "documentWidth": 1265,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Agents",
+      "viewport": 1280,
+      "width": 1280
+    },
+    {
+      "documentWidth": 1265,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Knowledge",
+      "viewport": 1280,
+      "width": 1280
+    },
+    {
+      "documentWidth": 1265,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Sequences",
+      "viewport": 1280,
+      "width": 1280
+    },
+    {
+      "documentWidth": 1265,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Notifications",
+      "viewport": 1280,
+      "width": 1280
+    },
+    {
+      "documentWidth": 1265,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Expenses",
+      "viewport": 1280,
+      "width": 1280
+    },
+    {
+      "documentWidth": 1425,
+      "heading": "A foundation for growth.",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Overview",
+      "viewport": 1440,
+      "width": 1440
+    },
+    {
+      "documentWidth": 1440,
+      "heading": "Brand Brain",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Brand Brain",
+      "viewport": 1440,
+      "width": 1440
+    },
+    {
+      "documentWidth": 1425,
+      "heading": "Activity",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Activity",
+      "viewport": 1440,
+      "width": 1440
+    },
+    {
+      "documentWidth": 1425,
+      "heading": "Integrations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Integrations",
+      "viewport": 1440,
+      "width": 1440
+    },
+    {
+      "documentWidth": 1425,
+      "heading": "Team & settings",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Team & settings",
+      "viewport": 1440,
+      "width": 1440
+    },
+    {
+      "documentWidth": 1425,
+      "heading": "Build roadmap",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Build roadmap",
+      "viewport": 1440,
+      "width": 1440
+    },
+    {
+      "documentWidth": 1425,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Command Center",
+      "viewport": 1440,
+      "width": 1440
+    },
+    {
+      "documentWidth": 1425,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Plans & tasks",
+      "viewport": 1440,
+      "width": 1440
+    },
+    {
+      "documentWidth": 1425,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Leads & CRM",
+      "viewport": 1440,
+      "width": 1440
+    },
+    {
+      "documentWidth": 1425,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Outreach",
+      "viewport": 1440,
+      "width": 1440
+    },
+    {
+      "documentWidth": 1425,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Inbox",
+      "viewport": 1440,
+      "width": 1440
+    },
+    {
+      "documentWidth": 1425,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Content",
+      "viewport": 1440,
+      "width": 1440
+    },
+    {
+      "documentWidth": 1425,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Campaigns",
+      "viewport": 1440,
+      "width": 1440
+    },
+    {
+      "documentWidth": 1425,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Approvals",
+      "viewport": 1440,
+      "width": 1440
+    },
+    {
+      "documentWidth": 1425,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Meetings",
+      "viewport": 1440,
+      "width": 1440
+    },
+    {
+      "documentWidth": 1425,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Revenue",
+      "viewport": 1440,
+      "width": 1440
+    },
+    {
+      "documentWidth": 1425,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Customers",
+      "viewport": 1440,
+      "width": 1440
+    },
+    {
+      "documentWidth": 1425,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Support",
+      "viewport": 1440,
+      "width": 1440
+    },
+    {
+      "documentWidth": 1425,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Automation",
+      "viewport": 1440,
+      "width": 1440
+    },
+    {
+      "documentWidth": 1425,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Learning",
+      "viewport": 1440,
+      "width": 1440
+    },
+    {
+      "documentWidth": 1425,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Analytics",
+      "viewport": 1440,
+      "width": 1440
+    },
+    {
+      "documentWidth": 1425,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Advertising",
+      "viewport": 1440,
+      "width": 1440
+    },
+    {
+      "documentWidth": 1425,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Agents",
+      "viewport": 1440,
+      "width": 1440
+    },
+    {
+      "documentWidth": 1425,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Knowledge",
+      "viewport": 1440,
+      "width": 1440
+    },
+    {
+      "documentWidth": 1425,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Sequences",
+      "viewport": 1440,
+      "width": 1440
+    },
+    {
+      "documentWidth": 1425,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Notifications",
+      "viewport": 1440,
+      "width": 1440
+    },
+    {
+      "documentWidth": 1425,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Expenses",
+      "viewport": 1440,
+      "width": 1440
+    },
+    {
+      "documentWidth": 1425,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Attribution",
+      "viewport": 1440,
+      "width": 320
+    },
+    {
+      "documentWidth": 1425,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Usage & cost",
+      "viewport": 1440,
+      "width": 320
+    },
+    {
+      "documentWidth": 1425,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Attribution",
+      "viewport": 1440,
+      "width": 390
+    },
+    {
+      "documentWidth": 1425,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Usage & cost",
+      "viewport": 1440,
+      "width": 390
+    },
+    {
+      "documentWidth": 1425,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Attribution",
+      "viewport": 1440,
+      "width": 768
+    },
+    {
+      "documentWidth": 1425,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Usage & cost",
+      "viewport": 1440,
+      "width": 768
+    },
+    {
+      "documentWidth": 1425,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Attribution",
+      "viewport": 1440,
+      "width": 1024
+    },
+    {
+      "documentWidth": 1425,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Usage & cost",
+      "viewport": 1440,
+      "width": 1024
+    },
+    {
+      "documentWidth": 1425,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Attribution",
+      "viewport": 1440,
+      "width": 1280
+    },
+    {
+      "documentWidth": 1425,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Usage & cost",
+      "viewport": 1440,
+      "width": 1280
+    },
+    {
+      "documentWidth": 1425,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Attribution",
+      "viewport": 1440,
+      "width": 1440
+    },
+    {
+      "documentWidth": 1425,
+      "heading": "Operations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Usage & cost",
+      "viewport": 1440,
+      "width": 1440
+    }
+  ]
+}

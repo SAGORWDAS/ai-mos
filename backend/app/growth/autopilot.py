@@ -62,6 +62,10 @@ def install_autopilot(app, runtime, settings, db, identity, require):
 
         canonical_base = public_base(settings)
         guides = {
+            "meta_ads": (
+                "Owner-reviewed paid link ads",
+                "Meta access token, ad account ID, page ID; active billing and ads grants",
+            ),
             "wordpress": (
                 "Publish reviewed website articles",
                 "WordPress.com OAuth token and numeric site ID",

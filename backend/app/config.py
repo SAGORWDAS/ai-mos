@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     worker_poll_seconds: float = 0.5
     model_id: str = ""
     embedding_model_id: str = ""
+    image_model_id: str = ""
     model_cache_seconds: int = Field(default=21600, ge=0, le=86400)
     model_max_cost_micros: int = Field(default=20000, ge=1, le=1_000_000)
     sandbox_model_cost_micros: int = Field(default=0, ge=0, le=1_000_000)

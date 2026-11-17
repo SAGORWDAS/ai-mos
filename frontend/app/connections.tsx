@@ -18,6 +18,7 @@ type Connection = {
   sync_error: string;
 };
 const providers = {
+  meta_ads: "Meta paid advertising",
   wordpress: "WordPress.com publishing",
   linkedin: "LinkedIn member publishing",
   openrouter: "OpenRouter",
@@ -29,6 +30,11 @@ const providers = {
 };
 type Provider = keyof typeof providers;
 const fields: Record<Provider, [string, string, boolean][]> = {
+  meta_ads: [
+    ["access_token", "Meta ads access token", true],
+    ["ad_account_id", "Numeric ad account ID", false],
+    ["page_id", "Numeric Facebook page ID", false],
+  ],
   wordpress: [
     ["access_token", "WordPress.com OAuth access token", true],
     ["site_id", "Numeric site ID", false],
@@ -51,6 +57,7 @@ const fields: Record<Provider, [string, string, boolean][]> = {
     ["api_key", "API key", true],
     ["model_id", "Exact model ID", false],
     ["embedding_model_id", "Embedding model ID (optional)", false],
+    ["image_model_id", "Image API model ID (optional)", false],
   ],
   gmail: [
     ["access_token", "OAuth access token", true],
@@ -74,6 +81,7 @@ const fields: Record<Provider, [string, string, boolean][]> = {
   ],
 };
 const activation: Record<Provider, string> = {
+  meta_ads: "Enable owner-approved paid advertising",
   wordpress: "Enable reviewed article publishing",
   linkedin: "Enable reviewed member posts",
   openrouter: "Enable model calls",

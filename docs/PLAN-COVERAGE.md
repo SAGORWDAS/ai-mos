@@ -1,11 +1,11 @@
-# Original plan coverage - v0.6.0
+# Original plan coverage - v0.7.0
 
 **Not all original requirements are complete.** Implemented means the listed application behavior exists with local tests; it does not certify real-account acceptance, every clause of the original capsule, business quality or production operation. Partial means additional development or evidence remains. External gate requires actual business/account input.
 
 See BUILD-STATUS.md for test evidence and RELEASE-VERIFICATION.md for the public release CI result.
 
 
-Review totals: **29 Implemented, 23 Partial, 6 External gate**. See [v0.6.0 verification](VERIFICATION-0.6.0.md) and the historical [v0.5.1 review](REVIEW-2026-11-17.md).
+Review totals: **32 Implemented, 20 Partial, 6 External gate**. See [v0.7.0 verification](VERIFICATION-0.7.0.md) and the historical [v0.5.1 review](REVIEW-2026-11-17.md).
 
 ## PH-0 - Decisions and spikes
 
@@ -19,7 +19,7 @@ Review totals: **29 Implemented, 23 Partial, 6 External gate**. See [v0.6.0 veri
 | T-0.6 | legal basis and suppression | Partial | Suppression and evidence fields work; jurisdiction-specific policy remains owner review. |
 | T-0.7 | brand brain content | External gate | Brand editor supports inputs; actual ICP/pricing/claims remain user supplied. |
 | T-0.8 | evaluation dataset | Partial | Fixture format and small regressions exist; 100 outreach/200 labelled replies remain. |
-| T-0.9 | cost model worksheet | Partial | Cost templates and ledger exist; real provider prices and review expenses remain. |
+| T-0.9 | cost model worksheet | Partial | Interactive monthly cost/funnel planner, actual ledger and templates exist; real provider prices and review expenses remain owner supplied. |
 | T-0.10 | decision log | Partial | Decision templates preserved; original ADR closure is not asserted. |
 
 ## PH-1 - Foundation
@@ -37,7 +37,7 @@ Review totals: **29 Implemented, 23 Partial, 6 External gate**. See [v0.6.0 veri
 | T-1.9 | audit logs tracing logging | Partial | Audit/trace and hidden SQL parameters implemented; deployment-wide observability review remains. |
 | T-1.10 | budgets and enforcement | Implemented | Atomic monthly reservations, caps, cost settlement and cache lineage tested. |
 | T-1.11 | settings roles emergency stop | Implemented | Roles, owner administration and emergency stop enforced. |
-| T-1.12 | usage and cost screens | Partial | Attempt ledger and agent totals available; original full day/type drill-down UI remains. |
+| T-1.12 | usage and cost screens | Implemented | Query-backed day/agent/type/model/result groups drill into exact paginated request/task ledger rows; costs and holds remain separate. |
 
 ## PH-2 - Marketing intelligence
 
@@ -65,7 +65,7 @@ Review totals: **29 Implemented, 23 Partial, 6 External gate**. See [v0.6.0 veri
 | T-3.7 | outreach drafting claim check | Implemented | Exactly one corrective generation is attempted after rejection; both attempts are costed, and a second invalid result creates no draft. |
 | T-3.8 | dispatch with approval | Implemented | Versioned edits void approvals; dispatch and ambiguous receipts tested. |
 | T-3.9 | reply sync and classification | Partial | Sync/classification/opt-out order tested; representative classification quality benchmark remains. |
-| T-3.10 | reply drafting and L4 option | Partial | Reviewed reply drafts and human escalation work; autonomous L4 sending stays disabled. |
+| T-3.10 | reply drafting and L4 option | Implemented | Owner-reviewed exact-template standing policy is off by default, capped and expiring; revocation, contactability and weekly effect digest tested. Pricing/refunds/contracts/disputes cannot be authorized by this API. |
 
 ## PH-4 - Conversation and revenue
 
@@ -83,19 +83,19 @@ Review totals: **29 Implemented, 23 Partial, 6 External gate**. See [v0.6.0 veri
 
 | Task | Original deliverable | Status | Evidence or remaining work |
 |---|---|---|---|
-| T-5.1 | attribution | Partial | First/last/linear gross-payment campaign attribution, automatic outreach touchpoints and manual evidence records work. Full owned-site capture, model-cost/refund allocation and funnel attribution remain. |
-| T-5.2 | cost per outcome | Partial | Expenses and recorded CAC/CPL supported; actual complete costs must be supplied. |
+| T-5.1 | attribution | Partial | First/last/linear gross-payment campaign attribution, automatic outreach touchpoints and manual evidence records work. Signed owned-page enquiry source capture, model-cost/refund allocation and funnel credits are implemented. Historical/ambiguous receipts and customers with no observed source remain explicitly unassigned; cross-device and third-party conversions need evidence. |
+| T-5.2 | cost per outcome | Partial | Model cost, expense/ad-spend evidence and outcome credits produce recorded CAC/CPL; complete external/non-USD costs still need evidence and no FX is guessed. |
 | T-5.3 | evaluation in CI | Partial | Three supplied reply cases plus 44 synthetic cases and an evaluation/prediction CLI run locally/in CI. Representative model/prompt promotion benchmarks remain. |
 | T-5.4 | learning records | Implemented | Learning records require workspace evidence and effect size. |
 | T-5.5 | support and retention | Partial | Support and lifecycle views/escalations implemented; broader live retention quality remains. |
-| T-5.6 | seo social creative | Partial | SEO/social/creative drafts, SVG cards, reviewed WordPress.com/Jetpack and LinkedIn member publishing work against HTTP fixtures. Raster images, company-page/other-network publication and live acceptance remain. |
+| T-5.6 | seo social creative | Partial | SEO/social/creative drafts, SVG cards, reviewed WordPress.com/Jetpack and LinkedIn member publishing work against HTTP fixtures. Private raster generation via an enabled image model and reviewed Meta link-ad execution are implemented with HTTP fixtures. Company-page/other-network publication and live acceptance remain. |
 
 ## PH-6 - Scale and hardening
 
 | Task | Original deliverable | Status | Evidence or remaining work |
 |---|---|---|---|
 | T-6.1 | second tenant audit | Partial | Two-tenant API/native SQL/RLS tests pass; independent exhaustive tenant audit remains. |
-| T-6.2 | load and queue tuning | Partial | Concurrency/race regressions pass; original 10x burst/load certification remains. |
+| T-6.2 | load and queue tuning | Implemented | Controlled 10x burst (baseline two, twenty tasks) under four workers, replayed requests and twenty HTTP-mocked provider deliveries has zero duplicate provider IDs or lost jobs on SQLite/PostgreSQL. Production capacity/SLO certification remains separate. |
 | T-6.3 | backup and restore drill | Implemented | SQLite and PostgreSQL restore drills verify counts/audit/RLS without active DB replacement. |
 | T-6.4 | security review | Partial | Recovery/MFA/encryption/throttles/scope/dependency checks implemented; production security review remains. |
 | T-6.5 | P1 P2 agent rollout | Partial | All twenty manifests ship; representative per-role golden sets and staged rollout remain. |
@@ -104,7 +104,7 @@ Review totals: **29 Implemented, 23 Partial, 6 External gate**. See [v0.6.0 veri
 
 | Area | Implemented evidence and limit |
 |---|---|
-| AC-01/02 | 40 tenant tables; native PostgreSQL restricted-role and PGlite RLS/foreign-key tests. Independent exhaustive audit remains. |
+| AC-01/02 | 42 tenant tables; native PostgreSQL restricted-role and PGlite RLS/foreign-key tests. Independent exhaustive audit remains. |
 | AC-03 | Suppression blocks sandbox/live dispatch; signed bounce/complaint handling tested. |
 | AC-04 | Unique tenant idempotency, task identity and effect receipt/replay tests; large-load certification remains. |
 | AC-05 | Frozen payload, version invalidation, expiry and single-use approval tests. |

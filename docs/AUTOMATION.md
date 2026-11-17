@@ -39,3 +39,12 @@ Refresh setup checks after connection changes. The deployment section separates 
 Reviewed WordPress.com/LinkedIn member publication, recipient-facing sends/bookings and bulk campaigns retain explicit execution controls. Spending changes, refunds, disputes and contractual decisions remain owner responsibilities. This release automates campaign preparation and existing configured workflows; it does not claim unrestricted autonomous business operation or guarantee clients.
 
 Production remains separately gated on the remaining engineering review, hosting/security setup, representative AI-quality tests and live provider drills. Adding business details or connecting credentials does not by itself satisfy those gates. See PLAN-COVERAGE.md for the original-plan status.
+
+
+## Standing reply approval and recorded outcomes (0.7.0)
+
+Operations / Automation offers an optional fixed reply template policy. The owner reviews the current business facts and exact template, chooses sandbox or connected Gmail, caps daily attempts and sets an expiry. Only clear, non-escalated inbound replies from known contacts qualify. It defaults off. Changing facts, removing authority, replacing the connection or disabling the sales agent blocks queued automatic delivery. Pricing/refunds/contracts/disputes and ambiguous replies stay in review. A rolling seven-day digest records all automatic effects, including failed or uncertain delivery. No digest email is sent by this feature.
+
+Operations / Content prepares private raster illustrations or labelled sandbox fixtures. Advertising freezes exact copy/image, landing page, country, currency, duration, budget and activation choice for owner review. Start with simulated execution. Existing running ads need the dedicated Pause control even when the workspace is stopped. No model budget is represented as an ad spending cap.
+
+Attribution creates signed owned-page enquiry links and reports known model costs, expenses, refunds and funnel credits. Unobserved sources and unknown costs remain explicit. Usage & cost groups actual attempts and drills into request/task IDs; its separate cost planner forecasts from your supplied assumptions without changing any budget.

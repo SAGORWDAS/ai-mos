@@ -1,0 +1,29 @@
+# v0.7.0 verification
+
+17 November 2026. Development verification uses fictional businesses, reserved test addresses, HTTP-mocked providers and signed synthetic receipts. No real messages, social posts, ad purchases or payments were made.
+
+## Added behavior
+
+- Signed, expiring campaign links preserve the source of owned-page enquiries. Tokens bind the organization, business page, campaign and channel. Forged/cross-workspace sources are rejected; duplicate enquiries do not duplicate credit. Ordinary untracked enquiries still work. No anonymous tracking cookies or invented source histories.
+- Attribution allocates recorded model attempts, expenses, refund reversals and qualified-lead/meeting/customer credits using the selected first/last/linear rule. Integer currency units are conserved; opposite refund allocations cancel symmetrically. Ambiguous legacy refunds and unobserved customer sources remain unassigned. USD recorded CAC/CPL excludes unknown costs; currencies and simulated/live records stay separate.
+- Private PNG/JPEG/WebP image generation uses a selected image model through the shared gateway, bounded response sizes, model reservations and unknown-cost holds. Routine task lists omit image bytes. Sandbox produces an explicitly labelled checkerboard fixture, not a pretend AI illustration. Assets require review.
+- Meta ordinary-commercial link ads freeze exact copy, image hash, landing URL, country, currency, lifetime budget, duration and activation choice for owner approval. The fixed-origin adapter creates paused resources, checkpoints each resource ID, activates the parent last only when requested and retains partial receipts. Ambiguous outcomes require provider-console review. Replays never blindly create another campaign. Special-category campaigns are not supported by this form.
+- Owners can pause a recorded Meta campaign even while the workspace is stopped. Workspace stop prevents new work; it does not recall running ads. Meta's recorded campaign cap and scheduled end remain the spending boundary. Model budgets do not include ad budgets. Cumulative provider-spend receipts deduplicate USD expense deltas; other currencies are reported separately without guessed FX.
+- Owner-reviewed standing authority permits one constrained, grounded inbound reply template. It defaults off, expires within 30 days and permits at most 20 attempts/day. Current owner, facts, agent, contactability, suppression, connection version, budgets and caps are rechecked. Changed/revoked authority blocks queued delivery. Ambiguous and monetary/contract/dispute messages stay with a human. The rolling seven-day digest lists automatic effects with pagination and sandbox labels.
+- Usage groups by day/agent/task/model/result and drills into exact request/task attempt records. Known costs and unresolved holds remain distinct. No prompts or message bodies are exposed by these endpoints.
+- An interactive monthly campaign worksheet computes funnel expectations, CPL, cost per reply and CAC using user-entered costs and rates. Assumptions are separate from actual ledgers; blank costs are not silently treated as known zero. Zero outcomes do not produce infinite or fabricated CAC.
+- A controlled tenfold burst (baseline two, twenty drafts) runs under four workers. Replayed requests and twenty mocked Gmail deliveries produce twenty unique provider IDs, no duplicate calls and no lost jobs. This is a bounded regression, not production throughput or provider deliverability certification.
+
+## Verification
+
+Local verification passed 150 Python tests (30 native PostgreSQL), 9 frontend tests, Ruff, TypeScript, optimized Next build, specification/scaffold checks, the 42-table PGlite check and the running HTTP smoke workflow. The frontend production-dependency audit reported zero known vulnerabilities at verification. Chromium reviewed 29 workspace views at six widths (174 observations); no page overflow or unlabelled visible form controls were found. Data is in responsive-audit-0.7.0.json. Manual interaction also verified image preview, policy enable/disable, sandbox ad review/execution, forecast arithmetic, agent filtering, usage records, signed HTML enquiry capture and report Refresh. Hosted CI is recorded in the release notes. Native PostgreSQL uses separate restricted API/worker logins. All 42 tenant tables are covered by forced-RLS regression checks. The original 58 capsules, twenty manifests and eighteen tool definitions remain accounted for.
+
+One upstream Starlette/httpx test-client deprecation warning remains. Placeholder tests do not establish real-account permissions, provider pricing accuracy, model quality, delivery, ad approval, merchant eligibility or client acquisition.
+
+## Remaining acceptance
+
+PLAN-COVERAGE.md deliberately keeps real-history datasets, model/qualification benchmarks, independent security/tenant review, broad role quality, external-account drills and deployment operations open. Company-page/other-network publishing, attachment/OCR and managed identity/recovery delivery remain additional implementation scope. The development release still refuses `APP_ENV=production`; this increment does not remove that gate.
+
+## Provider contracts
+
+[OpenRouter Image API](https://openrouter.ai/blog/tutorials/image-generation/) and [image model collection](https://openrouter.ai/collections/image-models/) describe model selection and base64 responses. [Meta campaigns](https://developers.facebook.com/documentation/ads-commerce/marketing-api/reference/ad-campaign-group), [ad sets](https://developers.facebook.com/docs/graph-api/reference/ad-campaign/), [creatives](https://developers.facebook.com/documentation/ads-commerce/marketing-api/reference/ad-creative) and [ads](https://developers.facebook.com/docs/graph-api/reference/adgroup) inform the v27.0 contract. Version support, application grants and account eligibility must be verified on live setup.

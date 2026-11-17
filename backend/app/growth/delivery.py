@@ -116,6 +116,8 @@ class Dispatcher:
                 receipt = await provider.send_batch(**arguments)
             elif item.action == "publish_channel":
                 receipt = await provider.publish(**arguments)
+            elif item.action == "launch_paid_ads":
+                receipt = await provider.deploy(**arguments)
             else:
                 raise ProviderError("unregistered_live_action")
             await self.finish(org_id, item_id, actor_id, "succeeded", receipt)
@@ -155,7 +157,11 @@ class Dispatcher:
                 Membership.organization_id == org_id, Membership.user_id == approval.decided_by
             )
         )
-        allowed = {"owner"} if effect.action == "send_bulk_campaign" else {"owner", "admin"}
+        allowed = (
+            {"owner"}
+            if effect.action in {"send_bulk_campaign", "launch_paid_ads"}
+            else {"owner", "admin"}
+        )
         if approver_role not in allowed:
             raise ProviderError("approver_access_revoked")
         if (
@@ -163,6 +169,10 @@ class Dispatcher:
             or payload_hash(effect.payload) != approval.payload_hash
         ):
             raise ProviderError("approval_expired_or_changed")
+        if approval.decision_basis.startswith("standing_policy:"):
+            from app.growth.reply_policy import authority
+
+            await authority(session, self.settings, org_id, approval, "live")
         if effect.action == "send_bulk_campaign":
             from app.growth.esp import prepare_bulk
 
@@ -173,6 +183,10 @@ class Dispatcher:
             return await prepare_publication(
                 session, self.settings, effect, approval, self.transport
             )
+        if effect.action == "launch_paid_ads":
+            from app.growth.advertising import prepare_ads
+
+            return await prepare_ads(self, session, effect, approval)
         provider_name = "gmail" if effect.action == "send_email" else "calendar"
         connection = await active(session, self.settings, org_id, provider_name)
         if (
@@ -291,7 +305,7 @@ class Dispatcher:
             if integration.account_ref != effect.result.get("_account_ref"):
                 raise HTTPException(409, "provider_account_changed")
             credentials = unseal(self.settings, integration)
-            if effect.action in {"send_bulk_campaign", "publish_channel"}:
+            if effect.action in {"send_bulk_campaign", "publish_channel", "launch_paid_ads"}:
                 return {"status": "provider_console_review_required", "retry_send_allowed": False}
             provider = GoogleProvider(
                 credentials.get("access_token", ""),

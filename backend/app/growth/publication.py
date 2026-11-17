@@ -17,7 +17,15 @@ from sqlalchemy import func, select, update
 
 from app.contracts import EmailInput
 from app.growth.knowledge import guard_content
-from app.growth.models import BrandChunk, Content, Lead, Message, Notification
+from app.growth.models import (
+    AttributionTouch,
+    BrandChunk,
+    Campaign,
+    Content,
+    Lead,
+    Message,
+    Notification,
+)
 from app.growth.runtime import find, record
 from app.models import Brand, Organization
 from app.tenancy import tenant_scope
@@ -28,6 +36,7 @@ class Enquiry(EmailInput):
     message: str = Field(min_length=10, max_length=2000)
     request_reply: bool
     website: str = Field(default="", max_length=200)
+    campaign_token: str = Field(default="", max_length=1000)
 
 
 def public_base(settings):
@@ -57,7 +66,7 @@ def public_base(settings):
         return value
 
 
-def page(brand, item, settings):
+def page(brand, item, settings, campaign_token=""):
     template = Template(
         (Path(__file__).parent / "templates/published.html").read_text(encoding="utf-8")
     )
@@ -74,6 +83,7 @@ def page(brand, item, settings):
         ),
         body=html.escape(item.body),
         id=item.id,
+        campaign_token=html.escape(campaign_token),
         description=html.escape(description),
         canonical=(
             f'<link rel="canonical" href="{html.escape(canonical)}">'
@@ -189,10 +199,22 @@ def install_publication(app, db, identity, require, limiter, settings):
         )
 
     @router.get("/public/{org_id}/{content_id}", response_class=HTMLResponse)
-    async def view(org_id: str, content_id: str, session=Depends(db)):
+    async def view(
+        org_id: str,
+        content_id: str,
+        campaign_token: str = Query(default="", max_length=1000),
+        session=Depends(db),
+    ):
         brand, item = await published(session, org_id, content_id)
+        if campaign_token:
+            from app.growth.tracking import verify_tracking
+
+            try:
+                verify_tracking(settings, campaign_token, org_id, content_id)
+            except HTTPException:
+                campaign_token = ""  # Old or malformed links still allow an unattributed enquiry.
         return HTMLResponse(
-            page(brand, item, settings),
+            page(brand, item, settings, campaign_token),
             headers={
                 "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; "
                 "form-action 'self'; base-uri 'none'; frame-ancestors 'none'",
@@ -227,6 +249,14 @@ def install_publication(app, db, identity, require, limiter, settings):
             raise HTTPException(422, "invalid_enquiry") from None
         if not data.request_reply:
             raise HTTPException(422, "reply_request_required")
+        tracking = None
+        if data.campaign_token:
+            from app.growth.tracking import verify_tracking
+
+            tracking = verify_tracking(settings, data.campaign_token, org_id, content_id)
+            campaign = await find(session, Campaign, org_id, tracking["campaign"])
+            if campaign.brand_id != brand.id:
+                raise HTTPException(422, "campaign_brand_mismatch")
         if not data.website:
             await session.execute(
                 update(Organization)
@@ -267,6 +297,19 @@ def install_publication(app, db, identity, require, limiter, settings):
                 )
             )
             if not previous:
+                if tracking:
+                    session.add(
+                        AttributionTouch(
+                            organization_id=org_id,
+                            lead_id=lead.id,
+                            campaign_id=tracking["campaign"],
+                            channel=tracking["channel"],
+                            evidence="Signed owned-page enquiry: " + content_id,
+                            occurred_at=time.time(),
+                            simulated=bool(brand.voice.get("sandbox_only")),
+                            idempotency_key=enquiry_key + ":" + tracking["campaign"],
+                        )
+                    )
                 session.add(
                     Message(
                         organization_id=org_id,

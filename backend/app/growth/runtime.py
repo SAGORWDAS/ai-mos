@@ -42,7 +42,12 @@ log = logging.getLogger("ai_mos.runtime")
 
 
 def public(row):
-    return {column.name: getattr(row, column.name) for column in row.__table__.columns}
+    result = {column.name: getattr(row, column.name) for column in row.__table__.columns}
+    if isinstance(row, Task) and isinstance(result.get("output"), dict):
+        result["output"] = {
+            key: value for key, value in result["output"].items() if key != "image_base64"
+        }
+    return result
 
 
 async def find(session, model, org_id, record_id):
@@ -437,6 +442,10 @@ class Runtime:
                 from app.growth.autopilot import research
 
                 return await research(self, session, task)
+            if task.type == "creative_image":
+                from app.growth.creative import generate_image
+
+                return await generate_image(self, session, task)
             if task.type in {
                 "content",
                 "landing_page",
@@ -755,7 +764,12 @@ class Runtime:
                     session, task.organization_id, task.created_by, "draft.created", draft.id
                 )
                 await session.commit()
-                return {"draft_id": draft.id, "mode": self.settings.provider_mode}
+                saved_draft_id = draft.id
+                if task.type == "reply" and task.input.get("auto_review"):
+                    from app.growth.reply_policy import maybe_send
+
+                    await maybe_send(self, session, task, draft)
+                return {"draft_id": saved_draft_id, "mode": self.settings.provider_mode}
 
             brand = await find(session, Brand, task.organization_id, task.input["brand_id"])
             citations = await claim_sources(session, brand)

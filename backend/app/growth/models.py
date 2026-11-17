@@ -170,6 +170,24 @@ class Approval(Row, Tenant, Base):
     expires_at: Mapped[float] = mapped_column(Float)
     decided_by: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
     decided_at: Mapped[float | None] = mapped_column(Float)
+    decision_basis: Mapped[str] = mapped_column(String(200), default="human")
+
+
+class ReplyPolicy(Row, Tenant, Base):
+    __tablename__ = "reply_policies"
+    __table_args__ = (UniqueConstraint("organization_id", "brand_id"),)
+    brand_id: Mapped[str] = mapped_column(ForeignKey("brands.id"))
+    owner_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    execution_mode: Mapped[str] = mapped_column(String(16), default="sandbox")
+    connection_id: Mapped[str | None] = mapped_column(ForeignKey("integrations.id"))
+    connection_version: Mapped[int] = mapped_column(Integer, default=0)
+    brand_hash: Mapped[str] = mapped_column(String(64))
+    template_hash: Mapped[str] = mapped_column(String(64))
+    expires_at: Mapped[float] = mapped_column(Float)
+    daily_cap: Mapped[int] = mapped_column(Integer, default=5)
+    counter_day: Mapped[str] = mapped_column(String(10), default="")
+    counter_used: Mapped[int] = mapped_column(Integer, default=0)
 
 
 class Message(Row, Tenant, Base):
@@ -418,6 +436,7 @@ RESOURCES = {
         Suppression,
         Draft,
         Approval,
+        ReplyPolicy,
         Message,
         Meeting,
         Campaign,
