@@ -1,0 +1,23 @@
+# T-4.5 — Checkout link tool
+# Generated from spec/ai-mos.spec.yaml + blueprint/tasks.js. Do not edit alone.
+
+id: T-4.5
+phase: PH-4
+kind: gateway
+blocking: false
+title: Checkout link tool
+context_budget_tokens: 5000
+load_only:
+  - master §3.4 TLS-16
+files_create:
+  - backend/app/services/agent_engine/tools/create_checkout.py
+  - backend/tests/test_checkout.py
+steps:
+  - return a URL only
+  - never mark anything paid
+done_when:
+  - tool returns a URL and writes nothing to money tables
+do_not:
+  - no payment inference allowed
+  - do not start another task in this session
+  - do not invent a table, endpoint, tool or model id

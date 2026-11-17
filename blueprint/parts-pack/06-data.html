@@ -1,0 +1,116 @@
+<div class="part">
+  <div class="part-head">
+    <p class="eyebrow">Section 5</p>
+    <h1 class="part-title">Data model quick sheet</h1>
+  </div>
+
+  <p class="lede">Every table, every column. If a column is not here it does not exist; add it by revising the spec, not by writing a migration.</p>
+
+  <p class="small">Universal columns on every table unless noted: <span class="mono">id uuid pk default gen_random_uuid()</span>, <span class="mono">created_at timestamptz default now()</span>, and on mutable rows <span class="mono">updated_at</span>. Every table marked <span class="mono">T</span> also carries <span class="mono">organization_id uuid not null references organizations(id) on delete cascade</span> and forced RLS.</p>
+
+  <table class="tight">
+    <thead><tr><th style="width:30mm">Table</th><th style="width:6mm">T</th><th>Columns beyond the universal set</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">organizations</td><td>—</td><td class="mono">name, slug uq, plan, timezone, autonomy_default(L1..L4), emergency_stop bool, status</td></tr>
+      <tr><td class="mono">users</td><td>—</td><td class="mono">email citext uq, name, auth_subject uq, last_seen_at</td></tr>
+      <tr><td class="mono">memberships</td><td>T</td><td class="mono">user_id fk, role(owner|admin|member|viewer), uq(org,user)</td></tr>
+      <tr><td class="mono">brands</td><td>T</td><td class="mono">name, website, positioning, icp jsonb, voice jsonb, pricing jsonb, approved_claims text[], prohibited_claims text[], uq(org,name)</td></tr>
+      <tr><td class="mono">brand_documents</td><td>T</td><td class="mono">brand_id fk, kind(doc|url|faq|transcript|policy), title, source_uri, checksum, status(pending|indexed|failed), uq(brand,checksum)</td></tr>
+      <tr><td class="mono">brand_chunks</td><td>T</td><td class="mono">document_id fk, ordinal, content, embedding vector(1536), token_count, uq(doc,ordinal)</td></tr>
+      <tr><td class="mono">integrations</td><td>T</td><td class="mono">provider, account_ref, scopes text[], status(connected|expired|revoked), token_ciphertext, expires_at, cursor</td></tr>
+      <tr><td class="mono">agents</td><td>T</td><td class="mono">role_id, name, manifest_version, model_tier, autonomy_ceiling, enabled, config jsonb, uq(org,role_id)</td></tr>
+      <tr><td class="mono">agent_tools</td><td>T</td><td class="mono">agent_id fk, tool_id, granted bool</td></tr>
+      <tr><td class="mono">model_registry</td><td>—</td><td class="mono">tier, model_id, price_in, price_out, status, verified_at, eval_score</td></tr>
+      <tr><td class="mono">commands</td><td>T</td><td class="mono">raw text, parsed jsonb, status(parsed|needs_info|confirmed|rejected), created_by fk</td></tr>
+      <tr><td class="mono">plans</td><td>T</td><td class="mono">command_id fk, objective, goal, audience jsonb, cost_estimate, status</td></tr>
+      <tr><td class="mono">tasks</td><td>T</td><td class="mono">plan_id, agent_id, campaign_id, type, status(9 states), attempt, idempotency_key, input jsonb, output jsonb, error_code, error_detail, cost_usd, started_at, finished_at, uq(org,idempotency_key)</td></tr>
+      <tr><td class="mono">task_dependencies</td><td>T</td><td class="mono">task_id fk, depends_on_id fk, pk(task,depends_on)</td></tr>
+      <tr><td class="mono">approvals</td><td>T</td><td class="mono">task_id fk, action_class, payload jsonb, payload_hash, requested_by, status(6 states), decided_by, decided_at, expires_at, uq(task,action_class,hash)</td></tr>
+      <tr><td class="mono">companies</td><td>T</td><td class="mono">domain, name, industry, employee_range, country, enrichment jsonb, source, uq(org,domain)</td></tr>
+      <tr><td class="mono">contacts</td><td>T</td><td class="mono">company_id, full_name, title, email citext, email_verified bool, contact_hash, lawful_basis, basis_evidence jsonb, uq(org,contact_hash)</td></tr>
+      <tr><td class="mono">leads</td><td>T</td><td class="mono">company_id, contact_id, campaign_id, status(11 states), score, score_model, source, source_ref, source_confidence</td></tr>
+      <tr><td class="mono">suppressions</td><td>T</td><td class="mono">channel, address citext, reason(opt_out|complaint|bounce|manual|legal), uq(org,channel,address)</td></tr>
+      <tr><td class="mono">campaigns</td><td>T</td><td class="mono">name, channel, segment jsonb, budget_usd, status(9 states), approval_id, starts_at, ends_at</td></tr>
+      <tr><td class="mono">conversations</td><td>T</td><td class="mono">lead_id, channel, provider_thread_id, status(10 states), last_inbound_at</td></tr>
+      <tr><td class="mono">messages</td><td>T</td><td class="mono">conversation_id, direction, channel, provider_id, subject, body, status(9 states), classification jsonb, approval_id, sent_at, uq(org,provider_id) where not null</td></tr>
+      <tr><td class="mono">outreach_drafts</td><td>T</td><td class="mono">lead_id, campaign_id, subject, body, claims jsonb, status, approval_id</td></tr>
+      <tr><td class="mono">sequences</td><td>T</td><td class="mono">campaign_id, name, steps jsonb, status</td></tr>
+      <tr><td class="mono">meetings</td><td>T</td><td class="mono">lead_id, provider_event_id, status(6 states), starts_at, timezone, attendees jsonb</td></tr>
+      <tr><td class="mono">customers</td><td>T</td><td class="mono">lead_id, name, email, status, activated_at</td></tr>
+      <tr><td class="mono">subscriptions</td><td>T</td><td class="mono">customer_id, provider, provider_sub_id uq, plan_code, status(5 states), current_period_end</td></tr>
+      <tr><td class="mono">payments</td><td>T</td><td class="mono">customer_id, provider, provider_event_id uq, amount_minor, currency, status, occurred_at, raw jsonb — no UPDATE grant for app role</td></tr>
+      <tr><td class="mono">workflows</td><td>T</td><td class="mono">name, trigger jsonb, conditions jsonb, actions jsonb, enabled</td></tr>
+      <tr><td class="mono">workflow_runs</td><td>T</td><td class="mono">workflow_id, status, started_at, finished_at, error</td></tr>
+      <tr><td class="mono">analytics_events</td><td>T</td><td class="mono">name, subject_type, subject_id, campaign_id, props jsonb, occurred_at</td></tr>
+      <tr><td class="mono">metric_snapshots</td><td>T</td><td class="mono">metric, period_start, period_end, value, dimensions jsonb</td></tr>
+      <tr><td class="mono">model_usage</td><td>T</td><td class="mono">task_id, agent_id, campaign_id, request_id uq, model_id, tier, input_tokens, output_tokens, cached_tokens, latency_ms, status, cost_usd</td></tr>
+      <tr><td class="mono">budgets</td><td>T</td><td class="mono">scope, scope_ref, period, limit_usd, spent_usd, action_on_breach</td></tr>
+      <tr><td class="mono">learning_records</td><td>T</td><td class="mono">campaign_id, lesson, evidence jsonb, effect_size, embedding vector(1536)</td></tr>
+      <tr><td class="mono">audit_logs</td><td>T</td><td class="mono">actor_type, actor_id, action, subject_type, subject_id, decision, reason, metadata jsonb — append only</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Migration order</h3>
+  <pre>0001 extensions            pgcrypto, citext, vector, pg_trgm
+0002 orgs_users            organizations, users, memberships, invitations
+0003 brands                brands, brand_documents, brand_chunks
+0004 integrations          integrations
+0005 agents_usage          agents, agent_tools, model_registry, model_usage, budgets
+0006 tasks_approvals       commands, plans, tasks, task_dependencies, approvals
+0007 leads                 companies, contacts, leads, suppressions
+0008 crm                   pipeline_stages, activities
+0009 campaigns             campaigns, campaign_assets, sequences
+0010 conversations         conversations, messages, outreach_drafts
+0011 billing               customers, subscriptions, payments
+0012 automation            workflows, workflow_runs
+0013 analytics             analytics_events, metric_snapshots, learning_records
+0014 audit                 audit_logs, notifications
+0015 views_jobs            rollup views, retention functions</pre>
+
+  <div class="callout">
+    <span class="label">RLS pattern — copy this exactly</span>
+    <pre style="margin:1.5mm 0 0; font-size:7.2pt">ALTER TABLE leads ENABLE ROW LEVEL SECURITY;
+ALTER TABLE leads FORCE  ROW LEVEL SECURITY;
+CREATE POLICY tenant_isolation ON leads
+  USING (organization_id = current_setting('app.current_org')::uuid)
+  WITH CHECK (organization_id = current_setting('app.current_org')::uuid);</pre>
+  </div>
+
+  <h2>5.1 Event catalogue</h2>
+  <p class="small">The only event names the system may emit. Every event carries <span class="mono">organization_id, occurred_at, actor_type, actor_id</span>. Emit after commit, never before. No message bodies, no personal data — ids, counts and enums only. Analytics, attribution, the CRM timeline and the weekly digest read from this list and nothing else.</p>
+
+  <table class="tight" style="font-size:7.1pt">
+    <thead><tr><th style="width:38mm">Event</th><th style="width:22mm">Emitter</th><th>Properties</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">org.created</td><td class="mono">platform</td><td class="mono">org_id, plan</td></tr>
+      <tr><td class="mono">member.invited</td><td class="mono">platform</td><td class="mono">org_id, email, role</td></tr>
+      <tr><td class="mono">integration.connected / .expired</td><td class="mono">platform</td><td class="mono">provider, account_ref</td></tr>
+      <tr><td class="mono">emergency_stop.set</td><td class="mono">platform</td><td class="mono">org_id, enabled</td></tr>
+      <tr><td class="mono">brand.updated</td><td class="mono">growth_strategy</td><td class="mono">brand_id, fields</td></tr>
+      <tr><td class="mono">document.indexed</td><td class="mono">growth_strategy</td><td class="mono">document_id, chunks</td></tr>
+      <tr><td class="mono">command.parsed</td><td class="mono">growth_strategy</td><td class="mono">command_id, status</td></tr>
+      <tr><td class="mono">plan.created</td><td class="mono">growth_strategy</td><td class="mono">plan_id, task_count, cost_estimate</td></tr>
+      <tr><td class="mono">task.started / .succeeded</td><td class="mono">growth_strategy</td><td class="mono">task_id, agent_id, type, cost_usd</td></tr>
+      <tr><td class="mono">task.failed / .blocked</td><td class="mono">growth_strategy</td><td class="mono">task_id, error_code | reason</td></tr>
+      <tr><td class="mono">approval.requested</td><td class="mono">growth_strategy</td><td class="mono">approval_id, action_class</td></tr>
+      <tr><td class="mono">approval.decided / .expired</td><td class="mono">growth_strategy</td><td class="mono">approval_id, decision, decided_by</td></tr>
+      <tr><td class="mono">lead.discovered</td><td class="mono">acquisition</td><td class="mono">lead_id, source, source_confidence</td></tr>
+      <tr><td class="mono">lead.qualified / .disqualified</td><td class="mono">acquisition</td><td class="mono">lead_id, campaign_id, score, score_model</td></tr>
+      <tr><td class="mono">lead.suppressed</td><td class="mono">acquisition</td><td class="mono">lead_id, reason</td></tr>
+      <tr><td class="mono">message.sent</td><td class="mono">acquisition</td><td class="mono">message_id, campaign_id, lead_id, provider_id</td></tr>
+      <tr><td class="mono">message.delivered</td><td class="mono">acquisition</td><td class="mono">message_id, provider_id</td></tr>
+      <tr><td class="mono">message.bounced</td><td class="mono">acquisition</td><td class="mono">message_id, bounce_type</td></tr>
+      <tr><td class="mono">message.complained</td><td class="mono">acquisition</td><td class="mono">message_id</td></tr>
+      <tr><td class="mono">message.replied</td><td class="mono">acquisition</td><td class="mono">message_id, conversation_id, intent, confidence</td></tr>
+      <tr><td class="mono">conversation.closed</td><td class="mono">acquisition</td><td class="mono">conversation_id, outcome</td></tr>
+      <tr><td class="mono">meeting.proposed / .booked</td><td class="mono">acquisition</td><td class="mono">meeting_id, lead_id, slots | starts_at</td></tr>
+      <tr><td class="mono">meeting.completed / .no_show</td><td class="mono">acquisition</td><td class="mono">meeting_id</td></tr>
+      <tr><td class="mono">customer.created</td><td class="mono">revenue</td><td class="mono">customer_id, lead_id</td></tr>
+      <tr><td class="mono">subscription.activated / .past_due</td><td class="mono">revenue</td><td class="mono">subscription_id, plan_code</td></tr>
+      <tr><td class="mono">subscription.cancelled</td><td class="mono">revenue</td><td class="mono">subscription_id, reason_code</td></tr>
+      <tr><td class="mono">payment.succeeded / .failed</td><td class="mono">revenue</td><td class="mono">payment_id, amount_minor, currency</td></tr>
+      <tr><td class="mono">budget.threshold / .exhausted</td><td class="mono">insights</td><td class="mono">scope, pct_used | limit_usd</td></tr>
+      <tr><td class="mono">model.call.failed</td><td class="mono">ai_gateway</td><td class="mono">model_id, status, task_id</td></tr>
+    </tbody>
+  </table>
+</div>

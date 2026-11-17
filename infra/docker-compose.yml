@@ -1,0 +1,94 @@
+name: ai-mos
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ai_mos}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ai_mos}
+      POSTGRES_DB: ${POSTGRES_DB:-ai_mos}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ai_mos} -d ${POSTGRES_DB:-ai_mos}"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    ports:
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  migrate:
+    build:
+      context: ../backend
+    env_file:
+      - ../.env
+    environment:
+      MIGRATION_DATABASE_URL: postgresql://${POSTGRES_USER:-ai_mos}:${POSTGRES_PASSWORD:-ai_mos}@db:5432/${POSTGRES_DB:-ai_mos}
+      PROVISION_DATABASE_ROLES: 'true'
+      APP_DATABASE_PASSWORD: ${APP_DATABASE_PASSWORD:-placeholder-app-local}
+      WORKER_DATABASE_PASSWORD: ${WORKER_DATABASE_PASSWORD:-placeholder-worker-local}
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["python", "-m", "app.migrate", "upgrade"]
+
+  api:
+    build:
+      context: ../backend
+    env_file:
+      - ../.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://ai_mos_app:${APP_DATABASE_PASSWORD:-placeholder-app-local}@db:5432/${POSTGRES_DB:-ai_mos}
+      WORKER_ENABLED: 'false'
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ../backend:/app
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+  worker:
+    build:
+      context: ../backend
+    env_file:
+      - ../.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://ai_mos_worker:${WORKER_DATABASE_PASSWORD:-placeholder-worker-local}@db:5432/${POSTGRES_DB:-ai_mos}
+    volumes:
+      - ../backend:/app
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    command: ["python", "-m", "app.workers.worker"]
+
+  web:
+    build:
+      context: ../frontend
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+      BACKEND_URL: http://api:8000
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - ../frontend:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - api
+    command: ["npm", "run", "dev"]
+
+volumes:
+  pgdata:

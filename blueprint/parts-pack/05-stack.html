@@ -1,0 +1,74 @@
+<div class="part">
+  <div class="part-head">
+    <p class="eyebrow">Section 4</p>
+    <h1 class="part-title">Stack and decisions</h1>
+  </div>
+
+  <p class="lede">No justification here — that is in the blueprint. This page exists so nobody re-opens a settled decision mid-task.</p>
+
+  <table>
+    <thead><tr><th style="width:30mm">Layer</th><th style="width:52mm">Choice</th><th>Do not</th></tr></thead>
+    <tbody>
+      <tr><td>Frontend</td><td>Next.js (App Router) + TypeScript, Tailwind</td><td>Add a state library before PH-3</td></tr>
+      <tr><td>Backend</td><td>Python 3.12 + FastAPI + Pydantic v2</td><td>Django, Flask, or an async ORM rewrite</td></tr>
+      <tr><td>Database</td><td>PostgreSQL 16 + pgvector + pgcrypto + citext</td><td>A second database of any kind</td></tr>
+      <tr><td>Queue</td><td>Redis 7, RQ or Redis Streams</td><td>Celery + broker + flower</td></tr>
+      <tr><td>AI</td><td>OpenRouter through <span class="mono">services/ai_gateway</span></td><td>Any provider SDK inside a service</td></tr>
+      <tr><td>Orchestration</td><td>Own task graph in Postgres</td><td>LangGraph, Temporal, Airflow (see ADR-04)</td></tr>
+      <tr><td>Auth</td><td>Session cookie for UI, bearer for machine</td><td>A custom JWT implementation</td></tr>
+      <tr><td>Storage</td><td>S3-compatible (documents, exports)</td><td>Large blobs in Postgres</td></tr>
+      <tr><td>Deploy</td><td>Docker Compose on one VPS</td><td>Kubernetes, service mesh, multi-region</td></tr>
+      <tr><td>Errors</td><td>Sentry + structured logs</td><td>Log-scraping as a monitoring strategy</td></tr>
+      <tr><td>Automation</td><td>Own scheduler; n8n only at the edge</td><td>Business logic or credentials in n8n</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Backend conventions</h3>
+  <ul class="tight">
+    <li><strong>One router per resource.</strong> Handlers do: parse → call service → shape response. No business logic in a handler.</li>
+    <li><strong>Services are plain functions</strong> taking a session and explicit arguments. No global state, no class singletons.</li>
+    <li><strong>Tenant context is set per transaction</strong> (<span class="mono">SET LOCAL app.current_org</span>), never per connection.</li>
+    <li><strong>Errors are typed.</strong> Raise <span class="mono">AppError(code, message, details)</span>; one handler renders the envelope in §6 of the blueprint.</li>
+    <li><strong>Every write that matters emits an event</strong> after commit, not before.</li>
+    <li><strong>No synchronous model calls in a request path.</strong> Enqueue, return <span class="mono">202</span>.</li>
+  </ul>
+
+  <h3>Frontend conventions</h3>
+  <ul class="tight">
+    <li>Server components by default; client components only where interaction demands it.</li>
+    <li>One API client module with typed calls generated from the OpenAPI schema.</li>
+    <li>Never render a number the API did not return. No client-side metric maths.</li>
+    <li>Every cost is rendered with its source (ledger row, campaign, task).</li>
+    <li>Approval screens always show the exact payload and the action class.</li>
+  </ul>
+
+  <h3>Testing</h3>
+  <table class="tight">
+    <thead><tr><th style="width:30mm">Layer</th><th style="width:34mm">Tool</th><th>What must be covered</th></tr></thead>
+    <tbody>
+      <tr><td>Unit</td><td>pytest</td><td>Scoring maths, state transitions, guards, budget arithmetic.</td></tr>
+      <tr><td>Integration</td><td>pytest + test database</td><td>Every gate step, every state machine edge, every RLS policy.</td></tr>
+      <tr><td>Contract</td><td>JSON Schema validation</td><td>Every agent output and every provider response.</td></tr>
+      <tr><td>Eval</td><td>evals/run.py</td><td>Golden sets per role; run before any prompt or model change.</td></tr>
+      <tr><td>Manual</td><td>the exit-gate demo</td><td>One real send, one real reply, one real payment. Not optional.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Budget defaults</h3>
+  <p class="small">Normative — <span class="mono">spec/ai-mos.spec.yaml#budgets</span>. Checked before dispatch, fail closed. Normal use sits an order of magnitude below the ceiling; the ceiling stops a runaway loop.</p>
+  <table class="tight">
+    <thead><tr><th style="width:44mm">Envelope</th><th style="width:26mm">Default</th><th>Note</th></tr></thead>
+    <tbody>
+      <tr><td>Per task</td><td class="mono">$0.02</td><td>A routine task actually costs ~$0.0002.</td></tr>
+      <tr><td>Per workflow run</td><td class="mono">$0.50</td><td>WKF-A … WKF-E.</td></tr>
+      <tr><td>Per agent / day</td><td class="mono">$0.10</td><td>Stops a single role looping.</td></tr>
+      <tr><td>Per organisation / month</td><td class="mono">$2.00</td><td>Founder-stage ceiling; expected spend is cents.</td></tr>
+      <tr><td>Operating target</td><td class="mono">&lt; $1.00 / mo</td><td>200 leads end to end ≈ $0.10–0.30.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="trap">
+    <span class="label">Environment</span>
+    <p>Four variables are mandatory at boot or the app refuses to start: <span class="mono">DATABASE_URL</span>, <span class="mono">REDIS_URL</span>, <span class="mono">OPENROUTER_API_KEY</span>, <span class="mono">TOKEN_ENCRYPTION_KEY</span>. Fail loudly at startup — a missing key discovered at 02:00 during a send is the worst possible failure mode.</p>
+  </div>
+</div>

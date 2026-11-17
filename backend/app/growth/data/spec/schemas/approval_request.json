@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schemas/approval_request.json",
+  "title": "ApprovalRequest",
+  "description": "Created by TLS-13. Single use, expires, and is void if payload_hash changes.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["task_id", "action_class", "payload", "payload_hash", "requested_by", "expires_at"],
+  "properties": {
+    "task_id": { "type": "string", "format": "uuid" },
+    "action_class": {
+      "type": "string",
+      "enum": ["send_email", "send_bulk_campaign", "book_meeting", "publish_content",
+               "change_ad_spend", "offer_discount"]
+    },
+    "payload": { "type": "object", "description": "Exact content to be executed." },
+    "payload_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "requested_by": { "type": "string", "pattern": "^AGT-[0-9]{2}$" },
+    "summary": { "type": "string", "maxLength": 280, "description": "Shown in the approval queue." },
+    "risk_level": { "type": "string", "enum": ["low", "medium", "high"] },
+    "expires_at": { "type": "string", "format": "date-time" }
+  }
+}

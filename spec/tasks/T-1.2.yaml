@@ -1,0 +1,29 @@
+# T-1.2 — Auth, organisations, memberships
+# Generated from spec/ai-mos.spec.yaml + blueprint/tasks.js. Do not edit alone.
+
+id: T-1.2
+phase: PH-1
+kind: auth
+blocking: true
+title: Auth, organisations, memberships
+context_budget_tokens: 4000
+load_only:
+  - master §2.6
+  - master §8.1
+files_create:
+  - backend/app/core/auth.py
+  - backend/app/core/tenancy.py
+  - backend/app/api/v1/auth.py
+  - backend/app/api/v1/orgs.py
+  - backend/tests/test_auth.py
+steps:
+  - session cookie for UI, bearer for machine
+  - sign-up creates org + owner membership
+  - invites with role
+  - middleware resolves org from session only
+done_when:
+  - test_auth_roles green; a client-supplied org id is ignored
+do_not:
+  - never trust organization_id from the request body
+  - do not start another task in this session
+  - do not invent a table, endpoint, tool or model id

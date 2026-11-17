@@ -1,0 +1,356 @@
+# AI-MOS — phase tasks
+# Extracted from spec/ai-mos.spec.yaml (normative source). Do not edit in isolation.
+# Task ledger with dependencies and definitions of done.
+
+spec_version: '1.0'
+phases:
+  - id: PH-0
+    name: Decisions and spikes
+    objective: close the four risks that can invalidate the build
+    gate_out:
+      - merchant account or documented alternative exists
+      - authenticated mail reaches inbox
+      - one priced completion per tier
+      - brand content written
+    tasks:
+      - id: T-0.1
+        deliverable: payment provider viability
+        depends: []
+        dod: account exists or ADR-01 alternative chosen
+      - id: T-0.2
+        deliverable: openrouter account and credit
+        depends: []
+        dod: completion obtained and priced per tier
+      - id: T-0.3
+        deliverable: model benchmark
+        depends:
+          - T-0.2
+        dod: 50 real examples scored on 3 candidates
+      - id: T-0.4
+        deliverable: sending domain and DNS
+        depends: []
+        dod: SPF DKIM DMARC verified
+      - id: T-0.5
+        deliverable: deliverability spike
+        depends:
+          - T-0.4
+        dod: 5 of 5 seed messages land in inbox
+      - id: T-0.6
+        deliverable: legal basis and suppression
+        depends: []
+        dod: policy written per jurisdiction; fields agreed
+      - id: T-0.7
+        deliverable: brand brain content
+        depends: []
+        dod: ICP pricing claims supplied by the business
+      - id: T-0.8
+        deliverable: evaluation dataset
+        depends:
+          - T-0.7
+        dod: 100 outreach + 200 replies labelled
+      - id: T-0.9
+        deliverable: cost model worksheet
+        depends:
+          - T-0.2
+          - T-0.4
+        dod: filled with real prices
+      - id: T-0.10
+        deliverable: decision log
+        depends: []
+        dod: ADR-01..ADR-12 closed or owned
+  - id: PH-1
+    name: Foundation
+    objective: one agent task runs end to end, costed and audited
+    gate_out:
+      - task executes with validated output
+      - cost recorded
+      - audit entry written
+      - second organization sees nothing
+    tasks:
+      - id: T-1.1
+        deliverable: repo CI compose stack
+        depends: []
+        dod: one command ups api worker pg redis; CI green
+      - id: T-1.2
+        deliverable: auth orgs memberships
+        depends:
+          - T-1.1
+        dod: signup creates org and owner; roles enforced
+      - id: T-1.3
+        deliverable: migrations 01-06 with RLS
+        depends:
+          - T-1.2
+        dod: AC-01 and AC-02 pass for every table
+      - id: T-1.4
+        deliverable: ai gateway registry ledger
+        depends:
+          - T-1.1
+        dod: AC-08 passes including forced timeout
+      - id: T-1.5
+        deliverable: task runtime and scheduler
+        depends:
+          - T-1.3
+        dod: AC-04 passes; DAG executes in order
+      - id: T-1.6
+        deliverable: tool gateway and read tools
+        depends:
+          - T-1.5
+        dod: unregistered tool rejected and audited
+      - id: T-1.7
+        deliverable: brand brain
+        depends:
+          - T-1.3
+        dod: retrieval returns passages with citations
+      - id: T-1.8
+        deliverable: approvals model and api
+        depends:
+          - T-1.5
+        dod: AC-05 passes
+      - id: T-1.9
+        deliverable: audit logs tracing logging
+        depends:
+          - T-1.2
+        dod: every gateway decision traceable
+      - id: T-1.10
+        deliverable: budgets and enforcement
+        depends:
+          - T-1.4
+        dod: AC-07 passes
+      - id: T-1.11
+        deliverable: settings roles emergency stop
+        depends:
+          - T-1.2
+        dod: AC-12 passes
+      - id: T-1.12
+        deliverable: usage and cost screens
+        depends:
+          - T-1.4
+        dod: cost by agent, type and day with drill-down
+  - id: PH-2
+    name: Marketing intelligence
+    objective: a command becomes an approved, costed plan
+    gate_out:
+      - one sentence becomes a structured plan with tasks
+      - owners
+      - cost
+      - approvals and metrics
+      - reviewed and approved by a human
+    tasks:
+      - id: T-2.1
+        deliverable: command center parse confirm
+        depends:
+          - T-1.7
+        dod: ambiguous input returns missing fields
+      - id: T-2.2
+        deliverable: planner (CMO)
+        depends:
+          - T-2.1
+        dod: plan conforms to schemas/plan.json
+      - id: T-2.3
+        deliverable: task graph execution
+        depends:
+          - T-1.5
+        dod: 20-task plan runs; cycle refused at write
+      - id: T-2.4
+        deliverable: research agent
+        depends:
+          - T-2.2
+        dod: no uncited claim passes validation
+      - id: T-2.5
+        deliverable: strategy agent
+        depends:
+          - T-2.4
+        dod: budget ranges grounded in brand pricing
+      - id: T-2.6
+        deliverable: content agent
+        depends:
+          - T-1.7
+        dod: AC-14 passes; prohibited claims blocked
+      - id: T-2.7
+        deliverable: approval center ui
+        depends:
+          - T-1.8
+        dod: batch above cap refused
+      - id: T-2.8
+        deliverable: overview and analytics v1
+        depends:
+          - T-1.12
+        dod: every figure traces to a query
+  - id: PH-3
+    name: Acquisition
+    objective: real messages to real people under governance
+    gate_out:
+      - 10 approved emails delivered to real prospects
+      - 2 replies classified
+      - 1 approved response sent
+      - 1 opt-out honoured and suppressed
+    tasks:
+      - id: T-3.1
+        deliverable: prospect data adapter
+        depends:
+          - T-0.9
+        dod: source and confidence stored; cost per record
+      - id: T-3.2
+        deliverable: dedupe and enrichment
+        depends:
+          - T-3.1
+        dod: AC-06 passes
+      - id: T-3.3
+        deliverable: qualification scoring
+        depends:
+          - T-3.2
+        dod: deterministic given model version; 85% label match
+      - id: T-3.4
+        deliverable: crm entities and pipeline
+        depends:
+          - T-3.3
+        dod: stage change writes activity with actor
+      - id: T-3.5
+        deliverable: mailbox connection read
+        depends:
+          - T-1.2
+        dod: incremental sync with provider thread ids
+      - id: T-3.6
+        deliverable: send path suppression and caps
+        depends:
+          - T-1.8
+          - T-0.4
+        dod: AC-03 passes
+      - id: T-3.7
+        deliverable: outreach drafting claim check
+        depends:
+          - T-2.6
+        dod: ungrounded claim fails then retries once
+      - id: T-3.8
+        deliverable: dispatch with approval
+        depends:
+          - T-3.6
+          - T-2.7
+        dod: edit voids approval; caps atomic
+      - id: T-3.9
+        deliverable: reply sync and classification
+        depends:
+          - T-3.5
+        dod: opt-out suppresses before any other work
+      - id: T-3.10
+        deliverable: reply drafting and L4 option
+        depends:
+          - T-3.9
+        dod: low confidence never auto-sends
+  - id: PH-4
+    name: Conversation and revenue
+    objective: close the loop from interest to money without inferring payment
+    gate_out:
+      - demo booked in both calendars
+      - checkout completed
+      - verified webhook
+      - customer and subscription created
+      - onboarding started
+      - refund escalates
+    tasks:
+      - id: T-4.1
+        deliverable: calendar adapter availability
+        depends:
+          - T-1.2
+        dod: free/busy normalized, cached under 60s
+      - id: T-4.2
+        deliverable: meeting propose confirm book
+        depends:
+          - T-4.1
+        dod: AC-09 passes
+      - id: T-4.3
+        deliverable: payment adapter and webhook
+        depends:
+          - T-0.1
+        dod: AC-10 passes
+      - id: T-4.4
+        deliverable: customers subscriptions gating
+        depends:
+          - T-4.3
+        dod: agent has no write path to these tables
+      - id: T-4.5
+        deliverable: checkout link tool
+        depends:
+          - T-4.4
+        dod: returns url only, never marks paid
+      - id: T-4.6
+        deliverable: onboarding triggers
+        depends:
+          - T-4.3
+        dod: starts only from verified payment event
+      - id: T-4.7
+        deliverable: automation center v1
+        depends:
+          - T-1.5
+        dod: loops impossible; runs traceable
+  - id: PH-5
+    name: Measurement and learning
+    objective: make economics legible and the system self-improving
+    gate_out:
+      - cost per won customer computed from real money split by cost line
+      - one learned lesson demonstrably changes a later plan
+    tasks:
+      - id: T-5.1
+        deliverable: attribution
+        depends:
+          - T-3.4
+          - T-4.4
+        dod: every customer traces to lead and campaign
+      - id: T-5.2
+        deliverable: cost per outcome
+        depends:
+          - T-5.1
+        dod: CPL and CAC include data, sending and review
+      - id: T-5.3
+        deliverable: evaluation in CI
+        depends:
+          - T-0.8
+        dod: regressing prompt fails the build
+      - id: T-5.4
+        deliverable: learning records
+        depends:
+          - T-5.2
+        dod: lesson needs evidence and effect size
+      - id: T-5.5
+        deliverable: support and retention
+        depends:
+          - T-4.4
+        dod: refunds and disputes always escalate
+      - id: T-5.6
+        deliverable: seo social creative
+        depends:
+          - T-2.6
+        dod: each is a manifest plus a tool
+  - id: PH-6
+    name: Scale and hardening
+    objective: prove isolation, durability and extensibility
+    gate_out:
+      - two tenants isolated under audit
+      - restore drill timed and documented
+      - new agent role addable in under a day
+    tasks:
+      - id: T-6.1
+        deliverable: second tenant audit
+        depends:
+          - PH-3
+        dod: zero cross-tenant paths found
+      - id: T-6.2
+        deliverable: load and queue tuning
+        depends:
+          - PH-3
+        dod: 10x burst without duplicate sends
+      - id: T-6.3
+        deliverable: backup and restore drill
+        depends:
+          - PH-1
+        dod: AC-13 passes
+      - id: T-6.4
+        deliverable: security review
+        depends:
+          - PH-4
+        dod: scope, rotation, deps, abuse cases checked
+      - id: T-6.5
+        deliverable: P1 P2 agent rollout
+        depends:
+          - PH-5
+        dod: each role ships with manifest and golden set

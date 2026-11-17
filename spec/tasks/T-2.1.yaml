@@ -1,0 +1,28 @@
+# T-2.1 — Command Center parse and confirm
+# Generated from spec/ai-mos.spec.yaml + blueprint/tasks.js. Do not edit alone.
+
+id: T-2.1
+phase: PH-2
+kind: api
+blocking: true
+title: Command Center parse and confirm
+context_budget_tokens: 5000
+load_only:
+  - master §6 MOD-02
+  - master §3.3 steps 1–4
+files_create:
+  - backend/app/api/v1/commands.py
+  - backend/app/services/orchestration/intent.py
+  - frontend/app/(app)/command/page.tsx
+  - backend/tests/test_commands.py
+steps:
+  - parse a one-line objective into a structured objective
+  - return missing_information instead of guessing
+  - confirm creates plan + tasks in one transaction
+  - 202 + command id
+done_when:
+  - ambiguous input lists exact missing fields
+do_not:
+  - no plan is created from an unconfirmed objective
+  - do not start another task in this session
+  - do not invent a table, endpoint, tool or model id

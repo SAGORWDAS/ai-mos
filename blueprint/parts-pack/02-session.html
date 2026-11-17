@@ -1,0 +1,50 @@
+<div class="part">
+  <div class="part-head">
+    <p class="eyebrow">Section 1</p>
+    <h1 class="part-title">How to run a build session</h1>
+  </div>
+
+  <p class="lede">The unit of work is one task. Not one phase, not one feature, not one afternoon of "refactoring". A session that ends with two task IDs in the changelog is a session that produced two untested changes.</p>
+
+  <h3>The loop</h3>
+  <table class="tight">
+    <thead><tr><th style="width:10mm">#</th><th style="width:46mm">Step</th><th>What you actually do</th></tr></thead>
+    <tbody>
+      <tr><td class="num">1</td><td>Pick the task</td><td>First task in the current phase whose dependencies are done. If a dependency is not done, that is the task.</td></tr>
+      <tr><td class="num">2</td><td>Load the capsule</td><td><span class="mono">spec/tasks/T-n.m.yaml</span>. It names the files, the two spec slices and the stop condition. Load nothing else.</td></tr>
+      <tr><td class="num">3</td><td>Read the two slices</td><td>Only the sections the capsule names — one table definition, one state machine, one schema. Never the whole Part.</td></tr>
+      <tr><td class="num">4</td><td>Write the failing test first</td><td>Named after the acceptance criterion: <span class="mono">test_AC-02_tenant_isolation_leads</span>.</td></tr>
+      <tr><td class="num">5</td><td>Implement until it passes</td><td>Only the files on the card. A new file is a decision — if it is not listed, report a gap instead of inventing it.</td></tr>
+      <tr><td class="num">6</td><td>Run the definition of done</td><td>All ten items in §9, not the three you remember.</td></tr>
+      <tr><td class="num">7</td><td>Commit and stop</td><td><span class="mono">T-n.m: &lt;title&gt;</span>. Do not start the next task in the same session.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Context budget</h3>
+  <p>These are ceilings for input context <em>before the first edit</em>. They are what keep a session cheap and keep the model focused.</p>
+
+  <table class="tight">
+    <thead><tr><th style="width:20mm">Phase</th><th style="width:24mm">Budget</th><th>Load</th><th style="width:40mm">Never load</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">PH-1</td><td class="mono">≤ 4k tok</td><td>capsule + table DDL + one schema</td><td>the blueprint PDF</td></tr>
+      <tr><td class="mono">PH-2</td><td class="mono">≤ 5k tok</td><td>capsule + manifest template + plan.json</td><td>PH-3 files</td></tr>
+      <tr><td class="mono">PH-3</td><td class="mono">≤ 6k tok</td><td>capsule + outreach_draft.json + send path</td><td>the whole spec YAML</td></tr>
+      <tr><td class="mono">PH-4</td><td class="mono">≤ 5k tok</td><td>capsule + webhook rules + billing DDL</td><td>marketing prompts</td></tr>
+      <tr><td class="mono">PH-5/6</td><td class="mono">≤ 6k tok</td><td>capsule + the metric's source query</td><td>everything else</td></tr>
+    </tbody>
+  </table>
+
+  <p class="small"><strong>Never load</strong> the blueprint PDF, the full spec YAML, or a second phase's files. <strong>Never batch</strong> two tasks into one session — the second test suite always gets written after the second change, which proves neither. If you catch yourself summarising what you just read, you loaded too much: drop to the capsule.</p>
+
+  <h3>When you are stuck</h3>
+  <table class="tight">
+    <thead><tr><th style="width:50mm">Situation</th><th>Action</th></tr></thead>
+    <tbody>
+      <tr><td>The capsule is missing something</td><td>Stop. Report a <span class="mono">SPEC-GAP</span> (§10 template B). Do not infer a shape.</td></tr>
+      <tr><td>Two rules conflict</td><td>Stop. Quote both. The MUST rule wins; the other is a document defect.</td></tr>
+      <tr><td>A credential is missing</td><td>Put the path behind an interface; mark it unverified in the commit body.</td></tr>
+      <tr><td>The task touches money or bulk sending</td><td>Stop unless the approval path is implemented and tested. Not a scheduling preference.</td></tr>
+      <tr><td>You want to fix something nearby</td><td>Do not. Propose a card and finish the current task.</td></tr>
+    </tbody>
+  </table>
+</div>

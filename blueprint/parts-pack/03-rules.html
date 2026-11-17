@@ -1,0 +1,47 @@
+<div class="part">
+  <div class="part-head">
+    <p class="eyebrow">Section 2</p>
+    <h1 class="part-title">Twelve rules</h1>
+  </div>
+
+  <p class="lede">Break any of these and the code is wrong even if it runs, passes review and demos well. Everything else in this pack is detail; this page is the standard.</p>
+
+  <table>
+    <thead><tr><th style="width:8mm">#</th><th style="width:62mm">Rule</th><th>What it prevents</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">R1</td><td>Every tenant query is scoped by <span class="mono">organization_id</span>, and RLS is enabled and forced on the table.</td><td>A cross-tenant leak that ends the company.</td></tr>
+      <tr><td class="mono">R2</td><td>No external effect exists outside the tool gateway. No service calls a provider directly.</td><td>Untraceable actions and unauditable permissions.</td></tr>
+      <tr><td class="mono">R3</td><td>No approval, no external effect. Approvals are single-use and bound to a payload hash.</td><td>"Approved 200 emails" becoming 2,000.</td></tr>
+      <tr><td class="mono">R4</td><td>Money state is written only by the verified webhook handler.</td><td>A customer marked paid because a model read an email.</td></tr>
+      <tr><td class="mono">R5</td><td>Suppression is checked inside the send tool, not by the caller.</td><td>Emailing someone who asked never to be contacted.</td></tr>
+      <tr><td class="mono">R6</td><td>Every model call writes exactly one <span class="mono">model_usage</span> row, including failures and timeouts.</td><td>Cost that cannot be attributed or explained.</td></tr>
+      <tr><td class="mono">R7</td><td>Model identifiers live in the registry table, never in code, prompts or fixtures.</td><td>A provider rename becoming a production outage.</td></tr>
+      <tr><td class="mono">R8</td><td>Deterministic-first: maths, filtering, scheduling and scoring are code; the model extracts, it does not decide numbers.</td><td>Non-reproducible results and unexplainable scores.</td></tr>
+      <tr><td class="mono">R9</td><td>Validate at boundaries only — user input and provider responses. Trust internal calls.</td><td>Defensive noise that hides real defects.</td></tr>
+      <tr><td class="mono">R10</td><td>One writer per table. Other services read through an API or a view.</td><td>Two services disagreeing about the same row.</td></tr>
+      <tr><td class="mono">R11</td><td>Long work is a job. An HTTP request never waits on a model, a send or a third-party API.</td><td>Timeouts, retries that duplicate effects, hung dashboards.</td></tr>
+      <tr><td class="mono">R12</td><td>Every effect carries an idempotency key. Duplicate provider ids must be zero.</td><td>Double sends and double billing after a retry.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="trap">
+    <span class="label">The four failures that actually happen</span>
+    <p>Not missing features. <strong>One:</strong> an agent that sends without approval. <strong>Two:</strong> a query that crosses tenants. <strong>Three:</strong> a task that runs twice and bills twice. <strong>Four:</strong> a campaign reported complete that was never delivered. Rules R2, R1, R12 and R6 exist for exactly these; the rest are hygiene.</p>
+  </div>
+
+  <h3>Naming and conventions</h3>
+  <table class="tight">
+    <thead><tr><th style="width:34mm">Thing</th><th>Convention</th><th style="width:44mm">Example</th></tr></thead>
+    <tbody>
+      <tr><td>Commit</td><td>Task id, colon, imperative title</td><td class="mono">T-1.6: add tool gateway gate sequence</td></tr>
+      <tr><td>Migration</td><td><span class="mono">YYYYMMDDHHMM_&lt;task-id&gt;_&lt;slug&gt;</span></td><td class="mono">202611201015_T-1.3_brands</td></tr>
+      <tr><td>Test</td><td>Acceptance id or task id in the name</td><td class="mono">test_AC-03_suppression_blocks_send</td></tr>
+      <tr><td>Tool</td><td><span class="mono">TLS-nn</span> in the registry, snake_case in code</td><td class="mono">TLS-14 → send_email</td></tr>
+      <tr><td>Agent</td><td><span class="mono">AGT-nn</span> manifest id, never a Python class</td><td class="mono">AGT-07 → manifests/AGT-07.yaml</td></tr>
+      <tr><td>Event</td><td><span class="mono">entity.past_tense</span></td><td class="mono">message.sent, lead.qualified</td></tr>
+      <tr><td>Money</td><td>integer minor units + ISO-4217</td><td class="mono">amount_minor=4900, currency="USD"</td></tr>
+      <tr><td>Timestamps</td><td><span class="mono">timestamptz</span>, UTC, ISO-8601 on the wire</td><td class="mono">2026-11-20T10:15:00Z</td></tr>
+      <tr><td>Log fields</td><td>org, task, agent, tool, trace_id — always</td><td class="mono">{"org":…,"task_id":…}</td></tr>
+    </tbody>
+  </table>
+</div>

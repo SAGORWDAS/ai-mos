@@ -1,0 +1,23 @@
+# T-4.6 — Onboarding triggers
+# Generated from spec/ai-mos.spec.yaml + blueprint/tasks.js. Do not edit alone.
+
+id: T-4.6
+phase: PH-4
+kind: automation
+blocking: false
+title: Onboarding triggers
+context_budget_tokens: 5000
+load_only:
+  - master §6 MOD-14
+files_create:
+  - backend/app/services/revenue/onboarding.py
+  - backend/migrations/0012_workflows.sql
+steps:
+  - start only from a verified payment event
+  - step tracking, activation flag
+done_when:
+  - no onboarding starts from a conversation or an agent decision
+do_not:
+  - never trigger onboarding from an email
+  - do not start another task in this session
+  - do not invent a table, endpoint, tool or model id

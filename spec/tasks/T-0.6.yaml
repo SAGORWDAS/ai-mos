@@ -1,0 +1,23 @@
+# T-0.6 — Lawful basis and suppression policy
+# Generated from spec/ai-mos.spec.yaml + blueprint/tasks.js. Do not edit alone.
+
+id: T-0.6
+phase: PH-0
+kind: legal
+blocking: true
+title: Lawful basis and suppression policy
+context_budget_tokens: 1500
+load_only:
+  - master §10.3
+files_create:
+  - docs/legal/outreach-policy.md
+steps:
+  - name the jurisdictions you will contact
+  - state lawful basis per jurisdiction
+  - list required record fields
+done_when:
+  - one-page policy that names the fields the schema must carry
+do_not:
+  - do not assume opt-out alone is lawful everywhere
+  - do not start another task in this session
+  - do not invent a table, endpoint, tool or model id

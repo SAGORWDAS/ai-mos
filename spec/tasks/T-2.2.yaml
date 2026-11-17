@@ -1,0 +1,27 @@
+# T-2.2 — Planner (AI CMO)
+# Generated from spec/ai-mos.spec.yaml + blueprint/tasks.js. Do not edit alone.
+
+id: T-2.2
+phase: PH-2
+kind: agent
+blocking: true
+title: Planner (AI CMO)
+context_budget_tokens: 5000
+load_only:
+  - master §4.2
+  - Appendix C prompt v1.0
+  - spec/schemas/plan.json
+files_create:
+  - backend/app/agents/manifests/AGT-01.yaml
+  - backend/app/services/orchestration/planner.py
+  - backend/tests/test_planner.py
+steps:
+  - manifest + versioned prompt
+  - structured output validated against plan.json
+  - repair once with the validation error, then escalate a tier
+done_when:
+  - a produced plan validates; an invalid one fails the task
+do_not:
+  - the prompt is never the enforcement mechanism
+  - do not start another task in this session
+  - do not invent a table, endpoint, tool or model id

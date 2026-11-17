@@ -1,0 +1,172 @@
+# AI-MOS — modules
+# Extracted from spec/ai-mos.spec.yaml (normative source). Do not edit in isolation.
+# MOD-01..MOD-23. Navigation modules mapped to owning services.
+
+spec_version: '1.0'
+modules:
+  - id: MOD-01
+    name: Overview
+    service: SVC-insights
+    phase: PH-2
+    entities: []
+  - id: MOD-02
+    name: Command Center
+    service: SVC-growth-strategy
+    phase: PH-2
+    entities:
+      - commands
+      - objectives
+  - id: MOD-03
+    name: AI Manager
+    service: SVC-growth-strategy
+    phase: PH-2
+    entities:
+      - plans
+      - tasks
+      - task_dependencies
+  - id: MOD-04
+    name: AI Agents
+    service: SVC-growth-strategy
+    phase: PH-1
+    entities:
+      - agents
+      - agent_tools
+  - id: MOD-05
+    name: Marketing Strategy
+    service: SVC-growth-strategy
+    phase: PH-2
+    entities:
+      - strategies
+      - research_reports
+  - id: MOD-06
+    name: Lead Generation
+    service: SVC-acquisition
+    phase: PH-3
+    entities:
+      - prospects
+      - leads
+      - lead_sources
+  - id: MOD-07
+    name: CRM
+    service: SVC-acquisition
+    phase: PH-3
+    entities:
+      - companies
+      - contacts
+      - pipeline_stages
+      - activities
+  - id: MOD-08
+    name: Outreach Studio
+    service: SVC-acquisition
+    phase: PH-3
+    entities:
+      - sequences
+      - sequence_steps
+      - outreach_drafts
+  - id: MOD-09
+    name: AI Sales Inbox
+    service: SVC-acquisition
+    phase: PH-3
+    entities:
+      - conversations
+      - messages
+  - id: MOD-10
+    name: Meeting Scheduler
+    service: SVC-acquisition
+    phase: PH-4
+    entities:
+      - meetings
+      - availability_rules
+  - id: MOD-11
+    name: Content Studio
+    service: SVC-content
+    phase: PH-2
+    entities:
+      - content_items
+  - id: MOD-12
+    name: Creative Studio
+    service: SVC-content
+    phase: PH-5
+    entities:
+      - creatives
+      - asset_files
+  - id: MOD-13
+    name: Campaign Manager
+    service: SVC-content
+    phase: PH-3
+    entities:
+      - campaigns
+      - campaign_assets
+      - campaign_metrics
+  - id: MOD-14
+    name: Customer Onboarding
+    service: SVC-revenue
+    phase: PH-4
+    entities:
+      - onboarding_flows
+      - activation_steps
+  - id: MOD-15
+    name: Customer Support
+    service: SVC-revenue
+    phase: PH-5
+    entities:
+      - support_threads
+  - id: MOD-16
+    name: Retention Center
+    service: SVC-revenue
+    phase: PH-5
+    entities:
+      - health_scores
+      - churn_risks
+  - id: MOD-17
+    name: Analytics
+    service: SVC-insights
+    phase: PH-2
+    entities:
+      - analytics_events
+      - metric_snapshots
+  - id: MOD-18
+    name: Brand Brain
+    service: SVC-growth-strategy
+    phase: PH-1
+    entities:
+      - brands
+      - brand_documents
+      - brand_chunks
+  - id: MOD-19
+    name: Automation Center
+    service: SVC-automation
+    phase: PH-4
+    entities:
+      - workflows
+      - workflow_runs
+      - triggers
+  - id: MOD-20
+    name: Approval Center
+    service: SVC-growth-strategy
+    phase: PH-2
+    entities:
+      - approvals
+      - approval_rules
+  - id: MOD-21
+    name: Integrations
+    service: SVC-platform
+    phase: PH-1
+    entities:
+      - integrations
+      - oauth_tokens
+  - id: MOD-22
+    name: Usage and Cost
+    service: SVC-insights
+    phase: PH-1
+    entities:
+      - model_usage
+      - budgets
+  - id: MOD-23
+    name: Settings
+    service: SVC-platform
+    phase: PH-1
+    entities:
+      - organizations
+      - memberships
+      - invitations

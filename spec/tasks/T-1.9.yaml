@@ -1,0 +1,27 @@
+# T-1.9 — Audit log, logging, traces
+# Generated from spec/ai-mos.spec.yaml + blueprint/tasks.js. Do not edit alone.
+
+id: T-1.9
+phase: PH-1
+kind: observability
+blocking: false
+title: Audit log, logging, traces
+context_budget_tokens: 4000
+load_only:
+  - master §3.7
+  - master §10.5
+files_create:
+  - backend/app/core/logging.py
+  - backend/app/core/audit.py
+  - backend/migrations/0014_*.sql
+  - backend/tests/test_audit.py
+steps:
+  - 'structured JSON logs: org, task, agent, tool, trace_id'
+  - append-only audit table; app role has no UPDATE/DELETE grant
+  - one trace per command
+done_when:
+  - a gateway rejection produces a log line and an audit row
+do_not:
+  - no secrets or message bodies in logs
+  - do not start another task in this session
+  - do not invent a table, endpoint, tool or model id

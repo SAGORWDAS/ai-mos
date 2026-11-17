@@ -1,0 +1,24 @@
+# T-2.8 — Overview and analytics v1
+# Generated from spec/ai-mos.spec.yaml + blueprint/tasks.js. Do not edit alone.
+
+id: T-2.8
+phase: PH-2
+kind: ui
+blocking: false
+title: Overview and analytics v1
+context_budget_tokens: 5000
+load_only:
+  - master §6 MOD-17
+  - master §1.5
+files_create:
+  - frontend/app/(app)/dashboard/page.tsx
+  - backend/app/api/v1/metrics.py
+steps:
+  - task, approval and cost tiles
+  - each tile links to its query
+done_when:
+  - every figure traceable to source rows
+do_not:
+  - no open-rate tile as a success metric
+  - do not start another task in this session
+  - do not invent a table, endpoint, tool or model id

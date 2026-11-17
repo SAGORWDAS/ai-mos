@@ -1,0 +1,24 @@
+# T-0.2 — OpenRouter account, key, credit
+# Generated from spec/ai-mos.spec.yaml + blueprint/tasks.js. Do not edit alone.
+
+id: T-0.2
+phase: PH-0
+kind: decision
+blocking: true
+title: OpenRouter account, key, credit
+context_budget_tokens: 1500
+load_only:
+  - master §5.1–5.2
+files_create:
+  - .env.example
+  - docs/decisions/ADR-05.md
+steps:
+  - create account and key
+  - obtain one completion per tier
+  - record live price per 1M tokens
+done_when:
+  - one priced completion per tier recorded in the registry file
+do_not:
+  - do not hardcode a model id anywhere yet
+  - do not start another task in this session
+  - do not invent a table, endpoint, tool or model id

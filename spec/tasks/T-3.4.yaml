@@ -1,0 +1,26 @@
+# T-3.4 — CRM entities and pipeline
+# Generated from spec/ai-mos.spec.yaml + blueprint/tasks.js. Do not edit alone.
+
+id: T-3.4
+phase: PH-3
+kind: schema
+blocking: false
+title: CRM entities and pipeline
+context_budget_tokens: 6000
+load_only:
+  - master §6 MOD-07
+files_create:
+  - backend/migrations/0008_crm.sql
+  - backend/app/api/v1/crm.py
+  - frontend/app/(app)/crm/page.tsx
+  - backend/tests/test_crm_activity.py
+steps:
+  - companies, contacts, pipeline_stages, activities
+  - field allowlist for agent edits
+  - every stage change writes an activity with actor type
+done_when:
+  - agent cannot edit owner-assigned fields
+do_not:
+  - no bulk update without an activity row
+  - do not start another task in this session
+  - do not invent a table, endpoint, tool or model id

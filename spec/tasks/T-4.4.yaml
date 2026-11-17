@@ -1,0 +1,26 @@
+# T-4.4 — Customers, subscriptions, plan gating
+# Generated from spec/ai-mos.spec.yaml + blueprint/tasks.js. Do not edit alone.
+
+id: T-4.4
+phase: PH-4
+kind: schema
+blocking: true
+title: Customers, subscriptions, plan gating
+context_budget_tokens: 5000
+load_only:
+  - master §7.2 money tables
+  - master §12.4
+files_create:
+  - backend/migrations/0011_billing.sql
+  - backend/app/services/revenue/subscriptions.py
+  - backend/tests/test_plan_gating.py
+steps:
+  - customers, subscriptions, payments
+  - plan limits enforced from verified state
+  - app role has no UPDATE grant on payments
+done_when:
+  - an agent write path to these tables does not exist
+do_not:
+  - never infer a subscription state from a checkout redirect
+  - do not start another task in this session
+  - do not invent a table, endpoint, tool or model id

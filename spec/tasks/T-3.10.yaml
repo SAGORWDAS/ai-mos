@@ -1,0 +1,26 @@
+# T-3.10 — Reply drafting and optional L4
+# Generated from spec/ai-mos.spec.yaml + blueprint/tasks.js. Do not edit alone.
+
+id: T-3.10
+phase: PH-3
+kind: agent
+blocking: false
+title: Reply drafting and optional L4
+context_budget_tokens: 6000
+load_only:
+  - master §4.5
+  - master §10.2
+files_create:
+  - backend/app/services/acquisition/reply.py
+  - backend/app/services/agent_engine/policy/autonomy.py
+  - backend/tests/test_autonomy.py
+steps:
+  - draft grounded strictly in brand
+  - L4 off by default, per action class
+  - every auto-send appears in the weekly digest
+done_when:
+  - raising L4 for a money action is rejected by the API
+do_not:
+  - no L4 for pricing, refunds, contracts, disputes
+  - do not start another task in this session
+  - do not invent a table, endpoint, tool or model id

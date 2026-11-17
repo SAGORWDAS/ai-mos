@@ -1,0 +1,52 @@
+<!-- ============ INSTRUCTIONS FOR AI AGENTS ============ -->
+<div class="part">
+  <div class="part-head">
+    <p class="eyebrow">Front matter · 02</p>
+    <h1 class="part-title">Instructions for automated<br>coding agents</h1>
+  </div>
+
+  <p class="lede">This page is written for an AI coding agent, not for a person. If you are a language model asked to implement AI-MOS, read this page before anything else, then follow the ingest order exactly.</p>
+
+  <h3>Ingest order</h3>
+  <pre>1. spec/ai-mos.spec.yaml        -> canonical registry: modules, agents, tools, phases, tasks
+2. Part 11 of this PDF          -> the phase you are authorised to build
+3. spec/phase-tasks.yaml        -> the task graph and its dependencies
+4. Part 2 + Part 7 of this PDF  -> entities, state machines, table definitions
+5. Part 3 + Part 4 of this PDF  -> the invariants your code must never break
+6. spec/schemas/*.json          -> exact output shapes for agent-facing APIs</pre>
+
+  <p><span class="mono">spec/ai-mos.spec.yaml</span> is normative. Where this prose and the spec disagree, the spec wins and the prose is a defect to be reported — never resolved by inference.</p>
+
+  <h3>Operating rules</h3>
+  <ol>
+    <li><strong>Work one task at a time.</strong> Tasks are identified as <span class="mono">T-n.m</span>. Do not begin <span class="mono">T-n.m+1</span> until <span class="mono">T-n.m</span> satisfies its definition of done. Do not batch-implement a phase.</li>
+    <li><strong>Never invent a schema.</strong> Every table, column, endpoint and agent output shape exists in Part 7, Part 8, Appendix A or Appendix B. If a needed shape is missing, stop and report <span class="mono">SPEC-GAP: &lt;what is missing&gt; &lt;why it blocks T-n.m&gt;</span>.</li>
+    <li><strong>Never invent a model identifier.</strong> The identifiers in Part 5 are marked <span class="mono">status: unverified</span>. Treat them as registry slots, not literals. A model string MUST NOT appear in business logic; it is loaded from configuration.</li>
+    <li><strong>Never invent a number.</strong> Prices, limits and cost estimates marked <em>illustrative</em> are placeholders. They belong in configuration with an explicit <span class="mono">verify_at_build</span> note.</li>
+    <li><strong>Every external action goes through the tool gateway.</strong> Code that calls Gmail, a calendar, a payment provider or an ad platform from anywhere other than a registered tool handler is wrong, regardless of whether it works. See Part 3.4.</li>
+    <li><strong>Tenant isolation is not optional.</strong> Every query on tenant data MUST be scoped by <span class="mono">organization_id</span>, enforced at the database layer and not only in application code. A test proves this for every table (AC-02).</li>
+    <li><strong>Write the test with the code.</strong> A task is not done when the happy path runs; it is done when its named acceptance test passes and its failure path is exercised.</li>
+    <li><strong>Emit attributable logs.</strong> Every log line carries <span class="mono">organization_id</span>, <span class="mono">task_id</span>, <span class="mono">agent_id</span> and <span class="mono">trace_id</span>. A line that cannot be attributed to a tenant and a task is not useful in production.</li>
+    <li><strong>Stop conditions.</strong> Stop and ask a human when: a task needs a credential you do not have; a requirement conflicts with a MUST rule; a migration would destroy data; a decision listed as an open ADR in Part 13.2 is still undecided; or the task touches money, refunds or bulk sending without an approval path already implemented.</li>
+  </ol>
+
+  <h3>Output contract per task</h3>
+  <table class="tight">
+    <thead><tr><th style="width:30mm">Artifact</th><th>Required content</th></tr></thead>
+    <tbody>
+      <tr><td>Migration</td><td>Reversible and ordered. No destructive change without a task that explicitly authorises it. Naming: <span class="mono">YYYYMMDDHHMM_&lt;task-id&gt;_&lt;slug&gt;</span>.</td></tr>
+      <tr><td>Code</td><td>Validate at boundaries only — user input and external APIs. Trust internal calls. No dead code, no compatibility shims.</td></tr>
+      <tr><td>Test</td><td>Named after the criterion it satisfies, e.g. <span class="mono">test_AC-02_tenant_isolation_leads</span>.</td></tr>
+      <tr><td>Commit</td><td><span class="mono">T-3.4: enforce suppression list before send</span> — one task, one commit, task ID first.</td></tr>
+      <tr><td>Report</td><td>Task ID, files changed, test evidence, any SPEC-GAP or deviation. No narrative summary of what the code obviously does.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>What you are not asked to do</h3>
+  <p>You are not asked to design the product, choose the stack, invent agents, select models or set pricing. Those decisions are made here, several of them deliberately and with reasons (Part 13.2). Implementing an unrequested improvement is a defect: it breaks the traceability between specification and running system, which is the entire point of this build.</p>
+
+  <div class="trap">
+    <span class="label">The failure mode to avoid</span>
+    <p>This project will not fail because a feature is missing. It will fail by producing impressive-looking output while quietly breaking one invariant: an agent that sends without approval, a query that crosses tenants, a task that runs twice and bills twice, or a campaign reported complete that was never actually sent. Every phase exit gate in Part 11 exists to catch exactly those four failures.</p>
+  </div>
+</div>

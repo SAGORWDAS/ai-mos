@@ -1,0 +1,27 @@
+# T-1.7 — Brand Brain
+# Generated from spec/ai-mos.spec.yaml + blueprint/tasks.js. Do not edit alone.
+
+id: T-1.7
+phase: PH-1
+kind: knowledge
+blocking: true
+title: Brand Brain
+context_budget_tokens: 4000
+load_only:
+  - master §6 MOD-18
+  - master §7.2 brand tables
+files_create:
+  - backend/app/services/brand_brain/ingest.py
+  - backend/app/services/brand_brain/retrieve.py
+  - backend/app/api/v1/brand.py
+  - backend/migrations/0003_brands.sql
+steps:
+  - upload → parse → chunk (~500 tok, 15% overlap) → embed → store with ordinal
+  - retrieval returns passages with document id + ordinal + score
+  - deleting a document cascades chunks in one transaction
+done_when:
+  - a query returns ≥1 cited passage; deleting a doc removes its chunks
+do_not:
+  - never return whole documents as context
+  - do not start another task in this session
+  - do not invent a table, endpoint, tool or model id

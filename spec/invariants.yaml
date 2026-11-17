@@ -1,0 +1,105 @@
+# AI-MOS — invariants and acceptance
+# Extracted from spec/ai-mos.spec.yaml (normative source). Do not edit in isolation.
+# Rules that must hold at all times, and the tests that prove them.
+
+spec_version: '1.0'
+invariants:
+  I-1: every tenant row carries a valid organization_id; enforced by NOT NULL + FK + RLS
+  I-2: >-
+    no external effect without a valid single-use approval, unless the action class is
+    pre-authorised at the agent autonomy level
+  I-3: no logical action executes twice; idempotency key unique per organization
+  I-4: money state is written only from a verified provider webhook
+  I-5: a suppressed address is never contacted on any channel by any agent
+  I-6: every model call writes exactly one model_usage row, including failures
+acceptance_tests:
+  - id: AC-01
+    name: tenant scoping on create
+  - id: AC-02
+    name: tenant isolation every table
+  - id: AC-03
+    name: suppression blocks send
+  - id: AC-04
+    name: duplicate execution prevented
+  - id: AC-05
+    name: approval integrity
+  - id: AC-06
+    name: lead deduplication
+  - id: AC-07
+    name: budget enforcement
+  - id: AC-08
+    name: ledger completeness
+  - id: AC-09
+    name: meeting race
+  - id: AC-10
+    name: webhook authenticity
+  - id: AC-11
+    name: agent permission ceiling
+  - id: AC-12
+    name: emergency stop
+  - id: AC-13
+    name: restore drill
+  - id: AC-14
+    name: claim grounding
+definition_of_done:
+  - matches the spec row, entity or endpoint it references
+  - boundary validation on user input and provider responses
+  - happy path covered by a test named after its AC or task id
+  - named failure path covered; failure classified not swallowed
+  - tenant scoping verified on every new query or job
+  - external effects routed through the tool gateway with an idempotency key
+  - cost attributable to org, task, agent and campaign where applicable
+  - audit entry for privileged or refused actions
+  - logs carry org, task, agent and trace id
+  - demonstrated once by a human and recorded
+autonomy:
+  L1: read and analyse
+  L2: create drafts and internal writes
+  L3: external effects with approval
+  L4: limited pre-authorised effects, off by default, never for money
+  always_human:
+    - ad_spend
+    - budget_increase
+    - discount_beyond_limit
+    - bulk_campaign
+    - contract_commitment
+    - price_change
+    - refund
+    - data_deletion
+    - dispute
+approval_matrix:
+  send_single_email:
+    L1: deny
+    L2: deny
+    L3: approve
+    L4: allow_if_enabled
+  send_bulk_campaign:
+    L1: deny
+    L2: deny
+    L3: approve
+    L4: approve
+  book_meeting:
+    L1: deny
+    L2: deny
+    L3: approve
+    L4: allow_if_enabled
+  publish_content:
+    L1: deny
+    L2: deny
+    L3: approve
+    L4: approve
+  change_ad_spend:
+    L1: deny
+    L2: deny
+    L3: approve
+    L4: deny
+  offer_discount:
+    L1: deny
+    L2: deny
+    L3: approve
+    L4: deny
+  refund:
+    L1: deny
+    L2: deny
+    L3: deny
+    L4: deny

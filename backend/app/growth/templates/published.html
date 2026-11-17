@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>$title | $name</title>
+<style>
+    *{box-sizing:border-box}
+body{margin:0;color:#111;background:white;font:18px/1.65 Arial,sans-serif}
+header,main,footer{max-width:1100px;margin:auto;padding:28px 24px}
+header{border-bottom:4px solid #111;font-weight:bold;letter-spacing:.08em}
+h1,h2{font-family:Georgia,serif;line-height:1.12}
+h1{font-size:clamp(40px,8vw,76px);max-width:900px;margin:40px 0}.copy{white-space:pre-wrap;max-width:760px;font-size:21px}section{border-top:1px solid #aaa;margin-top:48px;padding-top:28px}form{max-width:620px}label{display:block;margin:18px 0}input,textarea,button{font:inherit;padding:12px;border:1px solid #111;width:100%}input[type=checkbox]{width:auto}button{background:#111;color:white;cursor:pointer}footer{border-top:4px solid #111;margin-top:60px;font-size:14px}a{color:inherit}.trap{display:none}:focus-visible{outline:3px solid #555;outline-offset:4px}</style>
+</head>
+<body>
+<header>$name</header>
+<main>
+<p>OUR SERVICES</p>
+<h1>$title</h1>
+<div class="copy">$body</div>
+<section>
+<h2>Discuss your project</h2>
+<p>Your enquiry is saved privately for this business. It does not subscribe you to a marketing list.</p>
+<form method="post" action="./$id/enquire">
+<label>Your name<input name="name" required maxlength="120" autocomplete="name">
+</label>
+<label>Email<input name="email" type="email" required autocomplete="email">
+</label>
+<label>What would you like to discuss?<textarea name="message" required minlength="10" maxlength="2000" rows="5">
+</textarea>
+</label>
+<label class="trap">Website<input name="website" tabindex="-1" autocomplete="off">
+</label>
+<label>
+<input name="request_reply" type="checkbox" required value="true"> I request a reply about this enquiry.</label>
+<button>Send enquiry</button>
+</form>
+</section>
+</main>
+<footer>$name · Published with approval</footer>
+</body>
+</html>

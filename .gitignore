@@ -1,0 +1,27 @@
+# documents build
+node_modules/
+.tmp/
+.tmp-pack/
+
+# application
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.dump
+*.log
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+.next/
+frontend/out/
+.run/
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+*.tsbuildinfo

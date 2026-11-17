@@ -1,0 +1,106 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  specification:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Validate specification and validator failure paths
+        working-directory: blueprint
+        run: |
+          npm ci --no-audit --no-fund
+          node --test validate.test.js
+          node --test postgres-isolation.test.js
+          node validate.js
+          node verify-scaffold.js
+
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: ai_mos
+          POSTGRES_PASSWORD: ai_mos
+          POSTGRES_DB: ai_mos
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U ai_mos"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 12
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 12
+    env:
+      DATABASE_URL: postgresql+asyncpg://ai_mos:ai_mos@localhost:5432/ai_mos
+      AI_MOS_TEST_ADMIN_URL: postgresql://ai_mos:ai_mos@localhost:5432/ai_mos
+      AI_MOS_TEST_PG_BIN: /usr/lib/postgresql/16/bin
+      REDIS_URL: redis://localhost:6379/0
+      OPENROUTER_API_KEY: ci-placeholder
+      TOKEN_ENCRYPTION_KEY: Y2ktcGxhY2Vob2xkZXItMzItYnl0ZXMtbG9uZw==
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        working-directory: backend
+        run: |
+          if [ ! -x /usr/lib/postgresql/16/bin/pg_dump ]; then sudo apt-get update && sudo apt-get install -y postgresql-client-16; fi
+          pip install -r requirements-dev.lock
+          pip install --no-deps -e .
+      - name: Lint
+        working-directory: backend
+        run: ruff check .
+      - name: Test
+        working-directory: backend
+        run: pytest -q
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install
+        working-directory: frontend
+        run: npm ci --no-audit --no-fund
+      - name: Typecheck
+        working-directory: frontend
+        run: npx tsc --noEmit
+      - name: Build
+        working-directory: frontend
+        run: npm run build
+
+  compose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate compose file
+        run: |
+          cp .env.example .env
+          docker compose -f infra/docker-compose.yml config -q
+      - name: Build and start sandbox stack
+        run: docker compose -f infra/docker-compose.yml up -d --build
+      - name: Exercise HTTP workflow and durable worker
+        run: python scripts/smoke-http.py
+      - name: Capture service failures
+        if: failure()
+        run: docker compose -f infra/docker-compose.yml logs --tail=100
+      - name: Stop test stack
+        if: always()
+        run: docker compose -f infra/docker-compose.yml down -v

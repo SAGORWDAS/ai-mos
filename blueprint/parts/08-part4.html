@@ -1,0 +1,192 @@
+<!-- ============ PART 4 ============ -->
+<div class="part">
+  <div class="part-head">
+    <p class="eyebrow">Part 4</p>
+    <h1 class="part-title">Agent runtime</h1>
+  </div>
+
+  <p class="lede">There is one agent engine. A "CMO Agent" and a "Lead Qualification Agent" differ by configuration — instructions, tools, model tier, permissions, output schema — not by code path.</p>
+
+  <h2>4.1 One engine, many roles</h2>
+  <p>The temptation is to build twenty small applications. The consequence is twenty prompt stacks, twenty logging formats, twenty permission models and no way to answer "what did the system do yesterday". Instead:</p>
+
+  <pre class="diagram">        agent manifest (YAML / row)          task instance
+  +-----------------------------------+     +------------------+
+  | id, role, persona instructions    |     | input payload    |
+  | model tier + fallback tier        |     | org + brand      |
+  | allowed tools + max autonomy      |---->| context budget   |
+  | input/output JSON schema refs     |     | deadline         |
+  | token + cost + time limits        |     +--------+---------+
+  | memory scopes, escalation policy  |              |
+  +-----------------------------------+              v
+                                            +--------------------+
+                                            |   EXECUTION LOOP   |
+                                            | 1 assemble context |
+                                            | 2 call model       |
+                                            | 3 parse + validate |
+                                            | 4 tool calls? loop |
+                                            | 5 evaluate output  |
+                                            | 6 persist + bill   |
+                                            +--------------------+</pre>
+
+  <h3>The twenty roles</h3>
+  <p>Priorities follow the brief. What changes here is the <em>default tier</em>, the <em>autonomy ceiling</em> and the <em>phase</em> — the three properties that actually determine cost and risk.</p>
+
+  <table class="tight">
+    <thead><tr><th style="width:16mm">ID</th><th style="width:36mm">Role</th><th style="width:22mm">Responsibility</th><th style="width:13mm">Tier</th><th style="width:16mm">Ceiling</th><th style="width:11mm">Pri</th><th style="width:13mm">Phase</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">AGT-01</td><td>AI CMO</td><td>Goals, planning, delegation</td><td class="mono">2</td><td class="mono">L2</td><td class="mono">P0</td><td class="mono">PH-2</td></tr>
+      <tr><td class="mono">AGT-02</td><td>Research Agent</td><td>Market and competitor research</td><td class="mono">2</td><td class="mono">L1</td><td class="mono">P0</td><td class="mono">PH-2</td></tr>
+      <tr><td class="mono">AGT-03</td><td>Strategy Agent</td><td>Acquisition plans, offers</td><td class="mono">2</td><td class="mono">L2</td><td class="mono">P0</td><td class="mono">PH-2</td></tr>
+      <tr><td class="mono">AGT-04</td><td>Lead Generation Agent</td><td>Prospect discovery</td><td class="mono">1</td><td class="mono">L2</td><td class="mono">P0</td><td class="mono">PH-3</td></tr>
+      <tr><td class="mono">AGT-05</td><td>Lead Qualification Agent</td><td>Scoring and segmentation</td><td class="mono">1</td><td class="mono">L1</td><td class="mono">P0</td><td class="mono">PH-3</td></tr>
+      <tr><td class="mono">AGT-06</td><td>Content Agent</td><td>Emails, pages, articles</td><td class="mono">1→2</td><td class="mono">L2</td><td class="mono">P0</td><td class="mono">PH-2</td></tr>
+      <tr><td class="mono">AGT-07</td><td>Outreach Agent</td><td>Personalised first touch</td><td class="mono">1</td><td class="mono">L3</td><td class="mono">P0</td><td class="mono">PH-3</td></tr>
+      <tr><td class="mono">AGT-08</td><td>Sales Agent</td><td>Reply handling, objections</td><td class="mono">1→3</td><td class="mono">L4*</td><td class="mono">P0</td><td class="mono">PH-3</td></tr>
+      <tr><td class="mono">AGT-09</td><td>Follow-up Agent</td><td>Cadence management</td><td class="mono">1</td><td class="mono">L3</td><td class="mono">P0</td><td class="mono">PH-3</td></tr>
+      <tr><td class="mono">AGT-10</td><td>Analytics Agent</td><td>Measurement, recommendations</td><td class="mono">1</td><td class="mono">L1</td><td class="mono">P0</td><td class="mono">PH-2</td></tr>
+      <tr><td class="mono">AGT-11</td><td>Meeting Agent</td><td>Availability, booking</td><td class="mono">1</td><td class="mono">L3</td><td class="mono">P1</td><td class="mono">PH-4</td></tr>
+      <tr><td class="mono">AGT-12</td><td>Campaign Agent</td><td>Campaign execution</td><td class="mono">2</td><td class="mono">L3</td><td class="mono">P1</td><td class="mono">PH-3</td></tr>
+      <tr><td class="mono">AGT-13</td><td>SEO Agent</td><td>Search optimisation</td><td class="mono">1</td><td class="mono">L2</td><td class="mono">P1</td><td class="mono">PH-5</td></tr>
+      <tr><td class="mono">AGT-14</td><td>Social Media Agent</td><td>Publishing</td><td class="mono">1</td><td class="mono">L3</td><td class="mono">P1</td><td class="mono">PH-5</td></tr>
+      <tr><td class="mono">AGT-15</td><td>Creative Agent</td><td>Ad concepts, assets</td><td class="mono">2</td><td class="mono">L2</td><td class="mono">P1</td><td class="mono">PH-5</td></tr>
+      <tr><td class="mono">AGT-16</td><td>Advertising Agent</td><td>Paid campaigns</td><td class="mono">2</td><td class="mono">L3</td><td class="mono">P1</td><td class="mono">PH-6</td></tr>
+      <tr><td class="mono">AGT-17</td><td>Onboarding Agent</td><td>Activation</td><td class="mono">1</td><td class="mono">L3</td><td class="mono">P1</td><td class="mono">PH-4</td></tr>
+      <tr><td class="mono">AGT-18</td><td>Support Agent</td><td>Queries, escalation</td><td class="mono">1</td><td class="mono">L4*</td><td class="mono">P1</td><td class="mono">PH-5</td></tr>
+      <tr><td class="mono">AGT-19</td><td>Retention Agent</td><td>Churn prevention</td><td class="mono">2</td><td class="mono">L3</td><td class="mono">P2</td><td class="mono">PH-5</td></tr>
+      <tr><td class="mono">AGT-20</td><td>Learning Agent</td><td>Lessons with evidence</td><td class="mono">2</td><td class="mono">L2</td><td class="mono">P2</td><td class="mono">PH-5</td></tr>
+    </tbody>
+  </table>
+  <p class="tiny">* L4 is available only for a closed list of pre-approved action types, disabled by default, and never for money, pricing, contracts or bulk sending (Part 10.2). "1→3" means the default tier is 1 and escalates to 3 under the routing rules in Part 5.3.</p>
+
+  <h2>4.2 The manifest</h2>
+  <p>Every agent is data. The manifest below is the complete shape; the Appendix C version is the template to copy.</p>
+  <pre>id: AGT-07
+name: Outreach Agent
+version: 3
+status: active
+
+persona: |
+  You are an outreach specialist. You write one short, specific email to one person.
+  You never invent a fact. If you cannot ground a personalisation claim in the
+  provided evidence, you write a generic but honest email and say so in the evidence field.
+
+model:
+  tier: 1
+  fallback_tier: 2
+  temperature: 0.4
+  max_input_tokens: 6000
+  max_output_tokens: 1200
+
+tools:
+  allowed: [TLS-02, TLS-05, TLS-07, TLS-13]
+  forbidden: [TLS-14]          # drafting never sends, even with permission
+
+permissions:
+  autonomy_ceiling: L3         # may request a send; requires approval to execute
+  max_actions_per_task: 1
+  budgets: { task_usd: 0.02, day_usd: 5.00 }
+
+io:
+  input_schema: schemas/outreach_input.json
+  output_schema: schemas/outreach_draft.json
+
+memory:
+  brand_brain: retrieval     # pgvector, top-k with score threshold
+  conversation_history: 0    # first touch: no history by design
+  learned_lessons: true
+
+guards:
+  claim_check: required      # every claim must cite a brand_chunk_id
+  banned_phrases: brand/claims.yaml#prohibited
+  max_words: 140
+
+escalation:
+  on_validation_failure: retry_with_tier_2_once
+  on_low_confidence: human
+  on_policy_reject: human_notify
+
+eval:
+  dataset: evals/outreach_golden.jsonl
+  min_score: 0.78
+  metrics: [groundedness, specificity, subject_quality, spam_risk]</pre>
+
+  <p>Four properties of this manifest matter more than the rest:</p>
+  <ul>
+    <li><strong>Tool allowlists are exclusive.</strong> Listing a tool grants nothing until the tool itself validates the caller's autonomy level and the payload.</li>
+    <li><strong>Budgets are per-task and per-day.</strong> A runaway loop hits a wall in cents, not in dollars.</li>
+    <li><strong>Guards are deterministic.</strong> Claim checking, banned phrases and word limits are code, not instructions in a prompt. A model can ignore an instruction; it cannot ignore a validator.</li>
+    <li><strong>Eval is part of the manifest.</strong> Changing a prompt without running the golden set is a change without a test.</li>
+  </ul>
+
+  <h2>4.3 Context assembly</h2>
+  <p>Most of the money in this product is spent in this section. The rule is that context is <em>selected</em>, not concatenated.</p>
+
+  <table>
+    <thead><tr><th style="width:44mm">Context block</th><th style="width:20mm">Budget</th><th>Rule</th></tr></thead>
+    <tbody>
+      <tr><td>System instructions</td><td class="mono">~400 tok</td><td>Version-hashed and cacheable. Never varies per request; any variation is a new agent version.</td></tr>
+      <tr><td>Brand slice</td><td class="mono">~800 tok</td><td>Retrieved by the current task's intent, not "the whole brand". Threshold on similarity score; drop low-relevance chunks rather than padding.</td></tr>
+      <tr><td>Task input</td><td class="mono">~600 tok</td><td>The structured row plus the minimum fields the task needs. Never the entire entity.</td></tr>
+      <tr><td>Conversation</td><td class="mono">0–1,200 tok</td><td>Summarised beyond the last 4 turns. First-touch outreach carries zero history deliberately.</td></tr>
+      <tr><td>Retrieved facts</td><td class="mono">~600 tok</td><td>Research results and enrichment, each with source and retrieval date so the model can attribute.</td></tr>
+      <tr><td>Learned lessons</td><td class="mono">~300 tok</td><td>Top-3 relevant <span class="mono">learning_records</span> by embedding similarity, only where the manifest enables it.</td></tr>
+      <tr><td>Output schema</td><td class="mono">~200 tok</td><td>JSON schema, enforced by the provider where supported.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <span class="label">The cheapest optimisation in the product</span>
+    <p>Storing business knowledge in Postgres and retrieving it beats re-sending it in prompts by an order of magnitude — and it is the difference between an agent that says "we integrate with HubSpot" because it read it, and one that says it because it seemed plausible. Retrieval is a correctness feature before it is a cost feature.</p>
+  </div>
+
+  <h2>4.4 Structured output</h2>
+  <p>No agent returns prose to another agent. Every handoff is a JSON object validated against a schema referenced in the manifest.</p>
+  <ol class="tight">
+    <li>Request with the provider's structured-output mode where available; otherwise a schema in the prompt plus a strict parser.</li>
+    <li>Parse. On parse failure, one repair attempt with the parser error appended.</li>
+    <li>Semantic validation: required citations present, numbers within plausible ranges, no fields invented outside the schema.</li>
+    <li>On second failure, retry once at <span class="mono">fallback_tier</span>.</li>
+    <li>On third failure, fail the task and escalate. Never silently accept a partly parsed object.</li>
+  </ol>
+
+  <h2>4.5 Autonomy</h2>
+  <table class="tight">
+    <thead><tr><th style="width:12mm">Level</th><th style="width:34mm">Permission</th><th>What the gateway permits</th><th style="width:36mm">Never at this level</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">L1</td><td>Read and analyse</td><td>Retrieval, search, classification, scoring, reporting.</td><td>Any write.</td></tr>
+      <tr><td class="mono">L2</td><td>Create drafts</td><td>Writes to draft tables, CRM field updates within an allowlist.</td><td>Any external send.</td></tr>
+      <tr><td class="mono">L3</td><td>Execute with approval</td><td>External effects after a valid, unexpired approval bound to the payload hash.</td><td>Bulk send over the configured threshold; spend.</td></tr>
+      <tr><td class="mono">L4</td><td>Limited autonomy</td><td>A closed, configured list of routine effects — e.g. sending a reply classified as <em>routine enquiry</em> — inside hard caps.</td><td>Money, discounts, contracts, refunds, deletions, disputes.</td></tr>
+    </tbody>
+  </table>
+  <p class="small">L4 exists so that the system can be genuinely useful without a human present — but it is opt-in per action class, disabled by default, and every L4 action is still written to the audit log and reviewed in the weekly digest.</p>
+
+  <h2>4.6 Evaluation</h2>
+  <p>Every role has a golden set built from <em>the business's own</em> real examples, not from public benchmarks. A model change, a prompt change or a tier change runs against it before promotion.</p>
+
+  <table class="tight">
+    <thead><tr><th style="width:34mm">Role family</th><th style="width:44mm">Golden set</th><th>Pass criteria (illustrative)</th></tr></thead>
+    <tbody>
+      <tr><td>Qualification</td><td>300 labelled leads</td><td>≥ 85% agreement with human labels; false-positive rate on disqualified &lt; 10%.</td></tr>
+      <tr><td>Outreach</td><td>100 approved historical emails</td><td>Groundedness 1.0 (no unsupported claims), specificity ≥ 0.7, human edit distance within tolerance.</td></tr>
+      <tr><td>Reply handling</td><td>200 labelled replies</td><td>Intent accuracy ≥ 90%; zero pricing claims where price is unconfigured.</td></tr>
+      <tr><td>Strategy</td><td>20 past plans</td><td>Human rubric: structure, feasibility, budget realism, no invented capability.</td></tr>
+      <tr><td>Content</td><td>50 published pieces</td><td>Brand voice match, factual accuracy, prohibited-claims count = 0.</td></tr>
+    </tbody>
+  </table>
+
+  <p>Two operational rules follow. First, evaluation runs <em>before</em> a model is promoted, never after (Part 5.7). Second, evaluation results are stored against the agent version so a regression can be traced to the change that caused it.</p>
+
+  <h2>4.7 Memory</h2>
+  <p>Four kinds of memory, deliberately separated because they have different lifetimes, costs and privacy rules.</p>
+  <table class="tight">
+    <thead><tr><th style="width:30mm">Type</th><th style="width:34mm">Stored as</th><th>Lifetime and rule</th></tr></thead>
+    <tbody>
+      <tr><td>Brand knowledge</td><td class="mono">brand_chunks</td><td>Versioned with the brand document; re-embedded on change; the only source allowed to justify a claim.</td></tr>
+      <tr><td>Conversation</td><td class="mono">messages</td><td>Retained per policy; summarised for context; purged on request.</td></tr>
+      <tr><td>Task working memory</td><td class="mono">tasks.payload</td><td>Lives for the task. Not a cache, not reused across tasks.</td></tr>
+      <tr><td>Learned lessons</td><td class="mono">learning_records</td><td>Durable, but requires evidence and an effect size; biodegradable if contradicted.</td></tr>
+    </tbody>
+  </table>
+</div>

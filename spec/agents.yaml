@@ -1,0 +1,190 @@
+# AI-MOS — agents
+# Extracted from spec/ai-mos.spec.yaml (normative source). Do not edit in isolation.
+# AGT-01..AGT-20. Tier = default model tier; ceiling = max autonomy.
+
+spec_version: '1.0'
+agents:
+  - id: AGT-01
+    name: AI CMO
+    tier: T2
+    ceiling: L2
+    priority: P0
+    phase: PH-2
+    tools:
+      - TLS-02
+      - TLS-17
+  - id: AGT-02
+    name: Research Agent
+    tier: T2
+    ceiling: L1
+    priority: P0
+    phase: PH-2
+    tools:
+      - TLS-01
+      - TLS-02
+      - TLS-03
+  - id: AGT-03
+    name: Strategy Agent
+    tier: T2
+    ceiling: L2
+    priority: P0
+    phase: PH-2
+    tools:
+      - TLS-02
+      - TLS-17
+  - id: AGT-04
+    name: Lead Generation Agent
+    tier: T1
+    ceiling: L2
+    priority: P0
+    phase: PH-3
+    tools:
+      - TLS-03
+      - TLS-05
+  - id: AGT-05
+    name: Lead Qualification Agent
+    tier: T1
+    ceiling: L1
+    priority: P0
+    phase: PH-3
+    tools:
+      - TLS-04
+  - id: AGT-06
+    name: Content Agent
+    tier: T1
+    ceiling: L2
+    priority: P0
+    phase: PH-2
+    tools:
+      - TLS-02
+      - TLS-06
+  - id: AGT-07
+    name: Outreach Agent
+    tier: T1
+    ceiling: L3
+    priority: P0
+    phase: PH-3
+    tools:
+      - TLS-02
+      - TLS-05
+      - TLS-07
+      - TLS-13
+  - id: AGT-08
+    name: Sales Agent
+    tier: T1
+    ceiling: L4
+    priority: P0
+    phase: PH-3
+    tools:
+      - TLS-02
+      - TLS-11
+      - TLS-12
+      - TLS-13
+  - id: AGT-09
+    name: Follow-up Agent
+    tier: T1
+    ceiling: L3
+    priority: P0
+    phase: PH-3
+    tools:
+      - TLS-07
+      - TLS-13
+  - id: AGT-10
+    name: Analytics Agent
+    tier: T1
+    ceiling: L1
+    priority: P0
+    phase: PH-2
+    tools:
+      - TLS-17
+  - id: AGT-11
+    name: Meeting Agent
+    tier: T1
+    ceiling: L3
+    priority: P1
+    phase: PH-4
+    tools:
+      - TLS-08
+      - TLS-09
+      - TLS-13
+  - id: AGT-12
+    name: Campaign Agent
+    tier: T2
+    ceiling: L3
+    priority: P1
+    phase: PH-3
+    tools:
+      - TLS-15
+      - TLS-13
+  - id: AGT-13
+    name: SEO Agent
+    tier: T1
+    ceiling: L2
+    priority: P1
+    phase: PH-5
+    tools:
+      - TLS-01
+      - TLS-06
+  - id: AGT-14
+    name: Social Media Agent
+    tier: T1
+    ceiling: L3
+    priority: P1
+    phase: PH-5
+    tools:
+      - TLS-06
+      - TLS-13
+  - id: AGT-15
+    name: Creative Agent
+    tier: T2
+    ceiling: L2
+    priority: P1
+    phase: PH-5
+    tools:
+      - TLS-06
+  - id: AGT-16
+    name: Advertising Agent
+    tier: T2
+    ceiling: L3
+    priority: P1
+    phase: PH-6
+    tools:
+      - TLS-13
+      - TLS-17
+  - id: AGT-17
+    name: Onboarding Agent
+    tier: T1
+    ceiling: L3
+    priority: P1
+    phase: PH-4
+    tools:
+      - TLS-06
+      - TLS-13
+  - id: AGT-18
+    name: Support Agent
+    tier: T1
+    ceiling: L4
+    priority: P1
+    phase: PH-5
+    tools:
+      - TLS-02
+      - TLS-12
+      - TLS-13
+  - id: AGT-19
+    name: Retention Agent
+    tier: T2
+    ceiling: L3
+    priority: P2
+    phase: PH-5
+    tools:
+      - TLS-17
+      - TLS-13
+  - id: AGT-20
+    name: Learning Agent
+    tier: T2
+    ceiling: L2
+    priority: P2
+    phase: PH-5
+    tools:
+      - TLS-17
+      - TLS-18

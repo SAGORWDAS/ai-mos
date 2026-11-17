@@ -1,0 +1,2 @@
+ALTER TABLE subscriptions DROP CONSTRAINT subscriptions_organization_id_customer_id_key;
+ALTER TABLE subscriptions ADD CONSTRAINT subscriptions_checkout_unique UNIQUE(organization_id,checkout_id);

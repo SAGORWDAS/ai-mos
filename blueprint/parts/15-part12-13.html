@@ -1,0 +1,157 @@
+<!-- ============ PART 12 ============ -->
+<div class="part">
+  <div class="part-head">
+    <p class="eyebrow">Part 12</p>
+    <h1 class="part-title">Economics</h1>
+  </div>
+
+  <p class="lede">This part contains illustrative numbers. They exist to show the shape of the calculation and the relative weight of each cost line — not to be quoted to a customer or a board without re-measurement.</p>
+
+  <h2>12.1 Anatomy of one acquisition</h2>
+  <p>Cost per qualified lead is the sum of five lines. Only one of them is inference.</p>
+
+  <table>
+    <thead><tr><th style="width:44mm">Cost line</th><th style="width:26mm">Per 100 leads</th><th style="width:18mm">Share</th><th>Driven by</th></tr></thead>
+    <tbody>
+      <tr><td>Prospect data and enrichment</td><td class="num">$8 – $40</td><td class="num">40 – 60%</td><td>Provider price per record, match rate, re-enrichment policy.</td></tr>
+      <tr><td>Sending infrastructure</td><td class="num">$3 – $15</td><td class="num">15 – 30%</td><td>Mailboxes, ESP plan, domain warm-up time.</td></tr>
+      <tr><td>Human review</td><td class="num">$2 – $20</td><td class="num">10 – 30%</td><td>Minutes per approved batch × hourly rate. Often the largest controllable line.</td></tr>
+      <tr><td>Model inference</td><td class="num">$0.02 – $0.30</td><td class="num">under 2%</td><td>Task count × tokens × tier. At founder volume this is the smallest line by an order of magnitude.</td></tr>
+      <tr><td>Infrastructure amortised</td><td class="num">$0.50 – $2</td><td class="num">1 – 5%</td><td>VPS, database, object storage, monitoring.</td></tr>
+    </tbody>
+  </table>
+
+  <p class="small"><strong>Worked example (illustrative).</strong> 100 discovered prospects → 60 qualified → 55 delivered → 6 replies → 2 meetings → 1 customer. At $25 data, $8 sending, $10 review, $0.15 inference and $1 infrastructure, fully-loaded cost per won customer is about <span class="mono">$44</span> and cost per qualified lead about <span class="mono">$0.74</span>. Change the reply-to-meeting rate and the same campaign costs $90 or $30 per customer — which is why the instrumented funnel matters more than the token price.</p>
+
+  <div class="callout">
+    <span class="label">The number that governs pricing</span>
+    <p>Cost per <em>won customer</em>, not cost per lead. A campaign can look cheap per lead and be ruinous per customer if qualification is loose. Every campaign screen must show both, and the second must be computed from verified payments.</p>
+  </div>
+
+  <h2>12.2 Per-workflow model</h2>
+  <table class="tight">
+    <thead><tr><th style="width:30mm">Workflow</th><th style="width:34mm">Dominant cost</th><th style="width:26mm">Illustrative run cost</th><th>What must be capped</th></tr></thead>
+    <tbody>
+      <tr><td>WKF-A Marketing campaign</td><td>Research + content tokens</td><td class="num">$0.60 – $4.00</td><td>Research depth, number of drafts, QA passes.</td></tr>
+      <tr><td>WKF-B Lead generation, 200 prospects</td><td>Data provider</td><td class="num">$20 – $80</td><td>Per-record price, enrichment calls, re-run policy.</td></tr>
+      <tr><td>WKF-C Reply handling</td><td>Human review</td><td class="num">$0.02 – $0.20</td><td>Auto-send threshold, escalation rate.</td></tr>
+      <tr><td>WKF-D Meeting scheduling</td><td>Negligible</td><td class="num">$0.01 – $0.05</td><td>Retry storms on calendar APIs.</td></tr>
+      <tr><td>WKF-E Onboarding</td><td>Content generation</td><td class="num">$0.20 – $1.50</td><td>Sequence length, regeneration on edit.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>12.3 Infrastructure baseline</h2>
+  <table class="tight">
+    <thead><tr><th style="width:44mm">Component</th><th style="width:30mm">Illustrative monthly</th><th>Scaling note</th></tr></thead>
+    <tbody>
+      <tr><td>Application + worker host</td><td class="num">$20 – $60</td><td>Vertical until queue latency demands a second worker.</td></tr>
+      <tr><td>Managed PostgreSQL</td><td class="num">$15 – $80</td><td>Backups and PITR are the reason to pay, not CPU.</td></tr>
+      <tr><td>Redis</td><td class="num">$5 – $20</td><td>Can be co-located initially; separate once jobs are business-critical.</td></tr>
+      <tr><td>Object storage</td><td class="num">$1 – $10</td><td>Documents and generated assets.</td></tr>
+      <tr><td>Error tracking and logs</td><td class="num">$0 – $30</td><td>Free tiers are adequate through PH-3.</td></tr>
+      <tr><td>Total baseline</td><td class="num">$40 – $200</td><td>Before any inference, data or sending spend.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>12.4 The pricing question, stated properly</h2>
+  <p>Three viable models, with the constraint each imposes on the build:</p>
+  <table class="tight">
+    <thead><tr><th style="width:30mm">Model</th><th style="width:44mm">Fits which customer</th><th>Requires from the build</th></tr></thead>
+    <tbody>
+      <tr><td>Seat subscription</td><td>Agencies, teams</td><td>Roles, invitations, per-seat limits, and usage caps to protect margin.</td></tr>
+      <tr><td>Usage-based (per lead, per campaign)</td><td>SaaS founders</td><td>Accurate, per-unit cost attribution — which this architecture provides by design.</td></tr>
+      <tr><td>Flat with a workflow cap</td><td>Early adopters</td><td>Hard budget enforcement (Part 5.4) and a visible overage path.</td></tr>
+    </tbody>
+  </table>
+  <p class="small">The architecture deliberately makes usage-based pricing possible: every action carries tenant, campaign, task and cost. Whether the business chooses to charge that way is a commercial decision, but it should not be foreclosed by a schema that cannot attribute cost.</p>
+
+  <h2>12.5 The operating cost target</h2>
+  <p>For a founder running one product at low volume, inference should cost <strong>under $1 per month</strong>. That is not optimism — it follows from the unit price of a task, and it is worth stating as a target because it changes what you optimise.</p>
+
+  <table class="tight">
+    <thead><tr><th style="width:52mm">Work at 200 leads / month</th><th style="width:20mm">Unit</th><th style="width:18mm">Volume</th><th>Monthly</th></tr></thead>
+    <tbody>
+      <tr><td>Classification, extraction, scoring (T1)</td><td class="num">$0.0002</td><td class="num">~400</td><td class="num">$0.08</td></tr>
+      <tr><td>Drafting, replies (T1)</td><td class="num">$0.0002</td><td class="num">~250</td><td class="num">$0.05</td></tr>
+      <tr><td>Planning and strategy (T2)</td><td class="num">$0.002</td><td class="num">~25</td><td class="num">$0.05</td></tr>
+      <tr><td><strong>Total inference</strong></td><td></td><td></td><td class="num"><strong>≈ $0.16</strong></td></tr>
+    </tbody>
+  </table>
+
+  <p>Default envelopes, set in <span class="mono">spec/ai-mos.spec.yaml#budgets</span> and enforced before dispatch: <span class="mono">$0.02</span> per task, <span class="mono">$0.50</span> per workflow run, <span class="mono">$0.10</span> per agent per day, <span class="mono">$2.00</span> per organisation per month. The ceiling exists to stop a runaway loop, not to authorise spending — normal use sits an order of magnitude below it.</p>
+
+  <div class="trap">
+    <span class="label">Two honest caveats</span>
+    <p><strong>Credit is sold in blocks.</strong> Providers top up in $5 or similar increments, so the card moves in steps even when usage is cents. A $0.16 month still debits $5 once.</p>
+    <p><strong>Inference is not your fixed cost.</strong> Once hosted, infrastructure is $40–200 per month — the thing that actually dominates a quiet month. If the target is genuinely "under $1 in total", that means running the stack locally in Docker through PH-3 and deploying only when there is a customer paying for it. The plan supports that: nothing in PH-1 to PH-3 requires a server.</p>
+  </div>
+
+  <p class="small">The number to watch is not the monthly invoice but cost per qualified lead — and at these prices inference contributes less than a cent to it. If your CPL is $0.74, model spend is 0.2% of the story and the other 99.8% is data, sending and your own review time.</p>
+</div>
+
+<!-- ============ PART 13 ============ -->
+<div class="part">
+  <div class="part-head">
+    <p class="eyebrow">Part 13</p>
+    <h1 class="part-title">Risks and decisions</h1>
+  </div>
+
+  <h2>13.1 Risk register</h2>
+  <table>
+    <thead><tr><th style="width:8mm">#</th><th style="width:44mm">Risk</th><th style="width:14mm">Likelihood</th><th style="width:12mm">Impact</th><th>Mitigation and early signal</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">R-1</td><td>Deliverability collapse: domain lands in spam, replies stop</td><td>High</td><td>Severe</td><td>Separate sending subdomain, warm-up, caps, complaint thresholds wired to auto-pause. Signal: bounce &gt; 3% or complaint &gt; 0.1%.</td></tr>
+      <tr><td class="mono">R-2</td><td>Payment provider unavailable in the operating jurisdiction</td><td>Medium</td><td>Severe</td><td>PH-0 gate; adapter interface; documented alternative. Signal: no merchant account by PH-0 exit.</td></tr>
+      <tr><td class="mono">R-3</td><td>Model quality insufficient for grounded outreach</td><td>Medium</td><td>High</td><td>Golden set at PH-0; tier escalation; claim validation makes failure visible rather than silent.</td></tr>
+      <tr><td class="mono">R-4</td><td>Scope inflation back toward 23 parallel modules</td><td>High</td><td>High</td><td>Part 1.4 exclusion list is contractual; a new module needs a phase and an owner.</td></tr>
+      <tr><td class="mono">R-5</td><td>Cross-tenant leakage</td><td>Low</td><td>Severe</td><td>RLS from migration 01; per-table isolation tests; second-tenant audit at PH-6.</td></tr>
+      <tr><td class="mono">R-6</td><td>Approval fatigue — owner rubber-stamps batches</td><td>High</td><td>Medium</td><td>Batch limits, high-signal review UI, sampling with audit. Signal: median approval time under 3 seconds.</td></tr>
+      <tr><td class="mono">R-7</td><td>Cost per lead understated by ignoring human time</td><td>Medium</td><td>High</td><td>Instrument review minutes from PH-2; CPL includes labour.</td></tr>
+      <tr><td class="mono">R-8</td><td>Provider API changes or price shifts</td><td>Medium</td><td>Medium</td><td>Adapters, registry, price snapshots, eval-gated promotion.</td></tr>
+      <tr><td class="mono">R-9</td><td>Single-operator bus factor</td><td>High</td><td>High</td><td>Documented restore, runbooks, no exotic infrastructure, this document as the interface.</td></tr>
+      <tr><td class="mono">R-10</td><td>Regulatory exposure in cold outreach</td><td>Medium</td><td>High</td><td>Lawful-basis field, suppression list, jurisdiction gating, opt-out in every bulk message.</td></tr>
+      <tr><td class="mono">R-11</td><td>Agent hallucination in a customer-facing reply</td><td>Medium</td><td>High</td><td>Retrieval-only facts, prohibited-claim validation, confidence thresholds, L4 off by default.</td></tr>
+      <tr><td class="mono">R-12</td><td>Cost overrun from runaway retries</td><td>Medium</td><td>Medium</td><td>Attempt caps, per-task budgets, dead-letter queue, alert on retry rate.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>13.2 Decisions taken by this document</h2>
+  <p>Each decision is recorded with the alternative that was rejected, so it can be reopened deliberately rather than by accident.</p>
+  <table class="tight">
+    <thead><tr><th style="width:16mm">ADR</th><th style="width:44mm">Decision</th><th style="width:40mm">Rejected alternative</th><th>Reason</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">ADR-01</td><td>Payment provider chosen at PH-0, behind an adapter</td><td>Assume a global provider works</td><td>Eligibility is jurisdictional and can invalidate the revenue loop.</td></tr>
+      <tr><td class="mono">ADR-02</td><td>Seven services, twenty-three modules</td><td>One service per module</td><td>Most modules are views over shared tables; service count drives operational cost.</td></tr>
+      <tr><td class="mono">ADR-03</td><td>RLS in the database from migration 01</td><td>Application-level tenancy filters</td><td>A single missed filter is a breach; the database cannot forget.</td></tr>
+      <tr><td class="mono">ADR-04</td><td>Task graph in Postgres, not an orchestration framework</td><td>LangGraph or similar from day one</td><td>A DAG of rows is debuggable with SQL; frameworks earn their place after the workflow is known.</td></tr>
+      <tr><td class="mono">ADR-05</td><td>OpenRouter as the single model gateway</td><td>Direct provider SDKs</td><td>Model choice becomes configuration and cost attribution becomes trivial.</td></tr>
+      <tr><td class="mono">ADR-06</td><td>Model identifiers are registry data, never code</td><td>Hardcoded model strings</td><td>Model churn is certain; a string in code makes it a migration.</td></tr>
+      <tr><td class="mono">ADR-07</td><td>Dedicated ESP for bulk, mailbox API for conversations</td><td>Gmail for everything</td><td>Reputation isolation and quota survival; one bad campaign should not damage the primary domain.</td></tr>
+      <tr><td class="mono">ADR-08</td><td>Approvals bound to a payload hash, single-use</td><td>Approve a campaign once, send later</td><td>Otherwise approval of 200 becomes authorisation of 2,000.</td></tr>
+      <tr><td class="mono">ADR-09</td><td>Payment state written only by verified webhook</td><td>Trust a checkout redirect or agent inference</td><td>Money must be a fact, not an interpretation.</td></tr>
+      <tr><td class="mono">ADR-10</td><td>No scraping, no access-control bypass, in any phase</td><td>Aggressive acquisition tactics</td><td>Channel bans destroy the product; the commercial risk exceeds the gain.</td></tr>
+      <tr><td class="mono">ADR-11</td><td>Single VPS with Docker Compose through PH-4</td><td>Kubernetes</td><td>Operable by one person; scale is a measured problem, not a predicted one.</td></tr>
+      <tr><td class="mono">ADR-12</td><td>L4 autonomy off by default, per action class</td><td>Global autonomy switch</td><td>Autonomy should be earned per behaviour, with a digest to prove it.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>13.3 Deltas from the source brief</h2>
+  <p>Where this document departs from the original brief, and why. Each delta is a deliberate engineering judgement, not a preference.</p>
+  <table class="tight">
+    <thead><tr><th style="width:46mm">Brief said</th><th style="width:46mm">This blueprint</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td>23 modules, each a product area</td><td>7 services, 23 navigation modules</td><td>Eleven modules are reads over another module's tables.</td></tr>
+      <tr><td>20 agents as distinct systems</td><td>1 engine + 20 manifests</td><td>Logging, permissions, budgets and evaluation must be uniform.</td></tr>
+      <tr><td>Phases in weeks 1–12</td><td>7 phases with entry and exit gates</td><td>Provider approval and quality gates are not schedulable by estimate.</td></tr>
+      <tr><td>"Use GLM Flash / Muse Ember" as fixed choices</td><td>Tier logic is binding; identifiers are unverified registry entries</td><td>Model catalogues change; a stale string in a spec becomes a production failure.</td></tr>
+      <tr><td>n8n as a core automation layer</td><td>Optional edge glue only</td><td>Business logic and credentials must live where they are tested and audited.</td></tr>
+      <tr><td>Gmail API for email execution</td><td>Split: mailbox API for conversation, ESP for bulk</td><td>Per-mailbox quotas and reputation isolation.</td></tr>
+      <tr><td>Cost example ≈ $0.0063 per task</td><td>Correct, but explicitly inference-only</td><td>Data, sending and review dominate real acquisition cost.</td></tr>
+      <tr><td>Free OpenRouter tier noted</td><td>Development experiments only</td><td>Request limits make it unusable for production workflows.</td></tr>
+      <tr><td>Open rate implied as a marketing metric</td><td>Explicitly excluded from decision-making</td><td>Privacy proxies generate false opens.</td></tr>
+      <tr><td>LangGraph "introduced gradually"</td><td>Deferred until a measured need (ADR-04)</td><td>Premature orchestration frameworks are expensive to reverse.</td></tr>
+      <tr><td>Agents "use connected business tools"</td><td>Agents request; a gateway validates and executes</td><td>Unrestricted tool access is unauditable and unsafe.</td></tr>
+      <tr><td>Compliance implied by policy text</td><td>Lawful basis, suppression and unsubscribe as schema fields</td><td>A policy that is not in the data model is a hope.</td></tr>
+    </tbody>
+  </table>
+</div>

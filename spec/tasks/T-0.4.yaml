@@ -1,0 +1,23 @@
+# T-0.4 — Sending domain and DNS
+# Generated from spec/ai-mos.spec.yaml + blueprint/tasks.js. Do not edit alone.
+
+id: T-0.4
+phase: PH-0
+kind: ops
+blocking: true
+title: Sending domain and DNS
+context_budget_tokens: 1500
+load_only:
+  - master §9.3
+files_create:
+  - docs/ops/email-setup.md
+steps:
+  - register or delegate a sending subdomain
+  - publish SPF, DKIM, DMARC
+  - verify with a DNS check tool
+done_when:
+  - all three records verify; return-path documented
+do_not:
+  - do not send from the primary business domain
+  - do not start another task in this session
+  - do not invent a table, endpoint, tool or model id

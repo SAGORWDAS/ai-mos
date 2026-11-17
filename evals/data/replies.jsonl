@@ -1,0 +1,3 @@
+{"id":"r-001","text":"Thanks for reaching out. Can you tell me how the HubSpot sync works and how long setup takes?","label":"interested","confidence_expected":0.9,"notes":"example row — real questions, no price"}
+{"id":"r-002","text":"What does this cost for a team of five?","label":"pricing_question","confidence_expected":0.95,"notes":"price question always escalates"}
+{"id":"r-003","text":"Please remove me from this list immediately.","label":"unsubscribe","confidence_expected":0.99,"notes":"suppression must be written before anything else"}

@@ -1,0 +1,345 @@
+<!-- ============ APPENDIX A ============ -->
+<div class="part">
+  <div class="part-head">
+    <p class="eyebrow">Appendix A</p>
+    <h1 class="part-title">Machine-readable<br>specification</h1>
+  </div>
+
+  <style>
+    pre.spec-long { break-inside: auto; page-break-inside: auto; font-size: 7.2pt; line-height: 1.38; }
+  </style>
+
+  <p class="lede">The complete specification as data. This is the artifact an automated coding agent should ingest first; the prose in Parts 1–14 exists to explain it to humans.</p>
+
+  <table class="tight">
+    <thead><tr><th style="width:34mm">Property</th><th>Value</th></tr></thead>
+    <tbody>
+      <tr><td>Path</td><td class="mono">spec/ai-mos.spec.yaml</td></tr>
+      <tr><td>Status</td><td>Normative. Overrides prose where they disagree.</td></tr>
+      <tr><td>Contents</td><td>Services · 23 modules · 20 agents · 18 tools · 7 phases · 58 tasks · state machines · approval matrix · 14 acceptance tests · 5 workflows · model registry</td></tr>
+      <tr><td>Ingest order</td><td><span class="mono">phases[].tasks</span> → task <span class="mono">dod</span> → referenced schema → invariants → gate sequence. A task's <span class="mono">depends</span> may point at an earlier phase; that means the earlier phase must be complete.</td></tr>
+      <tr><td>Do not</td><td>Add a module, agent, tool, phase or task that is not listed. Propose the addition as a document revision instead.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <span class="label">How a coding agent should use this</span>
+    <p>Read <span class="mono">phases</span> in order. Within a phase, execute tasks whose <span class="mono">depends</span> are all satisfied. For each task, implement exactly its <span class="mono">deliverable</span>, and stop when its <span class="mono">dod</span> holds. The <span class="mono">acceptance_tests</span> list is the definition of correct; the <span class="mono">definition_of_done</span> list is the definition of finished.</p>
+  </div>
+
+  <pre class="spec-long">{{INCLUDE:spec/ai-mos.spec.yaml}}</pre>
+</div>
+
+<!-- ============ APPENDIX B ============ -->
+<div class="part">
+  <div class="part-head">
+    <p class="eyebrow">Appendix B</p>
+    <h1 class="part-title">Structured output schemas</h1>
+  </div>
+
+  <style>
+    pre.schema { font-size: 6.95pt; line-height: 1.34; break-inside: auto; page-break-inside: auto; }
+  </style>
+
+  <p class="lede">Agent outputs are contracts, not prose. These schemas are validated on every response, and a validation failure is a task failure — not a reason to parse loosely.</p>
+
+  <p class="small">Stored at <span class="mono">spec/schemas/</span>. Two are shown here; <span class="mono">approval_request.json</span> and <span class="mono">lead_record.json</span> follow the same conventions.</p>
+
+  <h2>B.1 Execution plan</h2>
+  <p class="small">Produced by AGT-01. If <span class="mono">missing_information</span> is non-empty the plan is not executable and is returned to the user rather than run.</p>
+  <pre class="schema">{{INCLUDE:spec/schemas/plan.json}}</pre>
+
+  <h2>B.2 Outreach draft</h2>
+  <p class="small">Produced by AGT-07. Every item in <span class="mono">claims</span> must carry a brand chunk id; validation rejects the draft otherwise (AC-14).</p>
+  <pre class="schema">{{INCLUDE:spec/schemas/outreach_draft.json}}</pre>
+
+  <div class="trap">
+    <span class="label">Schema discipline</span>
+    <p><span class="mono">additionalProperties: false</span> is deliberate. A model that invents a field is signalling that the prompt and the schema disagree; allowing the extra field hides the defect and lets an uncontrolled value reach the database.</p>
+  </div>
+</div>
+
+<!-- ============ APPENDIX C ============ -->
+<div class="part">
+  <div class="part-head">
+    <p class="eyebrow">Appendix C</p>
+    <h1 class="part-title">Manifest template and<br>prompt library</h1>
+  </div>
+
+  <p class="lede">Prompts are versioned assets with tests, exactly like code. They are never edited in production, and they are never the mechanism that enforces a rule.</p>
+
+  <h2>C.1 Blank manifest</h2>
+  <pre>id: AGT-nn
+name: &lt;Role Name&gt;
+version: 1
+status: draft            # draft | active | deprecated
+
+persona: |
+  &lt;2-5 sentences. What this role does, what it never does, and how it fails.&gt;
+
+model:
+  tier: T1               # T1 | T2 | T3 — routing may escalate within ceiling
+  fallback_tier: T2
+  temperature: 0.2
+  max_input_tokens: 6000
+  max_output_tokens: 1200
+
+tools:
+  allowed: []            # TLS ids only
+  forbidden: []
+
+permissions:
+  autonomy_ceiling: L2
+  max_actions_per_task: 1
+  budgets: { task_usd: 0.02, day_usd: 5.00 }
+
+io:
+  input_schema: schemas/&lt;name&gt;_input.json
+  output_schema: schemas/&lt;name&gt;.json
+
+memory:
+  brand_brain: retrieval
+  conversation_history: 0
+  learned_lessons: false
+
+guards:
+  claim_check: required
+  banned_phrases: brand/claims.yaml#prohibited
+  max_words: 200
+
+escalation:
+  on_validation_failure: retry_with_fallback_tier_once
+  on_low_confidence: human
+  on_policy_reject: human_notify
+
+eval:
+  dataset: evals/&lt;role&gt;_golden.jsonl
+  min_score: 0.75
+  metrics: [groundedness, relevance, format]</pre>
+
+  <h2>C.2 AI CMO system prompt — v1.0</h2>
+  <p class="small">Version-controlled, hashed, and referenced by <span class="mono">agents.config.prompt_version</span>. Changing one word creates a new version and requires the golden set to pass before promotion.</p>
+
+  <pre>You are the Chief Marketing and Growth Officer of AI-MOS.
+
+MISSION
+Help the business reach measurable growth through marketing, lead generation,
+sales and retention — at the lowest sustainable operating cost.
+
+OBJECTIVES, IN ORDER
+1 Generate qualified leads.
+2 Increase conversion of leads to customers.
+3 Reduce acquisition cost per won customer.
+4 Reduce manual work per outcome.
+5 Increase retention and recurring revenue.
+
+PRINCIPLES
+- Optimise for business outcome per unit of fully-loaded cost, not for task count.
+- Understand the objective before executing. If critical information is missing,
+  return it in missing_information and stop. Never guess a price, a capability,
+  a testimonial or a guarantee.
+- Use the organisation Brand Brain as the only source of product facts.
+- Decompose the objective into the smallest set of tasks that produces the outcome.
+- Assign each task to the role whose manifest permits it; never invent a role.
+- Prefer the cheapest model tier that meets the required quality. Escalate on
+  impact, uncertainty or a failed evaluation — never on the agent's name.
+- Never duplicate work. Check existing tasks, leads and campaigns before creating.
+- Define a success metric for every task you create.
+
+TASK EXECUTION
+1 Restate the desired outcome.
+2 Identify the audience and the segment.
+3 Load the relevant Brand Brain passages.
+4 List missing information; stop if it blocks execution.
+5 Produce a plan conforming to the ExecutionPlan schema.
+6 Attach dependencies so that nothing runs before its input exists.
+7 Estimate cost using the registry prices; include data and sending where relevant.
+8 Mark every task that requires approval, and say which approval.
+9 State the risks that would make this plan fail.
+
+PERMISSIONS — HARD CONSTRAINTS
+- Never bypass approval. Never spend money. Never set or change a price.
+- Never commit to terms, discounts or refunds.
+- Never claim an action succeeded without a tool result confirming it.
+- Respect suppression and consent without exception.
+- Escalate sensitive, disputed or legally consequential conversations.
+
+OUTPUT
+Return only the ExecutionPlan object. No prose outside the schema.
+If the plan cannot be produced, return final_status: blocked with the reason.
+
+SUCCESS
+The best measurable business result at acceptable cost and acceptable risk —
+not the largest number of tasks.</pre>
+
+  <p class="tiny">Prompt version 1.0 · hash recorded in the agent manifest · evaluation set <span class="mono">evals/cmo_golden.jsonl</span> · owned by Product · reviewed at each phase exit. This prompt constrains behaviour; it does not enforce it. Enforcement is Part 3.4.</p>
+</div>
+
+<!-- ============ APPENDIX D ============ -->
+<div class="part">
+  <div class="part-head">
+    <p class="eyebrow">Appendix D</p>
+    <h1 class="part-title">Glossary</h1>
+  </div>
+
+  <table class="tight">
+    <thead><tr><th style="width:38mm">Term</th><th>Meaning in this document</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Agent</strong></td><td>A configured role executed by the shared runtime: instructions, tools, model tier, permissions and output schema.</td></tr>
+      <tr><td><strong>Autonomy level (L1–L4)</strong></td><td>How much an agent may do without a human: read, draft, execute-with-approval, limited pre-authorised effects.</td></tr>
+      <tr><td><strong>Brand Brain</strong></td><td>Structured business knowledge plus indexed documents. The only permitted source of product facts.</td></tr>
+      <tr><td><strong>Campaign</strong></td><td>The join key binding a segment, message, channel and budget, so that cost and outcome are attributable.</td></tr>
+      <tr><td><strong>Command</strong></td><td>A natural-language objective entered in MOD-02 and converted into a validated objective and plan.</td></tr>
+      <tr><td><strong>Deterministic-first</strong></td><td>The rule that calculations, filtering, scheduling and state transitions are code, never model output.</td></tr>
+      <tr><td><strong>Eval / golden set</strong></td><td>A labelled dataset from the business's own history used to score a role or model before promotion.</td></tr>
+      <tr><td><strong>Gate</strong></td><td>An entry or exit condition for a phase, proven by a demonstration rather than by a checklist.</td></tr>
+      <tr><td><strong>Idempotency key</strong></td><td>A unique key that makes a repeated request return the original result instead of executing twice.</td></tr>
+      <tr><td><strong>Invariant</strong></td><td>A rule that must hold at all times, enforced in the database or gateway, and covered by a named test.</td></tr>
+      <tr><td><strong>Ledger (cost)</strong></td><td>One row per model call and per external cost, from which all cost reporting is derived.</td></tr>
+      <tr><td><strong>Manifest</strong></td><td>The configuration file that defines an agent role.</td></tr>
+      <tr><td><strong>Payload hash</strong></td><td>A digest of an approval's exact content; a change voids the approval.</td></tr>
+      <tr><td><strong>RLS</strong></td><td>Row-level security in PostgreSQL; the mechanism that makes tenant isolation a database guarantee.</td></tr>
+      <tr><td><strong>Suppression</strong></td><td>A permanent record that an address must never be contacted, checked inside the send tool.</td></tr>
+      <tr><td><strong>Task</strong></td><td>A unit of delegated work with a state machine, a cost, an owner agent and possibly an approval.</td></tr>
+      <tr><td><strong>Tier (T1–T3)</strong></td><td>Model cost and capability class, resolved per task from impact, uncertainty and quality needs.</td></tr>
+      <tr><td><strong>Tool gateway</strong></td><td>The only egress to the outside world; runs the nine-step gate sequence before any effect.</td></tr>
+      <tr><td><strong>WKF-A…E</strong></td><td>The five operating workflows that constitute the product's behaviour.</td></tr>
+      <tr><td><strong>Workspace / tenant</strong></td><td>An organisation: the isolation boundary for every row, budget, credential and audit entry.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>E. References</h2>
+  <p class="small">Only sources cited in the source brief, listed for the builder's convenience. Verify all pricing, limits and API behaviour at build time — none of the figures in this document are contracts.</p>
+  <table class="tight">
+    <thead><tr><th style="width:38mm">Resource</th><th>Use</th></tr></thead>
+    <tbody>
+      <tr><td>OpenRouter — model catalogue</td><td>Resolve the model identifiers in the registry; confirm capability and context limits.</td></tr>
+      <tr><td>OpenRouter — pricing and billing</td><td>Confirm per-token prices, platform fees and free-tier limits before any cost claim.</td></tr>
+      <tr><td>OpenRouter — API quickstart</td><td>Request shape, authentication, streaming.</td></tr>
+      <tr><td>OpenRouter — provider routing and fallback</td><td>Fallback behaviour when a provider is unavailable.</td></tr>
+      <tr><td>OpenRouter — prompt caching</td><td>Stable-prefix caching, used for system instructions.</td></tr>
+      <tr><td>OpenRouter — structured outputs</td><td>Schema-enforced JSON, used by every agent output.</td></tr>
+      <tr><td>Provider API documentation</td><td>Gmail, Google Calendar, Microsoft Graph, payment provider, ads platforms — scopes, quotas, webhook signatures.</td></tr>
+    </tbody>
+  </table>
+
+  <hr class="rule">
+
+  <p class="small"><strong>Appendices continue.</strong> The final appendix is an honest assessment of what this plan does and does not guarantee — read it before committing budget.</p>
+</div>
+
+<!-- ============ APPENDIX F ============ -->
+<div class="part">
+  <div class="part-head">
+    <p class="eyebrow">Appendix F</p>
+    <h1 class="part-title">Reality check and<br>corporate path</h1>
+  </div>
+
+  <p class="lede">Everything above is buildable. That is a different claim from "this will sell any product to any market", and the difference decides whether the project is worth starting.</p>
+
+  <h2>F.1 What is genuinely realistic here</h2>
+  <p>Nothing in Parts 1–14 depends on a research breakthrough or an API that does not exist. Every integration is a documented public API; every phase has an exit that can be demonstrated in an afternoon; every component is sized for a small team working in sequence rather than for an organisation running in parallel. The engineering risk is ordinary: integration quirks, deliverability, data quality, and the discipline of keeping a system honest about what it actually did.</p>
+  <p>The risk that matters is not technical. It is that the parts of the plan which are <em>not</em> code — the offer, the list, the sending reputation, the daily approval habit — are the parts that decide whether anything works.</p>
+
+  <h2>F.2 Four claims from the original brief that do not survive contact</h2>
+  <table>
+    <thead><tr><th style="width:52mm">The brief implied</th><th style="width:44mm">What is actually true</th><th>Consequence for the plan</th></tr></thead>
+    <tbody>
+      <tr><td>The whole platform in roughly twelve weeks</td><td>A first usable slice in that order of effort; the full 23-module surface over several months, with two of those months spent on integrations and deliverability rather than features.</td><td>Gates replace dates (Part 11). Only PH-0 through PH-3 matter for the first proof.</td></tr>
+      <tr><td>Twenty agents is the product</td><td>Twenty roles are configuration. The durable advantages are the approval workflow, the accumulated brand and campaign data, the send reputation, and the cost ledger.</td><td>Build one engine. Ship ten roles. Treat the rest as later releases.</td></tr>
+      <tr><td>Leads arrive with verified contact data</td><td>Match rates vary by provider, region and seniority; some records will be stale. Verification is an event, not a property.</td><td>Every record carries source and confidence (Part 7). Never promise a verified list.</td></tr>
+      <tr><td>AI does the marketing</td><td>AI does the execution. Positioning, pricing, offer design and the decision to keep going remain human, and are the reason campaigns succeed or fail.</td><td>Brand Brain is human-written on purpose (PH-0, T-0.7).</td></tr>
+    </tbody>
+  </table>
+
+  <h2>F.3 The three gates that decide whether it works</h2>
+  <p>None of them is software. All three can be measured from the first week of real sending, and any one of them can end the venture regardless of code quality.</p>
+  <table>
+    <thead><tr><th style="width:34mm">Gate</th><th style="width:54mm">What it actually is</th><th style="width:34mm">Metric that proves it</th><th>How it fails</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Deliverability</strong></td><td>Whether your messages reach an inbox at all, and whether that stays true as volume grows.</td><td>Bounce &lt; 2%, complaint &lt; 0.1%, inbox placement on seed tests.</td><td>One careless campaign on a cold domain — then the channel is gone and takes weeks to rebuild.</td></tr>
+      <tr><td><strong>Data and lawful basis</strong></td><td>Whether the people you contact are real, relevant and lawfully contactable.</td><td>Valid-contact rate, opt-out rate, reply rate per source.</td><td>Buying volume instead of accuracy. Reply rates collapse and reputation follows.</td></tr>
+      <tr><td><strong>Offer and fit</strong></td><td>Whether the message describes something a stranger wants at that price.</td><td>Reply rate, meeting rate, lead-to-customer conversion.</td><td>Nothing in this system fixes a weak offer. It will just deliver rejection more efficiently.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>F.4 Can this sell "any product"? No — and the distinction is useful</h2>
+  <p>The engine removes the labour bottleneck from a growth motion that already works. It does not create demand, and it does not substitute for product-market fit. Used honestly, that is still an extremely valuable thing to own.</p>
+
+  <table>
+    <thead><tr><th style="width:52mm">This system wins when</th><th>This system loses when</th></tr></thead>
+    <tbody>
+      <tr><td>The niche is narrow and the ICP can be written in one paragraph.</td><td>The product needs a demo before it can be understood.</td></tr>
+      <tr><td>Deal size is low to mid, so volume and a short cycle matter more than relationships.</td><td>Procurement, legal review and six stakeholders decide the purchase.</td></tr>
+      <tr><td>The offer is explainable in a short email and provable in a first call.</td><td>Trust must be established before any conversation is possible.</td></tr>
+      <tr><td>Someone will approve sends daily and read a weekly digest.</td><td>Nobody has twenty minutes a day to review output.</td></tr>
+      <tr><td>The market is not already saturated with automated cold outreach.</td><td>The inbox is already full of identical AI-written pitches.</td></tr>
+      <tr><td>A partner agency resells it across client workspaces.</td><td>Every customer needs a bespoke integration before value.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="trap">
+    <span class="label">The positioning that survives scrutiny</span>
+    <p>Not "an AI sales team". That framing invites the question "then why do I need you", and it collapses the first time a campaign underperforms. The defensible framing is: <em>an execution engine for a growth motion you have already proven, with governance and cost visibility built in.</em> It promises throughput and control, not judgement.</p>
+  </div>
+
+  <h2>F.5 Corporate readiness — what a future enterprise sale actually requires</h2>
+  <p>This architecture is already shaped for it: tenant isolation is a database guarantee, every action is audited, every cost is attributed, every provider sits behind an adapter. What is missing is almost entirely non-AI work, and it should be budgeted as such.</p>
+
+  <table>
+    <thead><tr><th style="width:44mm">Requirement</th><th style="width:44mm">Why the buyer asks</th><th style="width:16mm">Carried by</th><th>Effort</th></tr></thead>
+    <tbody>
+      <tr><td>SSO / SAML + SCIM provisioning</td><td>IT will not approve local passwords for a team</td><td class="mono">PH-6+</td><td>Moderate, well-trodden</td></tr>
+      <tr><td>DPA, subprocessor list, data residency</td><td>Legal sign-off before any pilot</td><td class="mono">PH-5/6</td><td>Legal, not engineering</td></tr>
+      <tr><td>Security questionnaire pack + pen-test summary</td><td>Procurement gate; the same 200 questions every time</td><td class="mono">PH-6</td><td>One-off, reusable</td></tr>
+      <tr><td>SOC 2 Type I, later Type II</td><td>Required by most mid-market and all enterprise buyers</td><td class="mono">post-PH-6</td><td>Months of process, not code</td></tr>
+      <tr><td>Audit export, retention controls, deletion certificates</td><td>Compliance evidence</td><td class="mono">PH-6</td><td>Small — the data model already supports it</td></tr>
+      <tr><td>Uptime SLA, status page, on-call runbook</td><td>Anything customer-facing carries an expectation</td><td class="mono">PH-6</td><td>Operational, ongoing</td></tr>
+      <tr><td>Support tiers and escalation policy</td><td>Enterprise contract term</td><td class="mono">post-PH-6</td><td>People, not features</td></tr>
+      <tr><td>Seats + usage caps + invoicing and POs</td><td>Finance will not pay by card at this size</td><td class="mono">PH-5</td><td>Billing surface, partly built</td></tr>
+      <tr><td>Partner / reseller agreement and margin model</td><td>How agency channels actually scale</td><td class="mono">post-PH-6</td><td>Commercial</td></tr>
+    </tbody>
+  </table>
+  <p class="small">A realistic reading: a self-serve product for founders and small agencies is reachable on this blueprint. A corporate edition is reachable too, but it is a further several months dominated by compliance, procurement and support design. The architecture will not block it. The calendar will.</p>
+
+  <h2>F.6 What will actually go wrong first</h2>
+  <p>Ranked by probability, from the failure modes that end projects of this shape.</p>
+  <table class="tight">
+    <thead><tr><th style="width:8mm">#</th><th style="width:48mm">Failure</th><th style="width:44mm">Early signal</th><th>Cheapest correction</th></tr></thead>
+    <tbody>
+      <tr><td class="num">1</td><td>Deliverability, long before any missing feature</td><td>Bounce over 3%, or inbox placement fails on a seed test</td><td>Slow down, warm up, split domains, cut volume — in that order.</td></tr>
+      <tr><td class="num">2</td><td>Approval fatigue turns review into rubber-stamping</td><td>Median approval time under three seconds</td><td>Batch caps, sampling, and a digest that names what was sent.</td></tr>
+      <tr><td class="num">3</td><td>Data quality, so replies dry up</td><td>Reply rate below 1% on a segment that used to work</td><td>Narrow the ICP before increasing volume.</td></tr>
+      <tr><td class="num">4</td><td>Cost attribution drifts and nobody trusts the numbers</td><td>A campaign cost that cannot be traced to ledger rows</td><td>Refuse to display an unattributed figure at all.</td></tr>
+      <tr><td class="num">5</td><td>Scope creep back toward 23 parallel modules</td><td>A new module appears without a phase or an owner</td><td>The exclusion list in Part 1.4 is contractual.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <span class="label">The test to apply before spending anything</span>
+    <p>Can you show ten real emails that a real prospect replied to, on a domain that still delivers, with the cost of those ten visible? Until that is true, there is no product — only a plan. Every phase before PH-3 exists to make that sentence true as cheaply as possible.</p>
+  </div>
+</div>
+
+<div class="part">
+  <div class="part-head">
+    <p class="eyebrow">Colophon</p>
+    <h1 class="part-title">End of document</h1>
+  </div>
+
+  <p class="small"><strong>AI-MOS-BP-001 · v1.1 · November 2026.</strong> Next revision at the PH-1 exit gate.</p>
+
+  <table class="tight">
+    <thead><tr><th style="width:52mm">Artifact</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">AI-MOS-Blueprint.pdf</td><td>This document. Strategy, architecture, phases, acceptance. For humans and for buyers.</td></tr>
+      <tr><td class="mono">AI-MOS-Build-Pack.pdf</td><td>28-page companion. The only document open while coding.</td></tr>
+      <tr><td class="mono">spec/ai-mos.spec.yaml</td><td>Normative machine-readable specification. Wins over prose.</td></tr>
+      <tr><td class="mono">spec/tasks/T-n.m.yaml</td><td>58 context capsules, ~350 tokens each — what an agent actually loads.</td></tr>
+      <tr><td class="mono">spec/schemas/*.json</td><td>Agent output contracts.</td></tr>
+      <tr><td class="mono">HANDOFF.md</td><td>One-page pointer for a person or an agent picking this up cold.</td></tr>
+    </tbody>
+  </table>
+
+  <p class="small">Where this document and the specification disagree, the specification wins and this document is a defect to be reported.</p>
+</div>
