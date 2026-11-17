@@ -15,6 +15,5 @@ def test_bulk_connection_cannot_activate_without_signed_receipts(clients):
         == 200
     )
     result = a.post("/v1/connections/resend/verify")
-    assert result.status_code == 200
-    assert result.json()["status"] != "verified"
+    assert result.status_code == 409
     assert a.post("/v1/connections/resend/activate").status_code == 409
