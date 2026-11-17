@@ -1,28 +1,17 @@
 # ADR-11 — Single VPS with Docker Compose through PH-4
 
-**Status:** open
-**Raised in:** T-1.1
-**Owner:** —
+**Status:** accepted development deployment; public operations deferred
+**Owner:** Workspace owner for hosting and operations
+**Reviewed:** 17 November 2026
 
 ## Decision
 
-One host, one compose stack, until a measured reason appears.
-
-_Record what you actually chose, in one paragraph, specific to this business._
-
-## Rejected alternative
-
-Kubernetes or a service mesh.
+Use the supplied local launcher or Compose stack until measured capacity requires a different deployment. Preserve private persistent keys and backups; production is not enabled by a placeholder account.
 
 ## Reason
 
-_Why this trade is right here. Be concrete: cost, operability, or a constraint you cannot move._
+Record the implemented boundary and its owner explicitly so a later business can connect accounts without treating placeholder evidence as live acceptance.
 
-## Consequences
+## Consequences and follow-up
 
-_What this makes easy, and what it makes hard. Write the hard part honestly — it is the reason to revisit._
-
-## Closed
-
-Date: —
-Verified by: —
+HTTPS, identity/recovery delivery, monitoring, operational review and live drills remain deployment work. Localhost publication is not internet hosting.

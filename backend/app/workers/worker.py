@@ -1,5 +1,8 @@
 import asyncio
+import json
 import logging
+import logging.config
+from pathlib import Path
 
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
@@ -22,5 +25,9 @@ async def main():
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
+    logging.config.dictConfig(
+        json.loads(
+            (Path(__file__).resolve().parents[1] / "logging.json").read_text(encoding="utf-8")
+        )
+    )
     asyncio.run(main())

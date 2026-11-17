@@ -1,28 +1,17 @@
 # ADR-04 — Task graph in Postgres, not a framework
 
-**Status:** open
-**Raised in:** T-2.3
-**Owner:** —
+**Status:** accepted
+**Owner:** Project maintainer (SAGORWDAS)
+**Reviewed:** 17 November 2026
 
 ## Decision
 
-Orchestration is a DAG of rows in tasks and task_dependencies.
-
-_Record what you actually chose, in one paragraph, specific to this business._
-
-## Rejected alternative
-
-Adopt LangGraph or Temporal from day one.
+Persist plans, tasks, dependencies, leases and effect receipts in the database. Queue claims and idempotency control retries; no external orchestration framework is required by the current bounded workflows.
 
 ## Reason
 
-_Why this trade is right here. Be concrete: cost, operability, or a constraint you cannot move._
+Record the implemented boundary and its owner explicitly so a later business can connect accounts without treating placeholder evidence as live acceptance.
 
-## Consequences
+## Consequences and follow-up
 
-_What this makes easy, and what it makes hard. Write the hard part honestly — it is the reason to revisit._
-
-## Closed
-
-Date: —
-Verified by: —
+Multi-host capacity and outage behavior still require staging drills. Unknown provider outcomes remain reconciliation work.

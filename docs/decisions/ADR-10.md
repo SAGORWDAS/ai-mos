@@ -1,28 +1,17 @@
 # ADR-10 — No scraping, no access-control bypass
 
-**Status:** open
-**Raised in:** the blueprint
-**Owner:** —
+**Status:** accepted controls; contactability policy deferred per market
+**Owner:** Workspace owner for market/contactability policy
+**Reviewed:** 17 November 2026
 
 ## Decision
 
-Prospect data comes only from licensed providers and first-party sources.
-
-_Record what you actually chose, in one paragraph, specific to this business._
-
-## Rejected alternative
-
-Aggressive acquisition through prohibited channels.
+Use configured provider suggestions and bounded public business-page observations with source evidence. Do not guess addresses, bypass access controls or infer marketing permission from publication.
 
 ## Reason
 
-_Why this trade is right here. Be concrete: cost, operability, or a constraint you cannot move._
+Record the implemented boundary and its owner explicitly so a later business can connect accounts without treating placeholder evidence as live acceptance.
 
-## Consequences
+## Consequences and follow-up
 
-_What this makes easy, and what it makes hard. Write the hard part honestly — it is the reason to revisit._
-
-## Closed
-
-Date: —
-Verified by: —
+The observed-source workflow records what was fetched. Data rights, jurisdiction and lawful contactability require an applicable owner policy before sending.

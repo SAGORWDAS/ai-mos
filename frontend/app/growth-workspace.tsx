@@ -18,6 +18,7 @@ import { CreativeAssets, Advertising } from "./growth-extras";
 import UsageBreakdown from "./usage-breakdown";
 import ReplyPolicy from "./reply-policy";
 import CostPlanner from "./cost-planner";
+import QualificationPolicy from "./qualification-policy";
 import { currencies, currencyFactor, displayMoney } from "./money";
 
 type Item = { id: string; created_at: number; [key: string]: unknown };
@@ -838,6 +839,7 @@ export default function GrowthWorkspace({
 
           {section === "Leads & CRM" && (
             <>
+              <QualificationPolicy owner={owner} disabled={!writable || busy} />
               <details className="form-disclosure">
                 <summary>Read a public business contact page</summary>
                 <p className="small muted">
@@ -849,7 +851,10 @@ export default function GrowthWorkspace({
                   submit={(form) =>
                     post(
                       "/v1/prospects/enrich",
-                      keyed(fields(form)),
+                      keyed({
+                        ...fields(form),
+                        refresh: form.get("refresh") === "on",
+                      }),
                       "Website research queued.",
                     )
                   }
@@ -867,6 +872,11 @@ export default function GrowthWorkspace({
                   <label>
                     Company name
                     <input name="company" maxLength={200} />
+                  </label>
+                  <label className="check">
+                    <input type="checkbox" name="refresh" />
+                    Refresh the source now instead of reusing the 90-day
+                    observation cache
                   </label>
                 </Form>
               </details>
@@ -1069,6 +1079,11 @@ export default function GrowthWorkspace({
                     {clean(lead.lawful_basis)}
                   </p>
                   <Evidence value={lead} />
+                  <p className="small muted">
+                    {text(lead, "score_model") === "unscored"
+                      ? "No recorded rubric version"
+                      : `Assessment: ${text(lead, "score_model")} · threshold ${number(lead, "qualification_threshold")}`}
+                  </p>
                   <ContactEditor
                     lead={lead}
                     save={(body) =>
@@ -1147,11 +1162,18 @@ export default function GrowthWorkspace({
                         >
                           <option value="discovered">Discovered</option>
                           <option value="enriched">Enriched</option>
+                          <option value="scored">Scored</option>
                           <option value="qualified">Qualified</option>
                           <option value="disqualified">Disqualified</option>
                           <option value="contacted">Contacted</option>
                           <option value="replied">Replied</option>
                           <option value="meeting_set">Meeting set</option>
+                          <option value="converted" disabled>
+                            Converted (verified payment)
+                          </option>
+                          <option value="suppressed" disabled>
+                            Suppressed
+                          </option>
                           <option value="dormant">Dormant</option>
                         </select>
                       </label>

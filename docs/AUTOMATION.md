@@ -48,3 +48,12 @@ Operations / Automation offers an optional fixed reply template policy. The owne
 Operations / Content prepares private raster illustrations or labelled sandbox fixtures. Advertising freezes exact copy/image, landing page, country, currency, duration, budget and activation choice for owner review. Start with simulated execution. Existing running ads need the dedicated Pause control even when the workspace is stopped. No model budget is represented as an ad spending cap.
 
 Attribution creates signed owned-page enquiry links and reports known model costs, expenses, refunds and funnel credits. Unobserved sources and unknown costs remain explicit. Usage & cost groups actual attempts and drills into request/task IDs; its separate cost planner forecasts from your supplied assumptions without changing any budget.
+
+
+## Research reuse and qualification (0.8.0)
+
+Search reuses the same account/version/query receipt for 24 hours. Observed contact pages reuse the original observation for at most 90 days; choose Refresh the source now for a new read. Reuse does not create a new provider charge or establish permission to contact anyone. An optional contract search price is entered in normal USD in Integrations; missing price stays unknown. Recorded accrual is distinct from an actual provider invoice.
+
+Owners set the qualification threshold in Leads & CRM. Existing scores retain their feature/rubric/threshold snapshot until rescored, and later pipeline stages are preserved. The deterministic rubric uses no paid model call. A campaign's optional USD allowance bounds strategy suggestions; it does not approve ad purchases or replace the separate model budget.
+
+Standing reply authority now requires a clear whole reply, not a keyword alone. Quoted, mixed-intent or uncertain messages stay with a human even when they contain positive words. Raw private message content is not copied into the structured operational logs.

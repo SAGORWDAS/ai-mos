@@ -13,6 +13,11 @@ def upgrade_local(connection):
         "approvals": [("decision_basis", "VARCHAR(200) NOT NULL DEFAULT 'human'")],
         "expenses": [("campaign_id", "VARCHAR(36) REFERENCES campaigns(id)")],
         "leads": [
+            ("source_ref", "VARCHAR(2000) NOT NULL DEFAULT ''"),
+            ("source_observed_at", "FLOAT NOT NULL DEFAULT 0"),
+            ("score_model", "VARCHAR(64) NOT NULL DEFAULT 'unscored'"),
+            ("score_features", "JSON NOT NULL DEFAULT '{}'"),
+            ("qualification_threshold", "INTEGER NOT NULL DEFAULT 65"),
             ("version", "INTEGER NOT NULL DEFAULT 1"),
             ("personalisation", "VARCHAR(400) NOT NULL DEFAULT ''"),
             ("personalisation_evidence", "VARCHAR(2000) NOT NULL DEFAULT ''"),

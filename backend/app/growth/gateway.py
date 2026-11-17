@@ -13,6 +13,7 @@ from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 
 from app.growth.connections import active
 from app.growth.models import Budget, ModelCache, ModelUsage
+from app.observability import emit, task_trace
 from app.tenancy import tenant_scope
 
 
@@ -286,6 +287,37 @@ class ModelGateway:
                         )
                     )
                 await session.commit()
+
+    async def reject(self, task):
+        context = getattr(task, "_model_cache_context", None)
+        if not context:
+            return
+        async with self.factory() as session:
+            await tenant_scope(session, task.organization_id, task.created_by)
+            await session.execute(
+                update(ModelUsage)
+                .where(
+                    ModelUsage.organization_id == task.organization_id,
+                    ModelUsage.id == context["request_id"],
+                )
+                .values(status="invalid_output")
+            )
+            await session.execute(
+                delete(ModelCache).where(
+                    ModelCache.organization_id == task.organization_id,
+                    ModelCache.cache_key == context["key"],
+                )
+            )
+            emit(
+                "model.output_refused",
+                org_id=task.organization_id,
+                task_id=task.id,
+                agent_id=task.agent_id,
+                request_id=context["request_id"],
+                trace_id=await task_trace(session, task.organization_id, task),
+                decision="grounding_rejected",
+            )
+            await session.commit()
 
     async def remember(self, session, task, validated_output):
         context = getattr(task, "_model_cache_context", None)

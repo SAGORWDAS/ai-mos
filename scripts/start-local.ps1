@@ -79,7 +79,7 @@ try {
     $env:DATABASE_URL = 'sqlite+aiosqlite:///' + ((Join-Path $runRoot 'local.db') -replace '\\', '/')
     $env:APP_ENV = 'development'
     $env:BACKEND_URL = 'http://127.0.0.1:8000'
-    $apiProcess = Start-Process -FilePath $pythonExe -ArgumentList @('-m','uvicorn','app.main:app','--host','127.0.0.1','--port','8000') -WorkingDirectory (Join-Path $projectRoot 'backend') -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $runRoot 'api.log') -RedirectStandardError (Join-Path $runRoot 'api-error.log')
+    $apiProcess = Start-Process -FilePath $pythonExe -ArgumentList @('-m','uvicorn','app.main:app','--host','127.0.0.1','--port','8000','--no-access-log','--log-config','app/logging.json') -WorkingDirectory (Join-Path $projectRoot 'backend') -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $runRoot 'api.log') -RedirectStandardError (Join-Path $runRoot 'api-error.log')
     $nextScript = Join-Path $projectRoot 'frontend\node_modules\next\dist\bin\next'
     $webProcess = Start-Process -FilePath $nodeCommand.Source -ArgumentList @('"' + $nextScript + '"','start','-H','127.0.0.1','-p','3000') -WorkingDirectory (Join-Path $projectRoot 'frontend') -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $runRoot 'web.log') -RedirectStandardError (Join-Path $runRoot 'web-error.log')
     @{api=$apiProcess.Id; web=$webProcess.Id} | ConvertTo-Json | Set-Content (Join-Path $runRoot 'processes.json')

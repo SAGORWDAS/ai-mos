@@ -1,28 +1,17 @@
 # ADR-08 — Approvals bound to a payload hash
 
-**Status:** open
-**Raised in:** T-1.8
-**Owner:** —
+**Status:** accepted
+**Owner:** Project maintainer (SAGORWDAS)
+**Reviewed:** 17 November 2026
 
 ## Decision
 
-Approvals are single-use, expire, and are void if the payload changes.
-
-_Record what you actually chose, in one paragraph, specific to this business._
-
-## Rejected alternative
-
-Approve a campaign once and send whatever follows.
+Freeze a versioned payload hash for every external effect. Approvals are expiring and single use; changes to relevant facts, copy or connections invalidate execution.
 
 ## Reason
 
-_Why this trade is right here. Be concrete: cost, operability, or a constraint you cannot move._
+Record the implemented boundary and its owner explicitly so a later business can connect accounts without treating placeholder evidence as live acceptance.
 
-## Consequences
+## Consequences and follow-up
 
-_What this makes easy, and what it makes hard. Write the hard part honestly — it is the reason to revisit._
-
-## Closed
-
-Date: —
-Verified by: —
+Standing authority is restricted to the exact reviewed reply policy and is rechecked before queued delivery. It is not a global approval bypass.

@@ -51,6 +51,7 @@ from app.growth.models import (
     Workflow,
     WorkflowRun,
 )
+from app.growth.qualification import apply_score
 from app.growth.runtime import AGENTS, find, public, record
 from app.models import Brand
 
@@ -167,7 +168,8 @@ def install(app, runtime, settings, db, identity, require, tool_services=None):
             )
         )
         if previous:
-            if previous.type != "plan" or previous.input.get("request") != parsed:
+            prior_request = {"campaign_budget_micros": 0, **previous.input.get("request", {})}
+            if previous.type != "plan" or prior_request != parsed:
                 raise HTTPException(409, "idempotency_key_payload_conflict")
             return {"status": "queued", "task": public(previous)}
         item = Command(
@@ -336,21 +338,16 @@ def install(app, runtime, settings, db, identity, require, tool_services=None):
         item = await find(session, Lead, who["organization"].id, lead_id)
         if item.status == "suppressed":
             raise HTTPException(403, "suppressed_recipient")
-        item.score = min(
-            100,
-            (25 if item.company else 0)
-            + (20 if item.domain else 0)
-            + item.source_confidence // 4
-            + (30 if item.lawful_basis != "not_established" else 0),
-        )
-        item.status = "qualified" if item.score >= 65 else "scored"
+        await apply_score(session, who["organization"].id, item)
         session.add(
             Activity(
                 organization_id=who["organization"].id,
                 lead_id=item.id,
                 actor_id=who["user"].id,
                 action="lead.scored",
-                detail=f"deterministic-v1: {item.score}",
+                detail=(
+                    f"{item.score_model}: {item.score} / threshold {item.qualification_threshold}"
+                ),
             )
         )
         await session.commit()
@@ -974,14 +971,7 @@ def install(app, runtime, settings, db, identity, require, tool_services=None):
         if item.action == "score_lead":
             if subject.status == "suppressed":
                 raise HTTPException(403, "suppressed_recipient")
-            subject.score = min(
-                100,
-                (25 if subject.company else 0)
-                + (20 if subject.domain else 0)
-                + subject.source_confidence // 4
-                + (30 if subject.lawful_basis != "not_established" else 0),
-            )
-            subject.status = "qualified" if subject.score >= 65 else "scored"
+            await apply_score(session, org_id, subject)
             output["score"] = subject.score
         run = WorkflowRun(
             organization_id=org_id,
@@ -1028,6 +1018,26 @@ def install(app, runtime, settings, db, identity, require, tool_services=None):
         who=Depends(identity),
         session=Depends(db),
     ):
+        org_id, actor_id = who["organization"].id, who["user"].id
+        try:
+            return await invoke_tool(tool_id, data, request, who, session)
+        except HTTPException as error:
+            await session.rollback()
+            await record(
+                session,
+                org_id,
+                actor_id,
+                "tool.refused",
+                tool_id,
+                decision="tool_guard_refused",
+                trace=request.state.trace_id,
+                agent_id=data.agent_id,
+                tool_id=tool_id,
+            )
+            await session.commit()
+            raise error
+
+    async def invoke_tool(tool_id, data, request, who, session):
         agent = AGENTS.get(data.agent_id)
         configured = await session.scalar(
             select(Agent).where(
@@ -1183,7 +1193,7 @@ def install(app, runtime, settings, db, identity, require, tool_services=None):
         qualified = await session.scalar(
             select(func.count())
             .select_from(Lead)
-            .where(Lead.organization_id == org_id, Lead.score >= 65)
+            .where(Lead.organization_id == org_id, Lead.score >= Lead.qualification_threshold)
         )
         simulated_revenue = {}
         real_revenue = {}

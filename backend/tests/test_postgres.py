@@ -112,6 +112,61 @@ def test_native_tenfold_worker_burst(pg_clients, monkeypatch):
     test_tenfold_draft_burst_under_four_workers_preserves_jobs(pg_clients, monkeypatch)
 
 
+def test_native_structured_tool_refusals(pg_clients, caplog):
+    from test_observability import (
+        test_tool_rejections_have_structured_logs_and_durable_audit_without_arguments,
+    )
+
+    test_tool_rejections_have_structured_logs_and_durable_audit_without_arguments(
+        pg_clients, caplog
+    )
+
+
+def test_native_command_workflow_trace(pg_clients, caplog):
+    from test_observability import test_command_task_events_share_one_workflow_trace
+
+    test_command_task_events_share_one_workflow_trace(pg_clients, caplog)
+
+
+def test_native_qualification_policy(pg_clients):
+    from test_qualification_policy import (
+        test_scoring_is_versioned_scoped_and_keeps_pipeline_and_contactability,
+    )
+
+    test_scoring_is_versioned_scoped_and_keeps_pipeline_and_contactability(pg_clients)
+
+
+def test_native_search_price_and_cache(pg_clients, monkeypatch):
+    from test_research_cache import test_search_cache_price_accrual_and_account_scope
+
+    test_search_cache_price_accrual_and_account_scope(pg_clients, monkeypatch)
+
+
+def test_native_observation_cache_age(pg_clients, monkeypatch):
+    from test_research_cache import (
+        test_contact_cache_preserves_observation_age_scope_and_force_refresh,
+    )
+
+    test_contact_cache_preserves_observation_age_scope_and_force_refresh(pg_clients, monkeypatch)
+
+
+@pytest.mark.parametrize("kind", ["research", "strategy"])
+def test_native_research_strategy_grounding(pg_clients, kind):
+    from test_planning_evidence import (
+        test_uncited_research_and_invented_strategy_are_costed_rejected_and_not_cached,
+    )
+
+    test_uncited_research_and_invented_strategy_are_costed_rejected_and_not_cached(pg_clients, kind)
+
+
+def test_native_automatic_reply_ambiguity(pg_clients):
+    from test_reply_policy import (
+        test_keyword_confidence_cannot_authorize_ambiguous_or_quoted_reply,
+    )
+
+    test_keyword_confidence_cannot_authorize_ambiguous_or_quoted_reply(pg_clients)
+
+
 @pytest.fixture
 def pg_clients():
     name = "ai_mos_test_" + uuid4().hex

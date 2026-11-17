@@ -1,3 +1,4 @@
+import re
 from types import SimpleNamespace
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -54,6 +55,10 @@ def install_connections(app, settings, db, identity, require):
             raise HTTPException(404, "unknown_provider")
         if not set(data.credentials) <= connections.FIELDS[provider]:
             raise HTTPException(422, "unknown_credential_fields")
+        if provider == "brave" and data.credentials.get("search_price_micros"):
+            price = data.credentials["search_price_micros"]
+            if not re.fullmatch(r"[0-9]{1,10}", price) or int(price) > 1_000_000_000:
+                raise HTTPException(422, "search_price_must_be_nonnegative_USD_micro_units")
         item = await session.scalar(
             select(Integration).where(
                 Integration.organization_id == who["organization"].id,

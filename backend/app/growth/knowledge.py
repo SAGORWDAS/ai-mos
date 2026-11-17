@@ -61,6 +61,16 @@ async def claim_sources(session, brand):
 
 
 async def retrieve(session, org_id, brand_id, query, limit=5):
+    documents = {
+        d.id: d
+        for d in (
+            await session.scalars(
+                select(BrandDocument).where(
+                    BrandDocument.organization_id == org_id, BrandDocument.brand_id == brand_id
+                )
+            )
+        ).all()
+    }
     rows = (
         await session.scalars(
             select(BrandChunk).where(
@@ -79,6 +89,8 @@ async def retrieve(session, org_id, brand_id, query, limit=5):
                     "document_id": chunk.document_id,
                     "content": chunk.content,
                     "score": len(overlap) / max(len(terms), 1),
+                    "source_uri": documents[chunk.document_id].source_uri,
+                    "source_recorded_at": documents[chunk.document_id].created_at,
                 }
             )
     return sorted(ranked, key=lambda row: row["score"], reverse=True)[:limit]
@@ -179,6 +191,10 @@ async def guard_content(session, brand, title, expected_title, body, claims, *, 
 
 
 def classify(body):
+    return {"model_version": "conservative-rules-v2", **_classify(body)}
+
+
+def _classify(body):
     lower = body.lower()
     if re.search(
         r"\b(unsubscribe|remove me|take me off|leave me alone|"

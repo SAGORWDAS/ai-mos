@@ -3,6 +3,7 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { api } from "./api";
 import SetupReadiness from "./setup-readiness";
+import { credentialPayload } from "./connection-values";
 
 type Connection = {
   id: string;
@@ -52,7 +53,14 @@ const fields: Record<Provider, [string, string, boolean][]> = {
     ["sender", "Verified sending address", false],
     ["webhook_secret", "Svix webhook signing secret", true],
   ],
-  brave: [["api_key", "Brave Search API key", true]],
+  brave: [
+    ["api_key", "Brave Search API key", true],
+    [
+      "search_price_micros",
+      "Contract cost per search (USD, optional; blank means unknown)",
+      false,
+    ],
+  ],
   openrouter: [
     ["api_key", "API key", true],
     ["model_id", "Exact model ID", false],
@@ -153,9 +161,7 @@ export default function Connections({ role }: { role: string }) {
           `/v1/connections/${provider}`,
           {
             account_ref: account,
-            credentials: Object.fromEntries(
-              Object.entries(credentials).filter(([, value]) => value),
-            ),
+            credentials: credentialPayload(provider, credentials),
           },
           "PUT",
         ),
@@ -417,7 +423,18 @@ export default function Connections({ role }: { role: string }) {
                 <label key={key}>
                   {label}
                   <input
-                    type={secret ? "password" : "text"}
+                    type={
+                      secret
+                        ? "password"
+                        : key === "search_price_micros"
+                          ? "number"
+                          : "text"
+                    }
+                    min={key === "search_price_micros" ? 0 : undefined}
+                    max={key === "search_price_micros" ? 1000 : undefined}
+                    step={
+                      key === "search_price_micros" ? "0.000001" : undefined
+                    }
                     autoComplete="off"
                     value={credentials[key] || ""}
                     onChange={(e) =>

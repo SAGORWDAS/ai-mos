@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import re
 import time
 from datetime import UTC, datetime
 from types import SimpleNamespace
@@ -100,6 +101,19 @@ async def authority(session, settings, org_id, approval, execution_mode):
             raise HTTPException(409, "standing_reply_connection_changed")
 
 
+def clear_automatic_intent(body):
+    """A classifier score alone cannot authorize a send; require an unambiguous whole reply."""
+    normalized = " ".join(body.lower().split())
+    return bool(
+        re.fullmatch(
+            r"(?:please )?(?:tell me more|send (?:me )?more (?:details|information)|"
+            r"can you send (?:me )?more (?:details|information)|"
+            r"can we schedule a call|let's schedule a call|book a demo)[.!?]*",
+            normalized,
+        )
+    )
+
+
 async def maybe_send(runtime, session, task, draft):
     if task.type != "reply" or not task.input.get("auto_review"):
         return False
@@ -126,6 +140,7 @@ async def maybe_send(runtime, session, task, draft):
         or incoming.classification.get("label") not in {"interested", "meeting_request"}
         or incoming.classification.get("escalate")
         or incoming.classification.get("confidence", 0) < 0.85
+        or not clear_automatic_intent(incoming.body)
         or (
             policy.execution_mode == "live"
             and (incoming.simulated or brand.voice.get("sandbox_only"))

@@ -17,6 +17,7 @@ class CommandInput(Keyed):
     audience: str = Field(default="", max_length=500)
     target: int = Field(default=10, ge=1, le=10000)
     window_days: int = Field(default=30, ge=1, le=365)
+    campaign_budget_micros: int = Field(default=0, ge=0, le=1_000_000_000_000)
 
 
 class LeadInput(EmailInput):
@@ -26,6 +27,7 @@ class LeadInput(EmailInput):
     domain: str = Field(default="", max_length=250)
     source: str = Field(min_length=3, max_length=500)
     source_confidence: int = Field(default=100, ge=0, le=100)
+    source_ref: str = Field(default="", max_length=2000)
     lawful_basis: Literal["consent", "legitimate_interest", "existing_customer", "not_established"]
     basis_evidence: str = Field(min_length=3, max_length=3000)
 

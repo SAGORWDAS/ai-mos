@@ -1,28 +1,17 @@
 # ADR-12 — L4 autonomy off by default
 
-**Status:** open
-**Raised in:** T-3.10
-**Owner:** —
+**Status:** accepted
+**Owner:** Project maintainer (SAGORWDAS)
+**Reviewed:** 17 November 2026
 
 ## Decision
 
-Autonomy is enabled per action class, with caps and a digest.
-
-_Record what you actually chose, in one paragraph, specific to this business._
-
-## Rejected alternative
-
-A single global autonomy switch.
+Autonomy defaults off. The owner may approve one exact inbound reply template with a daily attempt cap and expiry. Require a clear whole reply, current facts/authority, contactability, suppression and budget checks; retain a seven-day effect digest.
 
 ## Reason
 
-_Why this trade is right here. Be concrete: cost, operability, or a constraint you cannot move._
+Record the implemented boundary and its owner explicitly so a later business can connect accounts without treating placeholder evidence as live acceptance.
 
-## Consequences
+## Consequences and follow-up
 
-_What this makes easy, and what it makes hard. Write the hard part honestly — it is the reason to revisit._
-
-## Closed
-
-Date: —
-Verified by: —
+Pricing, refunds, contracts, disputes and ambiguous/quoted replies stay in review. Existing external actions cannot be recalled by a workspace pause.

@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "disable_existing_loggers": false,
+  "formatters": {
+    "events": { "format": "%(message)s" },
+    "default": { "format": "%(levelname)s %(name)s %(message)s" }
+  },
+  "handlers": {
+    "events": { "class": "logging.StreamHandler", "formatter": "events", "stream": "ext://sys.stdout" },
+    "default": { "class": "logging.StreamHandler", "formatter": "default", "stream": "ext://sys.stderr" }
+  },
+  "root": { "handlers": ["default"], "level": "WARNING" },
+  "loggers": {
+    "ai_mos.events": { "handlers": ["events"], "level": "INFO", "propagate": false },
+    "uvicorn.error": { "handlers": ["default"], "level": "INFO", "propagate": false },
+    "uvicorn.access": { "handlers": ["default"], "level": "WARNING", "propagate": false },
+    "httpx": { "level": "WARNING" },
+    "httpcore": { "level": "WARNING" },
+    "sqlalchemy.engine": { "level": "WARNING" }
+  }
+}

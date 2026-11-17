@@ -1,11 +1,11 @@
-# Original plan coverage - v0.7.0
+# Original plan coverage - v0.8.0
 
 **Not all original requirements are complete.** Implemented means the listed application behavior exists with local tests; it does not certify real-account acceptance, every clause of the original capsule, business quality or production operation. Partial means additional development or evidence remains. External gate requires actual business/account input.
 
 See BUILD-STATUS.md for test evidence and RELEASE-VERIFICATION.md for the public release CI result.
 
 
-Review totals: **32 Implemented, 20 Partial, 6 External gate**. See [v0.7.0 verification](VERIFICATION-0.7.0.md) and the historical [v0.5.1 review](REVIEW-2026-11-17.md).
+Review totals: **36 Implemented, 16 Partial, 6 External gate**. See [v0.8.0 verification](VERIFICATION-0.8.0.md) and the historical [v0.5.1 review](REVIEW-2026-11-17.md).
 
 ## PH-0 - Decisions and spikes
 
@@ -20,7 +20,7 @@ Review totals: **32 Implemented, 20 Partial, 6 External gate**. See [v0.7.0 veri
 | T-0.7 | brand brain content | External gate | Brand editor supports inputs; actual ICP/pricing/claims remain user supplied. |
 | T-0.8 | evaluation dataset | Partial | Fixture format and small regressions exist; 100 outreach/200 labelled replies remain. |
 | T-0.9 | cost model worksheet | Partial | Interactive monthly cost/funnel planner, actual ledger and templates exist; real provider prices and review expenses remain owner supplied. |
-| T-0.10 | decision log | Partial | Decision templates preserved; original ADR closure is not asserted. |
+| T-0.10 | decision log | Implemented | All twelve ADRs record an implemented decision or explicit deferral with an assigned maintainer/workspace-owner role; pending model-catalog and live decisions remain visible. |
 
 ## PH-1 - Foundation
 
@@ -29,12 +29,12 @@ Review totals: **32 Implemented, 20 Partial, 6 External gate**. See [v0.7.0 veri
 | T-1.1 | repo CI compose stack | Implemented | Public repository and all four CI jobs passed, including executed Compose HTTP workflow; see RELEASE-VERIFICATION.md. |
 | T-1.2 | auth orgs memberships | Implemented | Signup, owner, roles, invitations, workspace switching, recovery and TOTP tested. |
 | T-1.3 | migrations 01-06 with RLS | Implemented | Versioned migrations and forced RLS cover all current tenant tables. |
-| T-1.4 | ai gateway registry ledger | Implemented | Gateway, schema validation, cost ledger, timeout holds and reconciliation tested. |
+| T-1.4 | ai gateway registry ledger | Partial | Gateway, validation, cost ledger, timeout holds and reconciliation tested. Review found the original verified model/price registry is still missing; configurable model IDs do not substitute for it (ADR-06). |
 | T-1.5 | task runtime and scheduler | Implemented | Durable claims, DAG scheduling, retries and cancellation tested. |
-| T-1.6 | tool gateway and read tools | Partial | All 18 tool IDs route through guarded workflows/read/compute handlers with registry ceilings. Full independent service/tool acceptance remains unasserted. |
+| T-1.6 | tool gateway and read tools | Implemented | All 18 IDs route through schema, permission, policy, budget, approval, idempotency, execution and receipt workflows. Unknown calls, argument/schema failures and guard refusals are durably audited; cross-tenant failure tests pass. |
 | T-1.7 | brand brain | Implemented | Text/PDF/website ingestion and cited keyword/embedding retrieval implemented. |
 | T-1.8 | approvals model and api | Implemented | Frozen payload/hash, expiry, edit invalidation and single execution tested. |
-| T-1.9 | audit logs tracing logging | Partial | Audit/trace and hidden SQL parameters implemented; deployment-wide observability review remains. |
+| T-1.9 | audit logs tracing logging | Implemented | Allowlisted JSON request/task/tool events, stable command workflow traces, rejection logs/audit rows and append-only PostgreSQL grants tested. Supplied API/worker launchers use structured logging without raw query-string access logs. |
 | T-1.10 | budgets and enforcement | Implemented | Atomic monthly reservations, caps, cost settlement and cache lineage tested. |
 | T-1.11 | settings roles emergency stop | Implemented | Roles, owner administration and emergency stop enforced. |
 | T-1.12 | usage and cost screens | Implemented | Query-backed day/agent/type/model/result groups drill into exact paginated request/task ledger rows; costs and holds remain separate. |
@@ -46,8 +46,8 @@ Review totals: **32 Implemented, 20 Partial, 6 External gate**. See [v0.7.0 veri
 | T-2.1 | command center parse confirm | Implemented | Structured command fields, missing-information handling and plan review implemented. |
 | T-2.2 | planner (CMO) | Implemented | Planner output validates against the plan schema. |
 | T-2.3 | task graph execution | Implemented | Dependency/cycle guards and a completed 20-task graph with no duplicate content or lost jobs are tested. |
-| T-2.4 | research agent | Partial | Claim citations enforced and public research available; broad research quality benchmark remains. |
-| T-2.5 | strategy agent | Partial | Pricing is human supplied and claims constrained; full strategy budget-range acceptance remains. |
+| T-2.4 | research agent | Implemented | Uncited or modified research evidence is rejected and not cached. Source records/dates are retained; provider search reuses a tenant/account-version-bound 24-hour receipt cache. Broader live research quality remains an external evaluation concern. |
+| T-2.5 | strategy agent | Implemented | Plans use recorded audience/positioning/pricing, bounded channel choices and owner-entered USD allowances. Invented prices, changed facts and budget-range over-allocation are rejected, costed and excluded from cache. |
 | T-2.6 | content agent | Implemented | Grounded content and prohibited-claim guards tested. |
 | T-2.7 | approval center ui | Implemented | Approval UI, cap enforcement and reviewed bulk workflow implemented. |
 | T-2.8 | overview and analytics v1 | Implemented | Query-backed analytics; real/test gross, refund and net amounts separated. |
@@ -56,15 +56,15 @@ Review totals: **32 Implemented, 20 Partial, 6 External gate**. See [v0.7.0 veri
 
 | Task | Original deliverable | Status | Evidence or remaining work |
 |---|---|---|---|
-| T-3.1 | prospect data adapter | Partial | Brave search/observed addresses with provenance; actual per-record provider cost is manual. |
+| T-3.1 | prospect data adapter | Partial | Brave search/observed addresses carry source references, dates, a 24-hour search/90-day observation cache and optional configured-price USD accrual split across results. Actual invoice reconciliation and broader licensed contact adapters remain. |
 | T-3.2 | dedupe and enrichment | Implemented | Tenant email deduplication, source evidence and safe public enrichment tested. |
-| T-3.3 | qualification scoring | Partial | Deterministic score exists; representative 85% label-match benchmark remains. |
+| T-3.3 | qualification scoring | Partial | Versioned recorded feature snapshots and owner-configurable thresholds are used consistently by API, workflows, Autopilot and metrics. Rescoring preserves later pipeline stages. Model feature extraction and representative 85% label-match acceptance remain. |
 | T-3.4 | crm entities and pipeline | Implemented | CRM stages and actor activity records implemented. |
 | T-3.5 | mailbox connection read | Implemented | Known-contact incremental paged Gmail import, threads and opt-in schedule tested. |
 | T-3.6 | send path suppression and caps | Implemented | Suppression and atomic caps enforced at dispatch; provider receipts tested. |
 | T-3.7 | outreach drafting claim check | Implemented | Exactly one corrective generation is attempted after rejection; both attempts are costed, and a second invalid result creates no draft. |
 | T-3.8 | dispatch with approval | Implemented | Versioned edits void approvals; dispatch and ambiguous receipts tested. |
-| T-3.9 | reply sync and classification | Partial | Sync/classification/opt-out order tested; representative classification quality benchmark remains. |
+| T-3.9 | reply sync and classification | Partial | Sync, closed labels, stored conservative-rules version and opt-out ordering tested. Whole-reply checks prevent quoted/ambiguous keyword matches from authorizing automatic sends. Representative classifier/model quality remains. |
 | T-3.10 | reply drafting and L4 option | Implemented | Owner-reviewed exact-template standing policy is off by default, capped and expiring; revocation, contactability and weekly effect digest tested. Pricing/refunds/contracts/disputes cannot be authorized by this API. |
 
 ## PH-4 - Conversation and revenue

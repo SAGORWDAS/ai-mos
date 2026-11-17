@@ -232,4 +232,5 @@ def test_prospect_research_sandbox_and_connected_results_never_infer_contacts(cl
     assert len(calls) == 1 and len(results) == 1
     assert results[0]["contactability"] == "not_established" and "email" not in results[0]
     assert len(rows(a, "leads")) == 1
-    assert len(rows(a, "provider_events")) == 1
+    assert len([r for r in rows(a, "provider_events") if r["kind"] == "search.attempt"]) == 1
+    assert len([r for r in rows(a, "provider_events") if r["kind"] == "search.completed"]) == 1

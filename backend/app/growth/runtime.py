@@ -29,8 +29,10 @@ from app.growth.models import (
     Task,
     TaskDependency,
 )
+from app.growth.planning_evidence import strategy_seed, validate_research, validate_strategy
 from app.growth.providers import ProviderError, StripeProvider
 from app.models import AuditLog, Brand, Membership, Organization
+from app.observability import emit, task_trace
 from app.tenancy import tenant_scope
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -60,8 +62,26 @@ async def find(session, model, org_id, record_id):
     return row
 
 
-async def record(session, org_id, actor_id, action, subject="", decision="allowed", trace=None):
+async def record(
+    session,
+    org_id,
+    actor_id,
+    action,
+    subject="",
+    decision="allowed",
+    trace=None,
+    agent_id=None,
+    tool_id=None,
+):
     await tenant_scope(session, org_id, actor_id)
+    task_id = None
+    if action.startswith("task."):
+        task = await session.scalar(
+            select(Task).where(Task.organization_id == org_id, Task.id == subject)
+        )
+        if task:
+            trace = await task_trace(session, org_id, task)
+            task_id, agent_id = task.id, task.agent_id
     trace = trace or str(uuid4())
     session.add(
         AuditLog(
@@ -73,14 +93,15 @@ async def record(session, org_id, actor_id, action, subject="", decision="allowe
             trace_id=trace,
         )
     )
-    log.info(
-        "org=%s task=%s actor=%s trace=%s action=%s decision=%s",
-        org_id,
-        subject,
-        actor_id,
-        trace,
+    emit(
         action,
-        decision,
+        org_id=org_id,
+        task_id=task_id,
+        actor_id=actor_id,
+        trace_id=trace,
+        agent_id=agent_id,
+        tool_id=tool_id,
+        decision=decision,
     )
 
 
@@ -237,12 +258,14 @@ class Runtime:
         except (GatewayError, HTTPException, ValueError, ValidationError) as error:
             code = str(error.detail) if isinstance(error, HTTPException) else str(error)[:120]
             await self.fail(task, code)
-        except Exception:
-            log.exception(
-                "org=%s task=%s agent=%s unexpected task failure",
-                task.organization_id,
-                task.id,
-                task.agent_id,
+        except Exception as error:
+            emit(
+                "task.unexpected_failure",
+                org_id=task.organization_id,
+                task_id=task.id,
+                agent_id=task.agent_id,
+                trace_id=task.id,
+                exception_type=type(error).__name__,
             )
             await self.fail(task, "internal_error")
         return True
@@ -798,14 +821,7 @@ class Runtime:
                     "limitations": ["No external market data has been retrieved in sandbox mode."],
                 }
             elif task.type == "strategy":
-                seed = {
-                    "audience": brand.icp.get("segments", []),
-                    "channel": "approved_email",
-                    "positioning": brand.positioning,
-                    "approval_required": True,
-                    "autonomous_spend": False,
-                    "recommendation": "Validate one offer with a small reviewed contact set.",
-                }
+                seed = await strategy_seed(session, task, brand)
             elif task.type == "report":
                 seed = {
                     "summary": "Internal work completed; external execution needs approval.",
@@ -831,6 +847,21 @@ class Runtime:
                 session, task.organization_id, task.id, task.created_by, task.attempt
             )
             await session.refresh(brand)
+            if task.type in {"research", "strategy"}:
+                try:
+                    if task.type == "research":
+                        validate_research(output, seed)
+                    else:
+                        current_seed = await strategy_seed(session, task, brand)
+                        if current_seed != seed:
+                            raise ValueError("strategy_source_changed_during_generation")
+                        validate_strategy(output, seed)
+                except (ValueError, TypeError, KeyError):
+                    await session.rollback()
+                    await self.gateway.reject(task)
+                    raise ValueError("research_or_strategy_grounding_rejected") from None
+                await self.gateway.remember(session, task, output)
+                await session.commit()
             if "body" in seed:
                 await guard_content(
                     session,

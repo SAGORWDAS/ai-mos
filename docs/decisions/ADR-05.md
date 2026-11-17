@@ -1,28 +1,17 @@
 # ADR-05 — OpenRouter as the single model gateway
 
-**Status:** open
-**Raised in:** T-0.2
-**Owner:** —
+**Status:** accepted
+**Owner:** Project maintainer (SAGORWDAS)
+**Reviewed:** 17 November 2026
 
 ## Decision
 
-All model access goes through one gateway module.
-
-_Record what you actually chose, in one paragraph, specific to this business._
-
-## Rejected alternative
-
-Direct provider SDKs in each service.
+Route configured chat, embedding and image calls through the shared OpenRouter gateway. The gateway reserves model budget, records every attempt, validates results, reuses validated output and holds unresolved charges.
 
 ## Reason
 
-_Why this trade is right here. Be concrete: cost, operability, or a constraint you cannot move._
+Record the implemented boundary and its owner explicitly so a later business can connect accounts without treating placeholder evidence as live acceptance.
 
-## Consequences
+## Consequences and follow-up
 
-_What this makes easy, and what it makes hard. Write the hard part honestly — it is the reason to revisit._
-
-## Closed
-
-Date: —
-Verified by: —
+Provider grants, model quality and catalog/pricing verification are separate concerns. A successful key check does not establish them.

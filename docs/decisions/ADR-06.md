@@ -1,28 +1,17 @@
 # ADR-06 — Model identifiers are registry data
 
-**Status:** open
-**Raised in:** T-1.4
-**Owner:** —
+**Status:** deferred; assigned for verified model catalog implementation
+**Owner:** Project maintainer (SAGORWDAS)
+**Reviewed:** 17 November 2026
 
 ## Decision
 
-Model IDs and prices live in model_registry rows, never in code.
-
-_Record what you actually chose, in one paragraph, specific to this business._
-
-## Rejected alternative
-
-Hardcoded model strings in prompts and services.
+Model identifiers currently come from private connection configuration or development settings. A tenant-scoped registry with provider price snapshots and verification timestamps remains to be implemented; configuration alone is not described as that registry.
 
 ## Reason
 
-_Why this trade is right here. Be concrete: cost, operability, or a constraint you cannot move._
+Record the implemented boundary and its owner explicitly so a later business can connect accounts without treating placeholder evidence as live acceptance.
 
-## Consequences
+## Consequences and follow-up
 
-_What this makes easy, and what it makes hard. Write the hard part honestly — it is the reason to revisit._
-
-## Closed
-
-Date: —
-Verified by: —
+Production startup remains gated. This deferral records an engineering gap and does not promote an unbenchmarked model.

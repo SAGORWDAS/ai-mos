@@ -1,7 +1,8 @@
+from fastapi import HTTPException
 from sqlalchemy import select
 
 from app.growth.models import Customer, Lead, Notification, Workflow, WorkflowRun
-from app.growth.runtime_helpers import score
+from app.growth.qualification import apply_score
 
 
 async def dispatch(session, org_id, trigger, subject, event_id):
@@ -34,9 +35,14 @@ async def dispatch(session, org_id, trigger, subject, event_id):
                 state = "blocked"
                 output["reason"] = "suppressed_recipient"
             else:
-                subject.score = score(subject)
-                subject.status = "qualified" if subject.score >= 65 else "scored"
-                output["score"] = subject.score
+                try:
+                    await apply_score(session, org_id, subject)
+                    output["score"] = subject.score
+                except HTTPException as error:
+                    if error.detail != "qualification_agent_disabled":
+                        raise
+                    state = "blocked"
+                    output["reason"] = "qualification_agent_disabled"
         elif workflow.action == "notify_owner":
             notification = Notification(
                 organization_id=org_id, title=f"{workflow.name}: {trigger}", subject_id=subject.id

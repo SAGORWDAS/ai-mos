@@ -20,6 +20,7 @@ from app.growth.models import (
     Task,
     TaskDependency,
 )
+from app.growth.qualification import apply_score
 from app.growth.runtime import find, public, record
 from app.models import Brand, Organization
 
@@ -141,7 +142,8 @@ def install_autopilot(app, runtime, settings, db, identity, require):
             )
         )
         if previous:
-            if previous.type != "plan" or previous.input.get("request") != parsed:
+            prior_request = {"campaign_budget_micros": 0, **previous.input.get("request", {})}
+            if previous.type != "plan" or prior_request != parsed:
                 raise HTTPException(409, "idempotency_key_payload_conflict")
             return {"status": "queued", "task": public(previous)}
         missing = [
@@ -188,6 +190,7 @@ def install_autopilot(app, runtime, settings, db, identity, require):
             organization_id=org_id,
             brand_id=brand.id,
             name=data.objective[:160],
+            budget_micros=data.campaign_budget_micros,
             lead_ids=data.lead_ids,
         )
         session.add(campaign)
@@ -471,14 +474,7 @@ async def _research(runtime, session, task):
         for lead in leads:
             if lead.id in campaign.lead_ids:
                 continue
-            lead.score = min(
-                100,
-                (25 if lead.company else 0)
-                + (20 if lead.domain else 0)
-                + lead.source_confidence // 4
-                + (30 if lead.lawful_basis != "not_established" else 0),
-            )
-            lead.status = "qualified" if lead.score >= 65 else "scored"
+            await apply_score(session, task.organization_id, lead)
             job_key = f"autopilot:{task.plan_id}:observed:{lead.id}"
             child = await session.scalar(
                 select(Task).where(

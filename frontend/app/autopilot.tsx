@@ -89,6 +89,9 @@ export default function Autopilot({
           connected_research: form.get("connected_research") === "on",
           target: Number(form.get("target")),
           window_days: Number(form.get("window_days")),
+          campaign_budget_micros: Math.round(
+            Number(form.get("campaign_budget") || 0) * 1000000,
+          ),
           idempotency_key: crypto.randomUUID(),
         },
       );
@@ -214,6 +217,21 @@ export default function Autopilot({
                 max={365}
                 defaultValue={30}
               />
+            </label>
+            <label>
+              Campaign spending allowance (USD)
+              <input
+                name="campaign_budget"
+                type="number"
+                min="0"
+                max="1000000"
+                step="0.01"
+                defaultValue="0"
+              />
+              <span className="small muted">
+                Planning bounds only; zero grants no campaign spending. Model
+                costs use your separate monthly model budget.
+              </span>
             </label>
           </div>
           <details className="evidence">

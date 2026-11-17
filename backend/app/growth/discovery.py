@@ -1,3 +1,6 @@
+import asyncio
+import hashlib
+import json
 import re
 import time
 from datetime import UTC, datetime
@@ -11,7 +14,7 @@ from sqlalchemy import func, select
 from app.growth.connections import active
 from app.growth.contracts import Keyed
 from app.growth.ingestion import fetch_text
-from app.growth.models import Lead, ProviderEvent, Suppression
+from app.growth.models import Command, Expense, Lead, Plan, ProviderEvent, Suppression, Task
 from app.growth.providers import ProviderError
 from app.growth.runtime import find
 from app.models import Brand
@@ -27,12 +30,54 @@ class Enrich(Keyed):
     brand_id: str
     url: str = Field(min_length=10, max_length=2000)
     company: str = Field(default="", max_length=200)
+    refresh: bool = False
 
 
 async def enrich(session, task):
     from app.growth.runtime import Runtime
 
     await find(session, Brand, task.organization_id, task.input["brand_id"])
+    prior = (
+        await session.scalars(
+            select(Task)
+            .where(
+                Task.organization_id == task.organization_id,
+                Task.type == "prospect_enrich",
+                Task.status == "succeeded",
+                Task.input["url"].as_string() == task.input["url"],
+                Task.input["brand_id"].as_string() == task.input["brand_id"],
+                func.coalesce(Task.output["observed_at"].as_float(), Task.created_at)
+                >= time.time() - 90 * 86400,
+            )
+            .order_by(Task.created_at.desc())
+            .limit(1)
+        )
+    ).all()
+    if not task.input.get("refresh"):
+        for row in prior:
+            if (
+                row.input.get("url") == task.input["url"]
+                and row.input.get("brand_id") == task.input["brand_id"]
+            ):
+                current_ids = []
+                for lead_id in row.output.get("created_lead_ids", []):
+                    contact = await session.scalar(
+                        select(Lead).where(
+                            Lead.organization_id == task.organization_id,
+                            Lead.id == lead_id,
+                            Lead.brand_id == task.input["brand_id"],
+                            Lead.status != "suppressed",
+                        )
+                    )
+                    if contact:
+                        current_ids.append(contact.id)
+                return {
+                    **row.output,
+                    "created_lead_ids": current_ids,
+                    "cached": True,
+                    "cached_task_id": row.id,
+                    "observed_at": row.output.get("observed_at", row.created_at),
+                }
     await session.commit()
     content, url = await fetch_text(task.input["url"])
     host = (urlsplit(url).hostname or "").lower().removeprefix("www.")
@@ -65,6 +110,8 @@ async def enrich(session, task):
                 email=address,
                 source=("Observed public business contact: " + url)[:500],
                 source_confidence=75,
+                source_ref=url,
+                source_observed_at=time.time(),
                 lawful_basis="not_established",
                 basis_evidence="Observed on "
                 + url[:1800]
@@ -75,6 +122,8 @@ async def enrich(session, task):
             created.append(lead.id)
     await session.commit()
     return {
+        "observed_at": time.time(),
+        "cached": False,
         "source_url": url,
         "observed_addresses": emails,
         "created_lead_ids": created,
@@ -99,6 +148,32 @@ async def discover(session, settings, task, transport=None):
     connection = await active(session, settings, task.organization_id, "brave")
     if not connection:
         raise HTTPException(409, "enabled_search_provider_required")
+    cache_key = hashlib.sha256(
+        json.dumps(
+            [connection["id"], connection["version"], " ".join(task.input["query"].split())]
+        ).encode()
+    ).hexdigest()
+    cached = await session.scalar(
+        select(ProviderEvent)
+        .where(
+            ProviderEvent.organization_id == task.organization_id,
+            ProviderEvent.provider == "brave",
+            ProviderEvent.kind == "search.completed",
+            ProviderEvent.object_ref == cache_key,
+            ProviderEvent.created_at >= time.time() - 86400,
+        )
+        .order_by(ProviderEvent.created_at.desc())
+        .limit(1)
+    )
+    if cached:
+        return {
+            **cached.evidence["output"],
+            "cached": True,
+            "cache_receipt_id": cached.id,
+            "source_search_cost_micros": cached.evidence["output"].get("search_cost_micros"),
+            "search_cost_micros": 0,
+            "cost_basis": "cache_hit_zero_new_provider_cost",
+        }
     start = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
     attempts = await session.scalar(
         select(func.count())
@@ -106,6 +181,7 @@ async def discover(session, settings, task, transport=None):
         .where(
             ProviderEvent.organization_id == task.organization_id,
             ProviderEvent.provider == "brave",
+            ProviderEvent.kind == "search.attempt",
             ProviderEvent.created_at >= start,
         )
     )
@@ -125,14 +201,28 @@ async def discover(session, settings, task, transport=None):
     )
     await session.commit()
     try:
-        async with httpx.AsyncClient(timeout=20, transport=transport) as client:
-            response = await client.get(
+        async with (
+            asyncio.timeout(25),
+            httpx.AsyncClient(
+                timeout=20, transport=transport, follow_redirects=False, trust_env=False
+            ) as client,
+        ):
+            async with client.stream(
+                "GET",
                 "https://api.search.brave.com/res/v1/web/search",
                 params={"q": task.input["query"], "count": 20},
                 headers={"X-Subscription-Token": connection["credentials"]["api_key"]},
-            )
-            response.raise_for_status()
-            results = response.json().get("web", {}).get("results", [])
+            ) as response:
+                response.raise_for_status()
+                body = bytearray()
+                async for block in response.aiter_bytes():
+                    body.extend(block)
+                    if len(body) > 2_000_000:
+                        raise ValueError("search_response_too_large")
+                results = json.loads(body).get("web", {}).get("results", [])
+        observed_at = time.time()
+        quoted_price = connection["credentials"].get("search_price_micros", "")
+        price = int(quoted_price) if quoted_price else None
         safe = []
         for result in results[:20]:
             url = str(result.get("url", ""))[:2000]
@@ -144,19 +234,67 @@ async def discover(session, settings, task, transport=None):
                     "url": url,
                     "description": str(result.get("description", ""))[:1000],
                     "source": "Brave web search",
+                    "retrieved_at": observed_at,
                     "contactability": "not_established",
                 }
             )
-        await Runtime.checkpoint(
-            session, task.organization_id, task.id, task.created_by, task.attempt
-        )
-        return {
+        if price is not None and safe:
+            for index, row in enumerate(safe):
+                row["allocated_search_cost_micros"] = price // len(safe) + (
+                    index < price % len(safe)
+                )
+        output = {
             "simulated": False,
+            "cached": False,
+            "retrieved_at": observed_at,
+            "search_cost_micros": price,
+            "cost_basis": "owner_configured_USD_contract_accrual"
+            if price is not None
+            else "unknown_provider_cost",
             "results": safe,
             "note": "Research suggestions only; contactability is not established. "
             "No email address is inferred.",
         }
-    except (httpx.HTTPError, ValueError, TypeError, AttributeError):
+        receipt = ProviderEvent(
+            organization_id=task.organization_id,
+            provider="brave",
+            event_id=task.id + ":" + str(task.attempt) + ":completed",
+            kind="search.completed",
+            object_ref=cache_key,
+            occurred_at=observed_at,
+            simulated=False,
+            evidence={"output": output, "price_version": connection["version"]},
+        )
+        session.add(receipt)
+        if price:
+            campaign_id = None
+            if task.plan_id:
+                campaign_id = await session.scalar(
+                    select(Command.parsed)
+                    .join(Plan, Plan.command_id == Command.id)
+                    .where(
+                        Plan.organization_id == task.organization_id,
+                        Plan.id == task.plan_id,
+                        Command.organization_id == task.organization_id,
+                    )
+                )
+                campaign_id = (campaign_id or {}).get("campaign_id")
+            session.add(
+                Expense(
+                    organization_id=task.organization_id,
+                    campaign_id=campaign_id,
+                    category="prospect_data",
+                    amount_micros=price,
+                    simulated=False,
+                    evidence="Configured Brave search price accrual; receipt " + receipt.event_id,
+                )
+            )
+        await session.commit()
+        await Runtime.checkpoint(
+            session, task.organization_id, task.id, task.created_by, task.attempt
+        )
+        return output
+    except (httpx.HTTPError, TimeoutError, ValueError, TypeError, AttributeError):
         raise ProviderError("search_provider_failed") from None
 
 

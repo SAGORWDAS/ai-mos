@@ -6,6 +6,8 @@ from contextlib import asynccontextmanager
 from uuid import uuid4
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
+from fastapi.exception_handlers import request_validation_exception_handler
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy import event, func, select, text, update
@@ -44,11 +46,13 @@ from app.growth.oauth import install_oauth
 from app.growth.provider_api import install_provider_routes
 from app.growth.publication import install_publication
 from app.growth.publishing import install_publishing
+from app.growth.qualification import install_qualification
 from app.growth.reply_policy import install_reply_policy
 from app.growth.runtime import Runtime
 from app.growth.tracking import install_tracking
 from app.growth.usage import install_usage
 from app.models import AuditLog, Base, Brand, Invitation, Membership, Organization, Session, User
+from app.observability import emit
 from app.schema import upgrade_local
 from app.security import hash_password, token_hash, verify_password
 from app.tenancy import tenant_scope
@@ -102,7 +106,7 @@ def create_app(settings: Settings | None = None):
             if worker_engine:
                 await worker_engine.dispose()
 
-    app = FastAPI(title="AI-MOS", version="0.7.0", lifespan=lifespan)
+    app = FastAPI(title="AI-MOS", version="0.8.0", lifespan=lifespan)
     app.state.runtime = runtime
     app.state.factory = factory
     app.add_middleware(
@@ -118,6 +122,7 @@ def create_app(settings: Settings | None = None):
 
     @app.middleware("http")
     async def boundary(request: Request, call_next):
+        started = time.monotonic()
         request.state.trace_id = str(uuid4())
         if request.method in {"POST", "PUT", "PATCH", "DELETE"}:
             origin = request.headers.get("origin")
@@ -141,6 +146,17 @@ def create_app(settings: Settings | None = None):
                     {"detail": "rate_limited"}, status_code=429, headers={"Retry-After": "60"}
                 )
         response = await call_next(request)
+        route = request.scope.get("route")
+        emit(
+            "http.request",
+            request_id=request.state.trace_id,
+            org_id=getattr(request.state, "audit_org_id", None),
+            actor_id=getattr(request.state, "audit_actor_id", None),
+            route=getattr(route, "path", "unmatched"),
+            method=request.method,
+            status=response.status_code,
+            duration_ms=round((time.monotonic() - started) * 1000, 2),
+        )
         response.headers["X-Trace-ID"] = request.state.trace_id
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Cache-Control"] = "no-store"
@@ -154,6 +170,25 @@ def create_app(settings: Settings | None = None):
     async def db():
         async with factory() as session:
             yield session
+
+    @app.exception_handler(RequestValidationError)
+    async def invalid_request(request, error):
+        org_id = getattr(request.state, "audit_org_id", None)
+        actor_id = getattr(request.state, "audit_actor_id", None)
+        if org_id and actor_id and request.url.path.startswith("/v1/tools/"):
+            from app.growth.runtime import record
+
+            async with factory() as session:
+                await record(
+                    session,
+                    org_id,
+                    actor_id,
+                    "tool.schema_refused",
+                    decision="invalid_tool_input",
+                    trace=request.state.trace_id,
+                )
+                await session.commit()
+        return await request_validation_exception_handler(request, error)
 
     async def identity(request: Request, session=Depends(db)):
         bearer = request.headers.get("authorization", "")
@@ -185,6 +220,7 @@ def create_app(settings: Settings | None = None):
             raise HTTPException(401, "membership_revoked")
         user = await session.get(User, current.user_id)
         org = await session.get(Organization, current.organization_id)
+        request.state.audit_org_id, request.state.audit_actor_id = org.id, user.id
         return {"user": user, "organization": org, "role": member.role, "session": current}
 
     def public_identity(who):
@@ -209,13 +245,12 @@ def create_app(settings: Settings | None = None):
                 trace_id=request.state.trace_id,
             )
         )
-        logger.info(
-            "org=%s actor=%s action=%s decision=%s trace=%s task=- agent=-",
-            who["organization"].id,
-            who["user"].id,
+        emit(
             action,
-            decision,
-            request.state.trace_id,
+            org_id=who["organization"].id,
+            actor_id=who["user"].id,
+            decision=decision,
+            trace_id=request.state.trace_id,
         )
 
     async def require(session, request, who, roles, writes=True):
@@ -680,6 +715,7 @@ def create_app(settings: Settings | None = None):
     install_creative(app, runtime, settings, db, identity, require)
     install_advertising(app, settings, runtime, db, identity, require)
     install_usage(app, db, identity)
+    install_qualification(app, db, identity, require)
     install_reply_policy(app, settings, db, identity, require)
     install_publishing(app, settings, db, identity, require)
     install_connections(app, settings, db, identity, require)

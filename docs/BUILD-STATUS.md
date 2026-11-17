@@ -1,10 +1,14 @@
-# Build status - 17 November 2026
+# Build status - 18 November 2026
 
-Version 0.7.0 public beta. The local agency workflow is implemented and tested. **The entire original plan is not fully accepted.** [PLAN-COVERAGE.md](PLAN-COVERAGE.md) accounts for all 58 tasks and 14 acceptance areas without treating a manifest or mock test as production evidence.
+Version 0.8.0 public beta. The local agency workflow is implemented and tested. **The entire original plan is not fully accepted.** [PLAN-COVERAGE.md](PLAN-COVERAGE.md) accounts for all 58 tasks and 14 acceptance areas without treating a manifest or mock test as production evidence.
+
+## New in 0.8.0
+
+Structured operational logs and complete tool-refusal auditing; versioned, configurable qualification; source/cache dates and configured-price search accrual; 24-hour research and 90-day observation reuse; strict research/strategy grounding and channel-budget bounds; safer whole-reply standing authority. See [verification](VERIFICATION-0.8.0.md) and [logging operations](ops/observability.md). Review now counts 36 Implemented, 16 Partial and 6 External gate. The model-price registry gap is explicitly reopened instead of treating configurable IDs as verified catalog rows.
 
 ## New in 0.7.0
 
-Signed campaign enquiry links; model-cost/refund/funnel attribution; private image generation; owner-reviewed Meta link ads, partial-resource receipts, pause and spend reconciliation; expiring exact-template automatic replies and a weekly digest; query-backed usage drilldown; an interactive campaign cost planner. See [current verification](VERIFICATION-0.7.0.md). Software coverage is now 32 Implemented, 20 Partial and 6 External gate across the original 58 tasks.
+Signed campaign enquiry links; model-cost/refund/funnel attribution; private image generation; owner-reviewed Meta link ads, partial-resource receipts, pause and spend reconciliation; expiring exact-template automatic replies and a weekly digest; query-backed usage drilldown; an interactive campaign cost planner. See [current verification](VERIFICATION-0.7.0.md). Coverage at that release was 32 Implemented, 20 Partial and 6 External gate across the original 58 tasks.
 
 ## New in 0.6.0
 
@@ -26,7 +30,7 @@ Real provider adapters are tested using controlled HTTP responses and signed syn
 
 ## Verification evidence
 
-- Local regression suites: **150 Python tests passed**, including **30 native PostgreSQL tests** with separate restricted API/worker logins. One upstream Starlette/httpx deprecation warning remains.
+- Local regression suites: **168 Python tests passed**, including **38 native PostgreSQL tests** with separate restricted API/worker logins. One upstream Starlette/httpx deprecation warning remains.
 - PostgreSQL 16 backup/restore into a different empty database verified counts, audit content, restricted queue function ownership and RLS. SQLite backup/restore and pre-upgrade data preservation are also checked.
 - PGlite/pgvector regression exercises all **42 tenant tables**, two organizations, missing context, cross-tenant references, immutable payments/audit/provider receipts and vector isolation. Native PostgreSQL tests also exercise fallback retrieval when pgvector is unavailable.
 - Specification checks pass: 23 modules, 20 agents, 18 tools, seven phases, 58 matching capsules, four JSON schemas, dependency and cycle failure paths.
@@ -34,12 +38,12 @@ Real provider adapters are tested using controlled HTTP responses and signed syn
 - Windows launcher restart, existing QA database upgrade and automatic private pre-upgrade backup succeeded. HTTP smoke verified signup, brand, CRM, background drafting, approval and sandbox send.
 - Browser verification saved sourced contact edits, published an approved local service page, submitted an actual HTML form and observed the enquiry in the private inbox. The form test exposed and fixed a referrer/origin mismatch. Earlier sandbox walkthrough covered planning through customer onboarding. Screenshots contain synthetic fixtures only.
 - All four v0.5.1 hosted CI jobs passed. The v0.6.0 result is recorded with its tagged release; exact earlier evidence is in RELEASE-VERIFICATION.md.
-- Nine frontend API/setup/forecast tests pass. Current Chromium review checked 29 workspace views at widths 320, 390, 768, 1024, 1280 and 1440: 174 observations, no page overflow or unlabelled visible form controls. See responsive-audit-0.7.0.json. Manual browser checks verified private image preview, sandbox ad review/execution, policy enable/disable, forecast arithmetic, agent filtering, usage records, signed public enquiry capture and report refresh. This is not all-device or WCAG certification.
+- Eleven frontend API/setup/forecast/price-input tests pass. Current Chromium review checked 29 workspace views at widths 320, 390, 768, 1024, 1280 and 1440: 174 standard and 18 expanded-view observations, no page overflow or unlabelled visible form controls. See responsive-audit-0.8.0.json. Manual browser checks verified private image preview, sandbox ad review/execution, policy enable/disable, forecast arithmetic, agent filtering, usage records, signed public enquiry capture and report refresh. This is not all-device or WCAG certification.
 - Backend and frontend dependency audits reported no known vulnerabilities at verification time. One upstream Starlette/httpx warning remains.
 
 ## Remaining implementation and evidence
 
-Company-page/other-network publication, attachments/OCR, managed identity/email verification and automatic password-reset email, provider-level global calendar slot locking, automated search-price reconciliation, cross-device/third-party attribution and large-scale monitoring/load/failure certification remain outside this beta. Meta ordinary-commercial ads, private raster images, owned-enquiry tracking, cost/refund/funnel attribution and the controlled tenfold worker/provider burst now have implemented fixture-tested paths. The original qualification/model accuracy benchmarks and per-role golden sets are not complete. Three supplied labelled reply examples, 44 additional synthetic cases and focused boundary regressions are evaluated; these are not a representative live-model benchmark.
+Verified model/price catalog rows and promotion gates, model-assisted feature/intent extraction, company-page/other-network publication, attachments/OCR, managed identity/email verification and automatic password-reset email, provider-level global calendar slot locking, automated search-price reconciliation, cross-device/third-party attribution and large-scale monitoring/load/failure certification remain outside this beta. Meta ordinary-commercial ads, private raster images, owned-enquiry tracking, cost/refund/funnel attribution and the controlled tenfold worker/provider burst now have implemented fixture-tested paths. The original qualification/model accuracy benchmarks and per-role golden sets are not complete. Three supplied labelled reply examples, 44 additional synthetic cases and focused boundary regressions are evaluated; these are not a representative live-model benchmark.
 
 Some specialized agent roles share constrained templates and internal tools rather than independent production services. Copy is deliberately restricted to approved facts and reviewed prospect observations. A broad creative agency writing system still needs representative quality evaluation and richer evidence-aware generation.
 

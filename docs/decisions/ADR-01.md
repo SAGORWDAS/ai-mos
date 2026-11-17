@@ -1,28 +1,17 @@
 # ADR-01 — Payment provider
 
-**Status:** open
-**Raised in:** T-0.1
-**Owner:** —
+**Status:** accepted adapter; merchant activation deferred
+**Owner:** Workspace owner for merchant activation
+**Reviewed:** 17 November 2026
 
 ## Decision
 
-A payment provider is chosen in PH-0 and sits behind an adapter.
-
-_Record what you actually chose, in one paragraph, specific to this business._
-
-## Rejected alternative
-
-Assume a global provider works everywhere.
+Use the Stripe adapter and signed receipt workflow. Sandbox remains usable without a merchant account. Eligibility, fees and real activation are decided separately for each business.
 
 ## Reason
 
-_Why this trade is right here. Be concrete: cost, operability, or a constraint you cannot move._
+Record the implemented boundary and its owner explicitly so a later business can connect accounts without treating placeholder evidence as live acceptance.
 
-## Consequences
+## Consequences and follow-up
 
-_What this makes easy, and what it makes hard. Write the hard part honestly — it is the reason to revisit._
-
-## Closed
-
-Date: —
-Verified by: —
+Merchant approval and live payment/refund drills need a real account.

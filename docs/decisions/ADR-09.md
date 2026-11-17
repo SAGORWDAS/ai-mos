@@ -1,28 +1,17 @@
 # ADR-09 — Payment state only from verified webhooks
 
-**Status:** open
-**Raised in:** T-4.3
-**Owner:** —
+**Status:** accepted
+**Owner:** Project maintainer (SAGORWDAS)
+**Reviewed:** 17 November 2026
 
 ## Decision
 
-Money state is written solely by the signed webhook handler.
-
-_Record what you actually chose, in one paragraph, specific to this business._
-
-## Rejected alternative
-
-Trust a checkout redirect, an email, or an agent reading them.
+Update paid/customer/subscription state only through verified matching payment receipts. Checkout creation, browser return URLs and agent proposals cannot declare a payment successful.
 
 ## Reason
 
-_Why this trade is right here. Be concrete: cost, operability, or a constraint you cannot move._
+Record the implemented boundary and its owner explicitly so a later business can connect accounts without treating placeholder evidence as live acceptance.
 
-## Consequences
+## Consequences and follow-up
 
-_What this makes easy, and what it makes hard. Write the hard part honestly — it is the reason to revisit._
-
-## Closed
-
-Date: —
-Verified by: —
+Signed event replay, renewal, refund and dispute handling is tested with fixtures; real merchant drills remain separate.

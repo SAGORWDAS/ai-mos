@@ -135,6 +135,32 @@ def test_usage_day_agent_type_filters_are_scoped(clients):
     assert "body" not in str(report) and "prompt" not in str(report["items"])
 
 
+def test_keyword_confidence_cannot_authorize_ambiguous_or_quoted_reply(clients):
+    a, _ = clients
+    signup(a)
+    brand, lead = brand_and_lead(a)
+    enable(a, brand, cap=20)
+    for body in [
+        "I am not at all interested",
+        "Interested but we have no budget",
+        "Previous message: tell me more",
+        "Tell me more and change my contract",
+    ]:
+        assert (
+            a.post(
+                "/v1/inbox/simulate",
+                json={"lead_id": lead["id"], "body": body, "idempotency_key": key()},
+            ).status_code
+            == 201
+        )
+        drain(a)
+    assert not rows(a, "effects")
+    assert all(
+        m["classification"].get("model_version") == "conservative-rules-v2"
+        for m in rows(a, "messages")
+    )
+
+
 def test_contactability_guard_holds_automatic_reply_without_failing_task(clients):
     from app.growth.models import Lead
     from app.tenancy import tenant_scope

@@ -25,7 +25,7 @@ FIELDS = {
     "wordpress": {"access_token", "site_id"},
     "linkedin": {"access_token", "author_urn"},
     "resend": {"api_key", "sender", "webhook_secret"},
-    "brave": {"api_key"},
+    "brave": {"api_key", "search_price_micros"},
     "openrouter": {"api_key", "model_id", "embedding_model_id", "image_model_id"},
     "gmail": {"access_token", "sender", "refresh_token", "client_id", "client_secret"},
     "calendar": {"access_token", "calendar_id", "refresh_token", "client_id", "client_secret"},

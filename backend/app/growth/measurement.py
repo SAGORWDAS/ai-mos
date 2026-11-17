@@ -149,7 +149,7 @@ async def complete_report(session, org_id, payments, touches, expenses, model, w
                 simulated=mode,
             )
             credit(event, "contact_credit")
-            if lead.score >= 65:
+            if lead.score >= lead.qualification_threshold:
                 credit(event, "qualified_credit")
     meetings = {row.id: row for row in await rows(Meeting)}
     for effect in await rows(Effect):
