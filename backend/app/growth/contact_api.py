@@ -14,8 +14,10 @@ class ContactEdit(Input):
     name: str = Field(min_length=1, max_length=120)
     company: str = Field(default="", max_length=200)
     domain: str = Field(default="", max_length=250)
-    lawful_basis: Literal["consent", "legitimate_interest", "not_established"] = "not_established"
-    basis_evidence: str = Field(default="", max_length=2000)
+    lawful_basis: Literal[
+        "consent", "legitimate_interest", "existing_customer", "not_established"
+    ] = "not_established"
+    basis_evidence: str = Field(default="", max_length=3000)
     personalisation: str = Field(default="", max_length=400)
     personalisation_evidence: str = Field(default="", max_length=2000)
 

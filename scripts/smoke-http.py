@@ -6,6 +6,7 @@ import os
 import time
 import urllib.error
 import urllib.request
+from html.parser import HTMLParser
 from uuid import uuid4
 
 base = os.environ.get("AI_MOS_SMOKE_URL", "http://127.0.0.1:8000").rstrip("/")
@@ -30,6 +31,34 @@ for attempt in range(120):
         time.sleep(1)
 else:
     raise SystemExit("API did not become healthy")
+
+
+class Head(HTMLParser):
+    robots = ""
+
+    def handle_starttag(self, tag, attrs):
+        attrs = dict(attrs)
+        if tag == "meta" and attrs.get("name") == "robots":
+            self.robots = attrs.get("content", "")
+
+
+web = os.environ.get("AI_MOS_SMOKE_WEB_URL", "http://127.0.0.1:3000").rstrip("/")
+for attempt in range(12):
+    try:
+        with urllib.request.urlopen(web, timeout=10) as response:
+            head = Head()
+            head.feed(response.read().decode())
+            assert "noindex" in head.robots
+            assert response.headers.get("X-Frame-Options") == "DENY"
+            assert "frame-ancestors 'none'" in response.headers.get("Content-Security-Policy", "")
+        break
+    except (OSError, urllib.error.URLError):
+        time.sleep(1)
+else:
+    raise SystemExit("Frontend did not become healthy")
+with urllib.request.urlopen(web + "/robots.txt", timeout=10) as response:
+    assert "Allow: /api/v1/public/" in response.read().decode()
+print("Frontend smoke passed: HTML, private noindex, frame protection and public crawl path")
 
 call("/v1/auth/signup", {
     "name": "Synthetic CI", "email": uuid4().hex + "@example.test",

@@ -9,11 +9,14 @@ import subprocess
 import sys
 from html.parser import HTMLParser
 from io import BytesIO
+from pathlib import Path
 from urllib.parse import urljoin, urlsplit, urlunsplit
 
 import httpx
 from fastapi import HTTPException
 from pypdf import PdfReader
+
+FETCH_DEADLINE_SECONDS = 20
 
 
 class TextHTML(HTMLParser):
@@ -97,6 +100,7 @@ def isolated_pdf_text(content):
             [sys.executable, "-m", "app.growth.pdf_worker"],
             input=content,
             capture_output=True,
+            cwd=Path(__file__).resolve().parents[2],
             timeout=15,
             env=safe_env,
             creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0,
@@ -128,6 +132,14 @@ async def public_address(host):
 
 
 async def fetch_text(url, transport=None, resolver=public_address):
+    try:
+        async with asyncio.timeout(FETCH_DEADLINE_SECONDS):
+            return await _fetch_text(url, transport, resolver)
+    except TimeoutError:
+        raise HTTPException(422, "public_website_timeout") from None
+
+
+async def _fetch_text(url, transport=None, resolver=public_address):
     async with httpx.AsyncClient(
         timeout=12, follow_redirects=False, trust_env=False, transport=transport
     ) as client:

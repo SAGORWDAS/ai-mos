@@ -13,6 +13,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from app.accounts import check_otp, install_accounts
+from app.body_limit import RequestBodyLimit
 from app.config import Settings, get_settings
 from app.contracts import AcceptInvite, BrandInput, Invite, Login, Signup, Stop
 from app.growth.api import install
@@ -26,7 +27,16 @@ from app.growth.embeddings import install_embeddings
 from app.growth.esp_api import install_esp
 from app.growth.inbox_schedule import install_inbox_schedule
 from app.growth.knowledge_api import install_knowledge
-from app.growth.models import ModelUsage
+from app.growth.models import (
+    Approval,
+    Campaign,
+    Content,
+    Draft,
+    Effect,
+    Integration,
+    Lead,
+    ModelUsage,
+)
 from app.growth.oauth import install_oauth
 from app.growth.provider_api import install_provider_routes
 from app.growth.publication import install_publication
@@ -85,7 +95,7 @@ def create_app(settings: Settings | None = None):
             if worker_engine:
                 await worker_engine.dispose()
 
-    app = FastAPI(title="AI-MOS", version="0.5.0", lifespan=lifespan)
+    app = FastAPI(title="AI-MOS", version="0.5.1", lifespan=lifespan)
     app.state.runtime = runtime
     app.state.factory = factory
     app.add_middleware(
@@ -93,7 +103,7 @@ def create_app(settings: Settings | None = None):
         allow_origins=settings.allowed_origins,
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT"],
-        allow_headers=["Content-Type", "Authorization"],
+        allow_headers=["Content-Type", "Authorization", "X-Workspace-ID", "X-User-ID"],
     )
     auth_limiter = AuthLimiter(
         factory, settings.token_encryption_key or "local-development-throttle"
@@ -102,11 +112,6 @@ def create_app(settings: Settings | None = None):
     @app.middleware("http")
     async def boundary(request: Request, call_next):
         request.state.trace_id = str(uuid4())
-        if request.method in {"POST", "PUT", "PATCH"}:
-            body = await request.body()
-            body_limit = 5_000_000 if request.url.path.endswith("/ingest-pdf") else 65_536
-            if len(body) > body_limit:
-                return JSONResponse({"detail": "payload_too_large"}, status_code=413)
         if request.method in {"POST", "PUT", "PATCH", "DELETE"}:
             origin = request.headers.get("origin")
             if origin and origin not in settings.allowed_origins:
@@ -132,6 +137,11 @@ def create_app(settings: Settings | None = None):
         response.headers["X-Trace-ID"] = request.state.trace_id
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Cache-Control"] = "no-store"
+        response.headers.setdefault("X-Robots-Tag", "noindex, nofollow")
+        response.headers.setdefault("X-Frame-Options", "DENY")
+        response.headers.setdefault(
+            "Content-Security-Policy", "frame-ancestors 'none'; object-src 'none'; base-uri 'none'"
+        )
         return response
 
     async def db():
@@ -151,6 +161,12 @@ def create_app(settings: Settings | None = None):
         )
         if not current:
             raise HTTPException(401, "unauthenticated")
+        expected_org = request.headers.get("x-workspace-id")
+        expected_user = request.headers.get("x-user-id")
+        if (expected_org and expected_org != current.organization_id) or (
+            expected_user and expected_user != current.user_id
+        ):
+            raise HTTPException(409, "session_context_changed")
         await tenant_scope(session, current.organization_id, current.user_id)
         member = await session.scalar(
             select(Membership).where(
@@ -453,8 +469,55 @@ def create_app(settings: Settings | None = None):
         await require(session, request, who, {"owner", "admin", "member"})
         if brand_id:
             brand = await find_brand(session, who, brand_id)
+            changed = any(
+                getattr(brand, field) != value for field, value in data.model_dump().items()
+            )
             for key, value in data.model_dump().items():
                 setattr(brand, key, value)
+            if changed:
+                org_id = who["organization"].id
+                content_ids = select(Content.id).where(
+                    Content.organization_id == org_id, Content.brand_id == brand.id
+                )
+                draft_ids = (
+                    select(Draft.id)
+                    .join(Lead, Draft.lead_id == Lead.id)
+                    .where(
+                        Draft.organization_id == org_id,
+                        Lead.organization_id == org_id,
+                        Lead.brand_id == brand.id,
+                    )
+                )
+                campaign_ids = select(Campaign.id).where(
+                    Campaign.organization_id == org_id, Campaign.brand_id == brand.id
+                )
+                await session.execute(
+                    update(Approval)
+                    .where(
+                        Approval.organization_id == org_id,
+                        Approval.status.in_(["pending", "approved"]),
+                        (
+                            (Approval.subject_type == "content")
+                            & Approval.subject_id.in_(content_ids)
+                        )
+                        | ((Approval.subject_type == "draft") & Approval.subject_id.in_(draft_ids))
+                        | (
+                            (Approval.subject_type == "campaign")
+                            & Approval.subject_id.in_(campaign_ids)
+                        ),
+                    )
+                    .values(status="invalidated")
+                )
+                await session.execute(
+                    update(Content)
+                    .where(
+                        Content.organization_id == org_id,
+                        Content.brand_id == brand.id,
+                        Content.status == "published_local",
+                    )
+                    .values(status="draft")
+                )
+                await audit(session, request, who, "brand.review_reset", brand.id)
         else:
             brand = Brand(organization_id=who["organization"].id, **data.model_dump())
             session.add(brand)
@@ -526,18 +589,49 @@ def create_app(settings: Settings | None = None):
             .select_from(AuditLog)
             .where(AuditLog.organization_id == who["organization"].id)
         )
-        usage = (
-            await session.scalars(
-                select(ModelUsage).where(ModelUsage.organization_id == who["organization"].id)
+        attempts, cost = (
+            await session.execute(
+                select(
+                    func.count(ModelUsage.id), func.coalesce(func.sum(ModelUsage.cost_micros), 0)
+                ).where(ModelUsage.organization_id == who["organization"].id)
             )
-        ).all()
+        ).one()
+        effects = await session.scalar(
+            select(func.count())
+            .select_from(Effect)
+            .where(
+                Effect.organization_id == who["organization"].id,
+                Effect.status.in_(["succeeded", "simulated"]),
+            )
+        )
         return {
             "brands": count,
             "audit_events": events,
-            "model_calls": len(usage),
-            "external_effects": 0,
-            "cost_minor": sum(item.cost_micros for item in usage) / 10000,
+            "model_calls": attempts,
+            "external_effects": effects,
+            "cost_minor": cost / 10000,
             "currency": "USD",
+        }
+
+    @app.get("/v1/workspace")
+    async def workspace(who=Depends(identity), session=Depends(db)):
+        # One identity and tenant scope for the entire initial browser snapshot.
+        connections = (
+            await session.scalars(
+                select(Integration).where(Integration.organization_id == who["organization"].id)
+            )
+        ).all()
+        return {
+            "identity": public_identity(who),
+            "brands": await brands(who=who, session=session),
+            "logs": await logs(before=None, who=who, session=session),
+            "members": await members(who=who, session=session),
+            "orgs": await orgs(who=who, session=session),
+            "metrics": await overview(who=who, session=session),
+            "connections": [
+                {"provider": row.provider, "enabled": row.enabled, "status": row.status}
+                for row in connections
+            ],
         }
 
     @app.get("/v1/integrations")
@@ -562,6 +656,7 @@ def create_app(settings: Settings | None = None):
         identity,
         require,
         AuthLimiter(factory, settings.token_encryption_key or "local-public-limiter", limit=10),
+        settings,
     )
     install_billing(app, db, identity, require)
     install_costs(app, runtime, settings, db, identity, require)
@@ -576,6 +671,7 @@ def create_app(settings: Settings | None = None):
     install_autopilot(app, runtime, settings, db, identity, require)
     install_provider_routes(app, runtime, settings, db, identity, require)
     dummy_password = hash_password(secrets.token_urlsafe(32))
+    app.add_middleware(RequestBodyLimit)
     return app
 
 

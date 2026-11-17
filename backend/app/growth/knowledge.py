@@ -84,20 +84,30 @@ async def retrieve(session, org_id, brand_id, query, limit=5):
     return sorted(ranked, key=lambda row: row["score"], reverse=True)[:limit]
 
 
-async def guard(session, brand, body, claims):
+async def guard(session, brand, body, claims, *, chunks=None):
     banned = brand.prohibited_claims + brand.voice.get("banned_phrases", [])
     if any(phrase.strip() and phrase.lower() in body.lower() for phrase in banned):
         raise HTTPException(422, "prohibited_claim_or_phrase")
+    if chunks is None:
+        identifiers = list({claim.get("brand_chunk_id") for claim in claims})
+        chunks = {}
+        for offset in range(0, len(identifiers), 500):
+            rows = (
+                await session.scalars(
+                    select(BrandChunk).where(
+                        BrandChunk.id.in_(identifiers[offset : offset + 500]),
+                        BrandChunk.organization_id == brand.organization_id,
+                        BrandChunk.brand_id == brand.id,
+                    )
+                )
+            ).all()
+            chunks.update({chunk.id: chunk for chunk in rows})
     for claim in claims:
-        chunk = await session.scalar(
-            select(BrandChunk).where(
-                BrandChunk.id == claim.get("brand_chunk_id"),
-                BrandChunk.organization_id == brand.organization_id,
-                BrandChunk.brand_id == brand.id,
-            )
-        )
+        chunk = chunks.get(claim.get("brand_chunk_id"))
         if (
             not chunk
+            or chunk.organization_id != brand.organization_id
+            or chunk.brand_id != brand.id
             or claim.get("text") not in brand.approved_claims
             or claim.get("text") not in chunk.content
             or claim.get("text") not in body
@@ -154,8 +164,8 @@ async def guard_draft(session, brand, lead, subject, body, claims):
         raise HTTPException(422, "uncited_outreach_text_add_facts_to_brand_first")
 
 
-async def guard_content(session, brand, title, expected_title, body, claims):
-    await guard(session, brand, title + "\n" + body, claims)
+async def guard_content(session, brand, title, expected_title, body, claims, *, chunks=None):
+    await guard(session, brand, title + "\n" + body, claims, chunks=chunks)
     if title != expected_title:
         raise HTTPException(422, "content_title_must_match_approved_topic")
     remaining = body

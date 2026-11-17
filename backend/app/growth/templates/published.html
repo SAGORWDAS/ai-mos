@@ -3,21 +3,31 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>$title | $name</title>
+<title>$page_title</title>
+<meta name="description" content="$description">
+<meta name="robots" content="$robots">
+$canonical
+<meta property="og:type" content="website">
+<meta property="og:title" content="$title">
+<meta property="og:site_name" content="$name">
+<meta property="og:description" content="$description">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="$title">
+<meta name="twitter:description" content="$description">
 <style>
     *{box-sizing:border-box}
 body{margin:0;color:#111;background:white;font:18px/1.65 Arial,sans-serif}
 header,main,footer{max-width:1100px;margin:auto;padding:28px 24px}
 header{border-bottom:4px solid #111;font-weight:bold;letter-spacing:.08em}
 h1,h2{font-family:Georgia,serif;line-height:1.12}
-h1{font-size:clamp(40px,8vw,76px);max-width:900px;margin:40px 0}.copy{white-space:pre-wrap;max-width:760px;font-size:21px}section{border-top:1px solid #aaa;margin-top:48px;padding-top:28px}form{max-width:620px}label{display:block;margin:18px 0}input,textarea,button{font:inherit;padding:12px;border:1px solid #111;width:100%}input[type=checkbox]{width:auto}button{background:#111;color:white;cursor:pointer}footer{border-top:4px solid #111;margin-top:60px;font-size:14px}a{color:inherit}.trap{display:none}:focus-visible{outline:3px solid #555;outline-offset:4px}</style>
+h1{font-size:clamp(40px,8vw,76px);max-width:900px;margin:40px 0}.copy{white-space:pre-wrap;max-width:760px;font-size:21px}section{border-top:1px solid #aaa;margin-top:48px;padding-top:28px}form{max-width:620px}label{display:block;margin:18px 0}input,textarea,button{font:inherit;padding:12px;border:1px solid #111;width:100%;min-width:0}input[type=checkbox]{width:auto;min-width:24px;min-height:24px;vertical-align:middle}button{background:#111;color:white;cursor:pointer;min-height:44px}footer{border-top:4px solid #111;margin-top:60px;font-size:14px}a{color:inherit}.trap{display:none}:focus-visible{outline:3px solid #555;outline-offset:4px}header,main,footer,h1,h2,.copy{overflow-wrap:anywhere}textarea,input{font-size:16px}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}</style>
 </head>
 <body>
 <header>$name</header>
-<main>
+<main id="main" itemscope itemtype="https://schema.org/WebPage">
 <p>OUR SERVICES</p>
-<h1>$title</h1>
-<div class="copy">$body</div>
+<h1 itemprop="name">$title</h1>
+<div class="copy" itemprop="text">$body</div>
 <section>
 <h2>Discuss your project</h2>
 <p>Your enquiry is saved privately for this business. It does not subscribe you to a marketing list.</p>

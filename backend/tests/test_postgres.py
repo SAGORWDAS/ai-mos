@@ -135,6 +135,20 @@ def test_native_postgres_autopilot(pg_clients):
     test_autopilot_runs_internal_work_and_prepares_reviews_once(pg_clients)
 
 
+def test_native_postgres_brand_edit_publication_review(pg_clients):
+    from test_public_seo import (
+        test_brand_edit_withdraws_publication_and_invalidates_related_approvals,
+    )
+
+    test_brand_edit_withdraws_publication_and_invalidates_related_approvals(pg_clients)
+
+
+def test_native_postgres_workspace_snapshot(pg_clients):
+    from test_workspace_snapshot import test_workspace_snapshot_has_one_tenant_and_no_credentials
+
+    test_workspace_snapshot_has_one_tenant_and_no_credentials(pg_clients)
+
+
 def test_native_postgres_account_recovery(pg_clients):
     from test_accounts import test_private_recovery_consumed_once_and_all_sessions_revoked
 

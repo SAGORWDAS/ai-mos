@@ -1,9 +1,11 @@
-# Original plan coverage - v0.4.0
+# Original plan coverage - v0.5.1
 
 **Not all original requirements are complete.** Implemented means the listed application behavior exists with local tests; it does not certify real-account acceptance, every clause of the original capsule, business quality or production operation. Partial means additional development or evidence remains. External gate requires actual business/account input.
 
 See BUILD-STATUS.md for test evidence and RELEASE-VERIFICATION.md for the public release CI result.
 
+
+Review totals: **26 Implemented, 26 Partial, 6 External gate**. See [the current review](REVIEW-2026-11-17.md).
 
 ## PH-0 - Decisions and spikes
 

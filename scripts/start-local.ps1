@@ -10,6 +10,13 @@ function Assert-Exit([string]$Step) {
     if ($LASTEXITCODE -ne 0) { throw "$Step failed (exit $LASTEXITCODE)." }
 }
 
+# Check before replacing .next files used by an already running web process.
+foreach ($port in @(8000, 3000)) {
+    if (Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue) {
+        throw "Port $port is already in use. Stop the existing app before preparing or starting another build."
+    }
+}
+
 if (-not (Test-Path -LiteralPath $pythonExe)) {
     if ($PythonPath) {
         & $PythonPath -m venv $venvRoot
@@ -46,11 +53,6 @@ try {
 } finally { Pop-Location }
 if ($PrepareOnly) { Write-Host 'Dependencies installed and build verified.'; exit 0 }
 
-foreach ($port in @(8000, 3000)) {
-    if (Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue) {
-        throw "Port $port is already in use. Stop the existing app before starting another instance."
-    }
-}
 $priorDatabase = $env:DATABASE_URL
 $priorEnvironment = $env:APP_ENV
 $priorBackend = $env:BACKEND_URL

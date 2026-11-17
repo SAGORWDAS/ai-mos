@@ -1,0 +1,1371 @@
+{
+  "version": "0.5.1",
+  "date": "2026-11-17",
+  "browser": "Chromium in-app browser",
+  "responsiveResults": [
+    {
+      "client": 305,
+      "document": 305,
+      "section": "Command Center",
+      "unlabelled": 0,
+      "width": 320
+    },
+    {
+      "client": 305,
+      "document": 305,
+      "section": "Plans & tasks",
+      "unlabelled": 0,
+      "width": 320
+    },
+    {
+      "client": 305,
+      "document": 305,
+      "section": "Leads & CRM",
+      "unlabelled": 0,
+      "width": 320
+    },
+    {
+      "client": 305,
+      "document": 305,
+      "section": "Outreach",
+      "unlabelled": 0,
+      "width": 320
+    },
+    {
+      "client": 305,
+      "document": 305,
+      "section": "Inbox",
+      "unlabelled": 0,
+      "width": 320
+    },
+    {
+      "client": 305,
+      "document": 305,
+      "section": "Content",
+      "unlabelled": 0,
+      "width": 320
+    },
+    {
+      "client": 305,
+      "document": 305,
+      "section": "Campaigns",
+      "unlabelled": 0,
+      "width": 320
+    },
+    {
+      "client": 305,
+      "document": 305,
+      "section": "Approvals",
+      "unlabelled": 0,
+      "width": 320
+    },
+    {
+      "client": 305,
+      "document": 305,
+      "section": "Meetings",
+      "unlabelled": 0,
+      "width": 320
+    },
+    {
+      "client": 305,
+      "document": 305,
+      "section": "Revenue",
+      "unlabelled": 0,
+      "width": 320
+    },
+    {
+      "client": 305,
+      "document": 305,
+      "section": "Customers",
+      "unlabelled": 0,
+      "width": 320
+    },
+    {
+      "client": 305,
+      "document": 305,
+      "section": "Support",
+      "unlabelled": 0,
+      "width": 320
+    },
+    {
+      "client": 305,
+      "document": 305,
+      "section": "Automation",
+      "unlabelled": 0,
+      "width": 320
+    },
+    {
+      "client": 305,
+      "document": 305,
+      "section": "Learning",
+      "unlabelled": 0,
+      "width": 320
+    },
+    {
+      "client": 305,
+      "document": 305,
+      "section": "Analytics",
+      "unlabelled": 0,
+      "width": 320
+    },
+    {
+      "client": 305,
+      "document": 305,
+      "section": "Agents",
+      "unlabelled": 0,
+      "width": 320
+    },
+    {
+      "client": 305,
+      "document": 305,
+      "section": "Usage & cost",
+      "unlabelled": 0,
+      "width": 320
+    },
+    {
+      "client": 305,
+      "document": 305,
+      "section": "Knowledge",
+      "unlabelled": 0,
+      "width": 320
+    },
+    {
+      "client": 305,
+      "document": 305,
+      "section": "Sequences",
+      "unlabelled": 0,
+      "width": 320
+    },
+    {
+      "client": 305,
+      "document": 305,
+      "section": "Notifications",
+      "unlabelled": 0,
+      "width": 320
+    },
+    {
+      "client": 305,
+      "document": 305,
+      "section": "Expenses",
+      "unlabelled": 0,
+      "width": 320
+    },
+    {
+      "client": 360,
+      "document": 360,
+      "section": "Command Center",
+      "unlabelled": 0,
+      "width": 375
+    },
+    {
+      "client": 360,
+      "document": 360,
+      "section": "Plans & tasks",
+      "unlabelled": 0,
+      "width": 375
+    },
+    {
+      "client": 360,
+      "document": 360,
+      "section": "Leads & CRM",
+      "unlabelled": 0,
+      "width": 375
+    },
+    {
+      "client": 360,
+      "document": 360,
+      "section": "Outreach",
+      "unlabelled": 0,
+      "width": 375
+    },
+    {
+      "client": 360,
+      "document": 360,
+      "section": "Inbox",
+      "unlabelled": 0,
+      "width": 375
+    },
+    {
+      "client": 360,
+      "document": 360,
+      "section": "Content",
+      "unlabelled": 0,
+      "width": 375
+    },
+    {
+      "client": 360,
+      "document": 360,
+      "section": "Campaigns",
+      "unlabelled": 0,
+      "width": 375
+    },
+    {
+      "client": 360,
+      "document": 360,
+      "section": "Approvals",
+      "unlabelled": 0,
+      "width": 375
+    },
+    {
+      "client": 360,
+      "document": 360,
+      "section": "Meetings",
+      "unlabelled": 0,
+      "width": 375
+    },
+    {
+      "client": 360,
+      "document": 360,
+      "section": "Revenue",
+      "unlabelled": 0,
+      "width": 375
+    },
+    {
+      "client": 360,
+      "document": 360,
+      "section": "Customers",
+      "unlabelled": 0,
+      "width": 375
+    },
+    {
+      "client": 360,
+      "document": 360,
+      "section": "Support",
+      "unlabelled": 0,
+      "width": 375
+    },
+    {
+      "client": 360,
+      "document": 360,
+      "section": "Automation",
+      "unlabelled": 0,
+      "width": 375
+    },
+    {
+      "client": 360,
+      "document": 360,
+      "section": "Learning",
+      "unlabelled": 0,
+      "width": 375
+    },
+    {
+      "client": 360,
+      "document": 360,
+      "section": "Analytics",
+      "unlabelled": 0,
+      "width": 375
+    },
+    {
+      "client": 360,
+      "document": 360,
+      "section": "Agents",
+      "unlabelled": 0,
+      "width": 375
+    },
+    {
+      "client": 360,
+      "document": 360,
+      "section": "Usage & cost",
+      "unlabelled": 0,
+      "width": 375
+    },
+    {
+      "client": 360,
+      "document": 360,
+      "section": "Knowledge",
+      "unlabelled": 0,
+      "width": 375
+    },
+    {
+      "client": 360,
+      "document": 360,
+      "section": "Sequences",
+      "unlabelled": 0,
+      "width": 375
+    },
+    {
+      "client": 360,
+      "document": 360,
+      "section": "Notifications",
+      "unlabelled": 0,
+      "width": 375
+    },
+    {
+      "client": 360,
+      "document": 360,
+      "section": "Expenses",
+      "unlabelled": 0,
+      "width": 375
+    },
+    {
+      "client": 753,
+      "document": 753,
+      "section": "Command Center",
+      "unlabelled": 0,
+      "width": 768
+    },
+    {
+      "client": 753,
+      "document": 753,
+      "section": "Plans & tasks",
+      "unlabelled": 0,
+      "width": 768
+    },
+    {
+      "client": 753,
+      "document": 753,
+      "section": "Leads & CRM",
+      "unlabelled": 0,
+      "width": 768
+    },
+    {
+      "client": 753,
+      "document": 753,
+      "section": "Outreach",
+      "unlabelled": 0,
+      "width": 768
+    },
+    {
+      "client": 753,
+      "document": 753,
+      "section": "Inbox",
+      "unlabelled": 0,
+      "width": 768
+    },
+    {
+      "client": 753,
+      "document": 753,
+      "section": "Content",
+      "unlabelled": 0,
+      "width": 768
+    },
+    {
+      "client": 753,
+      "document": 753,
+      "section": "Campaigns",
+      "unlabelled": 0,
+      "width": 768
+    },
+    {
+      "client": 753,
+      "document": 753,
+      "section": "Approvals",
+      "unlabelled": 0,
+      "width": 768
+    },
+    {
+      "client": 753,
+      "document": 753,
+      "section": "Meetings",
+      "unlabelled": 0,
+      "width": 768
+    },
+    {
+      "client": 753,
+      "document": 753,
+      "section": "Revenue",
+      "unlabelled": 0,
+      "width": 768
+    },
+    {
+      "client": 753,
+      "document": 753,
+      "section": "Customers",
+      "unlabelled": 0,
+      "width": 768
+    },
+    {
+      "client": 753,
+      "document": 753,
+      "section": "Support",
+      "unlabelled": 0,
+      "width": 768
+    },
+    {
+      "client": 753,
+      "document": 753,
+      "section": "Automation",
+      "unlabelled": 0,
+      "width": 768
+    },
+    {
+      "client": 753,
+      "document": 753,
+      "section": "Learning",
+      "unlabelled": 0,
+      "width": 768
+    },
+    {
+      "client": 753,
+      "document": 753,
+      "section": "Analytics",
+      "unlabelled": 0,
+      "width": 768
+    },
+    {
+      "client": 753,
+      "document": 753,
+      "section": "Agents",
+      "unlabelled": 0,
+      "width": 768
+    },
+    {
+      "client": 753,
+      "document": 753,
+      "section": "Usage & cost",
+      "unlabelled": 0,
+      "width": 768
+    },
+    {
+      "client": 753,
+      "document": 753,
+      "section": "Knowledge",
+      "unlabelled": 0,
+      "width": 768
+    },
+    {
+      "client": 753,
+      "document": 753,
+      "section": "Sequences",
+      "unlabelled": 0,
+      "width": 768
+    },
+    {
+      "client": 753,
+      "document": 753,
+      "section": "Notifications",
+      "unlabelled": 0,
+      "width": 768
+    },
+    {
+      "client": 753,
+      "document": 753,
+      "section": "Expenses",
+      "unlabelled": 0,
+      "width": 768
+    },
+    {
+      "client": 1425,
+      "document": 1425,
+      "section": "Command Center",
+      "unlabelled": 0,
+      "width": 1440
+    },
+    {
+      "client": 1425,
+      "document": 1425,
+      "section": "Plans & tasks",
+      "unlabelled": 0,
+      "width": 1440
+    },
+    {
+      "client": 1425,
+      "document": 1425,
+      "section": "Leads & CRM",
+      "unlabelled": 0,
+      "width": 1440
+    },
+    {
+      "client": 1425,
+      "document": 1425,
+      "section": "Outreach",
+      "unlabelled": 0,
+      "width": 1440
+    },
+    {
+      "client": 1425,
+      "document": 1425,
+      "section": "Inbox",
+      "unlabelled": 0,
+      "width": 1440
+    },
+    {
+      "client": 1425,
+      "document": 1425,
+      "section": "Content",
+      "unlabelled": 0,
+      "width": 1440
+    },
+    {
+      "client": 1425,
+      "document": 1425,
+      "section": "Campaigns",
+      "unlabelled": 0,
+      "width": 1440
+    },
+    {
+      "client": 1425,
+      "document": 1425,
+      "section": "Approvals",
+      "unlabelled": 0,
+      "width": 1440
+    },
+    {
+      "client": 1425,
+      "document": 1425,
+      "section": "Meetings",
+      "unlabelled": 0,
+      "width": 1440
+    },
+    {
+      "client": 1425,
+      "document": 1425,
+      "section": "Revenue",
+      "unlabelled": 0,
+      "width": 1440
+    },
+    {
+      "client": 1425,
+      "document": 1425,
+      "section": "Customers",
+      "unlabelled": 0,
+      "width": 1440
+    },
+    {
+      "client": 1425,
+      "document": 1425,
+      "section": "Support",
+      "unlabelled": 0,
+      "width": 1440
+    },
+    {
+      "client": 1425,
+      "document": 1425,
+      "section": "Automation",
+      "unlabelled": 0,
+      "width": 1440
+    },
+    {
+      "client": 1425,
+      "document": 1425,
+      "section": "Learning",
+      "unlabelled": 0,
+      "width": 1440
+    },
+    {
+      "client": 1425,
+      "document": 1425,
+      "section": "Analytics",
+      "unlabelled": 0,
+      "width": 1440
+    },
+    {
+      "client": 1425,
+      "document": 1425,
+      "section": "Agents",
+      "unlabelled": 0,
+      "width": 1440
+    },
+    {
+      "client": 1425,
+      "document": 1425,
+      "section": "Usage & cost",
+      "unlabelled": 0,
+      "width": 1440
+    },
+    {
+      "client": 1425,
+      "document": 1425,
+      "section": "Knowledge",
+      "unlabelled": 0,
+      "width": 1440
+    },
+    {
+      "client": 1425,
+      "document": 1425,
+      "section": "Sequences",
+      "unlabelled": 0,
+      "width": 1440
+    },
+    {
+      "client": 1425,
+      "document": 1425,
+      "section": "Notifications",
+      "unlabelled": 0,
+      "width": 1440
+    },
+    {
+      "client": 1425,
+      "document": 1425,
+      "section": "Expenses",
+      "unlabelled": 0,
+      "width": 1440
+    },
+    {
+      "client": 375,
+      "document": 375,
+      "section": "Command Center",
+      "unlabelled": 0,
+      "width": 390
+    },
+    {
+      "client": 375,
+      "document": 375,
+      "section": "Plans & tasks",
+      "unlabelled": 0,
+      "width": 390
+    },
+    {
+      "client": 375,
+      "document": 375,
+      "section": "Leads & CRM",
+      "unlabelled": 0,
+      "width": 390
+    },
+    {
+      "client": 375,
+      "document": 375,
+      "section": "Outreach",
+      "unlabelled": 0,
+      "width": 390
+    },
+    {
+      "client": 375,
+      "document": 375,
+      "section": "Inbox",
+      "unlabelled": 0,
+      "width": 390
+    },
+    {
+      "client": 375,
+      "document": 375,
+      "section": "Content",
+      "unlabelled": 0,
+      "width": 390
+    },
+    {
+      "client": 375,
+      "document": 375,
+      "section": "Campaigns",
+      "unlabelled": 0,
+      "width": 390
+    },
+    {
+      "client": 375,
+      "document": 375,
+      "section": "Approvals",
+      "unlabelled": 0,
+      "width": 390
+    },
+    {
+      "client": 375,
+      "document": 375,
+      "section": "Meetings",
+      "unlabelled": 0,
+      "width": 390
+    },
+    {
+      "client": 375,
+      "document": 375,
+      "section": "Revenue",
+      "unlabelled": 0,
+      "width": 390
+    },
+    {
+      "client": 375,
+      "document": 375,
+      "section": "Customers",
+      "unlabelled": 0,
+      "width": 390
+    },
+    {
+      "client": 375,
+      "document": 375,
+      "section": "Support",
+      "unlabelled": 0,
+      "width": 390
+    },
+    {
+      "client": 375,
+      "document": 375,
+      "section": "Automation",
+      "unlabelled": 0,
+      "width": 390
+    },
+    {
+      "client": 375,
+      "document": 375,
+      "section": "Learning",
+      "unlabelled": 0,
+      "width": 390
+    },
+    {
+      "client": 375,
+      "document": 375,
+      "section": "Analytics",
+      "unlabelled": 0,
+      "width": 390
+    },
+    {
+      "client": 375,
+      "document": 375,
+      "section": "Agents",
+      "unlabelled": 0,
+      "width": 390
+    },
+    {
+      "client": 375,
+      "document": 375,
+      "section": "Usage & cost",
+      "unlabelled": 0,
+      "width": 390
+    },
+    {
+      "client": 375,
+      "document": 375,
+      "section": "Knowledge",
+      "unlabelled": 0,
+      "width": 390
+    },
+    {
+      "client": 375,
+      "document": 375,
+      "section": "Sequences",
+      "unlabelled": 0,
+      "width": 390
+    },
+    {
+      "client": 375,
+      "document": 375,
+      "section": "Notifications",
+      "unlabelled": 0,
+      "width": 390
+    },
+    {
+      "client": 375,
+      "document": 375,
+      "section": "Expenses",
+      "unlabelled": 0,
+      "width": 390
+    },
+    {
+      "client": 1009,
+      "document": 1009,
+      "section": "Command Center",
+      "unlabelled": 0,
+      "width": 1024
+    },
+    {
+      "client": 1009,
+      "document": 1009,
+      "section": "Plans & tasks",
+      "unlabelled": 0,
+      "width": 1024
+    },
+    {
+      "client": 1009,
+      "document": 1009,
+      "section": "Leads & CRM",
+      "unlabelled": 0,
+      "width": 1024
+    },
+    {
+      "client": 1009,
+      "document": 1009,
+      "section": "Outreach",
+      "unlabelled": 0,
+      "width": 1024
+    },
+    {
+      "client": 1009,
+      "document": 1009,
+      "section": "Inbox",
+      "unlabelled": 0,
+      "width": 1024
+    },
+    {
+      "client": 1009,
+      "document": 1009,
+      "section": "Content",
+      "unlabelled": 0,
+      "width": 1024
+    },
+    {
+      "client": 1009,
+      "document": 1009,
+      "section": "Campaigns",
+      "unlabelled": 0,
+      "width": 1024
+    },
+    {
+      "client": 1009,
+      "document": 1009,
+      "section": "Approvals",
+      "unlabelled": 0,
+      "width": 1024
+    },
+    {
+      "client": 1009,
+      "document": 1009,
+      "section": "Meetings",
+      "unlabelled": 0,
+      "width": 1024
+    },
+    {
+      "client": 1009,
+      "document": 1009,
+      "section": "Revenue",
+      "unlabelled": 0,
+      "width": 1024
+    },
+    {
+      "client": 1009,
+      "document": 1009,
+      "section": "Customers",
+      "unlabelled": 0,
+      "width": 1024
+    },
+    {
+      "client": 1009,
+      "document": 1009,
+      "section": "Support",
+      "unlabelled": 0,
+      "width": 1024
+    },
+    {
+      "client": 1009,
+      "document": 1009,
+      "section": "Automation",
+      "unlabelled": 0,
+      "width": 1024
+    },
+    {
+      "client": 1009,
+      "document": 1009,
+      "section": "Learning",
+      "unlabelled": 0,
+      "width": 1024
+    },
+    {
+      "client": 1009,
+      "document": 1009,
+      "section": "Analytics",
+      "unlabelled": 0,
+      "width": 1024
+    },
+    {
+      "client": 1009,
+      "document": 1009,
+      "section": "Agents",
+      "unlabelled": 0,
+      "width": 1024
+    },
+    {
+      "client": 1009,
+      "document": 1009,
+      "section": "Usage & cost",
+      "unlabelled": 0,
+      "width": 1024
+    },
+    {
+      "client": 1009,
+      "document": 1009,
+      "section": "Knowledge",
+      "unlabelled": 0,
+      "width": 1024
+    },
+    {
+      "client": 1009,
+      "document": 1009,
+      "section": "Sequences",
+      "unlabelled": 0,
+      "width": 1024
+    },
+    {
+      "client": 1009,
+      "document": 1009,
+      "section": "Notifications",
+      "unlabelled": 0,
+      "width": 1024
+    },
+    {
+      "client": 1009,
+      "document": 1009,
+      "section": "Expenses",
+      "unlabelled": 0,
+      "width": 1024
+    },
+    {
+      "client": 305,
+      "document": 305,
+      "section": "A foundation for growth.",
+      "unlabelled": 0,
+      "width": 320
+    },
+    {
+      "client": 305,
+      "document": 305,
+      "section": "Brand Brain",
+      "unlabelled": 0,
+      "width": 320
+    },
+    {
+      "client": 305,
+      "document": 305,
+      "section": "Activity",
+      "unlabelled": 0,
+      "width": 320
+    },
+    {
+      "client": 305,
+      "document": 305,
+      "section": "Integrations",
+      "unlabelled": 0,
+      "width": 320
+    },
+    {
+      "client": 305,
+      "document": 305,
+      "section": "Team & settings",
+      "unlabelled": 0,
+      "width": 320
+    },
+    {
+      "client": 305,
+      "document": 305,
+      "section": "Build roadmap",
+      "unlabelled": 0,
+      "width": 320
+    },
+    {
+      "client": 360,
+      "document": 360,
+      "section": "A foundation for growth.",
+      "unlabelled": 0,
+      "width": 375
+    },
+    {
+      "client": 375,
+      "document": 375,
+      "section": "Brand Brain",
+      "unlabelled": 0,
+      "width": 375
+    },
+    {
+      "client": 360,
+      "document": 360,
+      "section": "Activity",
+      "unlabelled": 0,
+      "width": 375
+    },
+    {
+      "client": 360,
+      "document": 360,
+      "section": "Integrations",
+      "unlabelled": 0,
+      "width": 375
+    },
+    {
+      "client": 360,
+      "document": 360,
+      "section": "Team & settings",
+      "unlabelled": 0,
+      "width": 375
+    },
+    {
+      "client": 360,
+      "document": 360,
+      "section": "Build roadmap",
+      "unlabelled": 0,
+      "width": 375
+    },
+    {
+      "client": 375,
+      "document": 375,
+      "section": "A foundation for growth.",
+      "unlabelled": 0,
+      "width": 390
+    },
+    {
+      "client": 390,
+      "document": 390,
+      "section": "Brand Brain",
+      "unlabelled": 0,
+      "width": 390
+    },
+    {
+      "client": 375,
+      "document": 375,
+      "section": "Activity",
+      "unlabelled": 0,
+      "width": 390
+    },
+    {
+      "client": 375,
+      "document": 375,
+      "section": "Integrations",
+      "unlabelled": 0,
+      "width": 390
+    },
+    {
+      "client": 375,
+      "document": 375,
+      "section": "Team & settings",
+      "unlabelled": 0,
+      "width": 390
+    },
+    {
+      "client": 375,
+      "document": 375,
+      "section": "Build roadmap",
+      "unlabelled": 0,
+      "width": 390
+    },
+    {
+      "client": 753,
+      "document": 753,
+      "section": "A foundation for growth.",
+      "unlabelled": 0,
+      "width": 768
+    },
+    {
+      "client": 768,
+      "document": 768,
+      "section": "Brand Brain",
+      "unlabelled": 0,
+      "width": 768
+    },
+    {
+      "client": 753,
+      "document": 753,
+      "section": "Activity",
+      "unlabelled": 0,
+      "width": 768
+    },
+    {
+      "client": 753,
+      "document": 753,
+      "section": "Integrations",
+      "unlabelled": 0,
+      "width": 768
+    },
+    {
+      "client": 753,
+      "document": 753,
+      "section": "Team & settings",
+      "unlabelled": 0,
+      "width": 768
+    },
+    {
+      "client": 753,
+      "document": 753,
+      "section": "Build roadmap",
+      "unlabelled": 0,
+      "width": 768
+    },
+    {
+      "client": 1009,
+      "document": 1009,
+      "section": "A foundation for growth.",
+      "unlabelled": 0,
+      "width": 1024
+    },
+    {
+      "client": 1024,
+      "document": 1024,
+      "section": "Brand Brain",
+      "unlabelled": 0,
+      "width": 1024
+    },
+    {
+      "client": 1009,
+      "document": 1009,
+      "section": "Activity",
+      "unlabelled": 0,
+      "width": 1024
+    },
+    {
+      "client": 1009,
+      "document": 1009,
+      "section": "Integrations",
+      "unlabelled": 0,
+      "width": 1024
+    },
+    {
+      "client": 1009,
+      "document": 1009,
+      "section": "Team & settings",
+      "unlabelled": 0,
+      "width": 1024
+    },
+    {
+      "client": 1009,
+      "document": 1009,
+      "section": "Build roadmap",
+      "unlabelled": 0,
+      "width": 1024
+    },
+    {
+      "client": 1425,
+      "document": 1425,
+      "section": "A foundation for growth.",
+      "unlabelled": 0,
+      "width": 1440
+    },
+    {
+      "client": 1440,
+      "document": 1440,
+      "section": "Brand Brain",
+      "unlabelled": 0,
+      "width": 1440
+    },
+    {
+      "client": 1425,
+      "document": 1425,
+      "section": "Activity",
+      "unlabelled": 0,
+      "width": 1440
+    },
+    {
+      "client": 1425,
+      "document": 1425,
+      "section": "Integrations",
+      "unlabelled": 0,
+      "width": 1440
+    },
+    {
+      "client": 1425,
+      "document": 1425,
+      "section": "Team & settings",
+      "unlabelled": 0,
+      "width": 1440
+    },
+    {
+      "client": 1425,
+      "document": 1425,
+      "section": "Build roadmap",
+      "unlabelled": 0,
+      "width": 1440
+    }
+  ],
+  "expandedResults": [
+    {
+      "client": 305,
+      "document": 305,
+      "openForms": 4,
+      "section": "Command Center",
+      "unlabelled": 0,
+      "width": 320
+    },
+    {
+      "client": 305,
+      "document": 305,
+      "openForms": 10,
+      "section": "Leads & CRM",
+      "unlabelled": 0,
+      "width": 320
+    },
+    {
+      "client": 305,
+      "document": 305,
+      "openForms": 1,
+      "section": "Outreach",
+      "unlabelled": 0,
+      "width": 320
+    },
+    {
+      "client": 305,
+      "document": 305,
+      "openForms": 2,
+      "section": "Approvals",
+      "unlabelled": 0,
+      "width": 320
+    },
+    {
+      "client": 305,
+      "document": 305,
+      "openForms": 4,
+      "section": "Knowledge",
+      "unlabelled": 0,
+      "width": 320
+    },
+    {
+      "client": 305,
+      "document": 305,
+      "openForms": 3,
+      "section": "Revenue",
+      "unlabelled": 0,
+      "width": 320
+    },
+    {
+      "client": 305,
+      "document": 305,
+      "openForms": 0,
+      "section": "Sequences",
+      "unlabelled": 0,
+      "width": 320
+    },
+    {
+      "client": 305,
+      "document": 305,
+      "openForms": 0,
+      "section": "Automation",
+      "unlabelled": 0,
+      "width": 320
+    }
+  ],
+  "publicResults": [
+    {
+      "client": 305,
+      "description": true,
+      "document": 305,
+      "h1": 1,
+      "robots": "noindex, nofollow",
+      "section": "Published page",
+      "unlabelled": 0,
+      "width": 320
+    },
+    {
+      "client": 360,
+      "description": true,
+      "document": 360,
+      "h1": 1,
+      "robots": "noindex, nofollow",
+      "section": "Published page",
+      "unlabelled": 0,
+      "width": 375
+    },
+    {
+      "client": 753,
+      "description": true,
+      "document": 753,
+      "h1": 1,
+      "robots": "noindex, nofollow",
+      "section": "Published page",
+      "unlabelled": 0,
+      "width": 768
+    },
+    {
+      "client": 1425,
+      "description": true,
+      "document": 1425,
+      "h1": 1,
+      "robots": "noindex, nofollow",
+      "section": "Published page",
+      "unlabelled": 0,
+      "width": 1440
+    }
+  ],
+  "authResults": [
+    {
+      "client": 305,
+      "document": 305,
+      "section": "Account creation",
+      "unlabelled": 0,
+      "width": 320
+    },
+    {
+      "client": 360,
+      "document": 360,
+      "section": "Account creation",
+      "unlabelled": 0,
+      "width": 375
+    },
+    {
+      "client": 753,
+      "document": 753,
+      "section": "Account creation",
+      "unlabelled": 0,
+      "width": 768
+    },
+    {
+      "client": 1425,
+      "document": 1425,
+      "section": "Account creation",
+      "unlabelled": 0,
+      "width": 1440
+    },
+    {
+      "client": 305,
+      "document": 305,
+      "section": "Sign in",
+      "unlabelled": 0,
+      "width": 320
+    },
+    {
+      "client": 360,
+      "document": 360,
+      "section": "Sign in",
+      "unlabelled": 0,
+      "width": 375
+    },
+    {
+      "client": 753,
+      "document": 753,
+      "section": "Sign in",
+      "unlabelled": 0,
+      "width": 768
+    },
+    {
+      "client": 1425,
+      "document": 1425,
+      "section": "Sign in",
+      "unlabelled": 0,
+      "width": 1440
+    },
+    {
+      "client": 305,
+      "document": 305,
+      "section": "Recovery form",
+      "unlabelled": 0,
+      "width": 320
+    },
+    {
+      "client": 753,
+      "document": 753,
+      "section": "Recovery form",
+      "unlabelled": 0,
+      "width": 768
+    }
+  ],
+  "finalIntegrationResults": [
+    {
+      "client": 305,
+      "document": 305,
+      "section": "Integrations final",
+      "unlabelled": 0,
+      "width": 320
+    },
+    {
+      "client": 360,
+      "document": 360,
+      "section": "Integrations final",
+      "unlabelled": 0,
+      "width": 375
+    },
+    {
+      "client": 375,
+      "document": 375,
+      "section": "Integrations final",
+      "unlabelled": 0,
+      "width": 390
+    },
+    {
+      "client": 753,
+      "document": 753,
+      "section": "Integrations final",
+      "unlabelled": 0,
+      "width": 768
+    },
+    {
+      "client": 1009,
+      "document": 1009,
+      "section": "Integrations final",
+      "unlabelled": 0,
+      "width": 1024
+    },
+    {
+      "client": 1425,
+      "document": 1425,
+      "section": "Integrations final",
+      "unlabelled": 0,
+      "width": 1440
+    }
+  ],
+  "keyboardSkipFocus": "main",
+  "crossTabSignoutCleared": true,
+  "crossTabSigninRestored": true,
+  "limitations": [
+    "No physical device, WebKit/Safari, screen reader or formal WCAG certification"
+  ]
+}

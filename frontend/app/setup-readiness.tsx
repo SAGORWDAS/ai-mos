@@ -15,6 +15,7 @@ type Report = {
   hosting: Record<string, boolean>;
   live_checks: string[];
   production_gate: string;
+  seo: { public_indexing_active: boolean; sitemap_url: string; note: string };
 };
 export default function SetupReadiness({
   configure,
@@ -36,7 +37,7 @@ export default function SetupReadiness({
   }, []);
   return (
     <section className="operation-card">
-      <h3>Connect when you are ready</h3>
+      <h2>Connect when you are ready</h2>
       <p>
         Business details belong to campaign setup inside the app. They are not
         required to install the platform. Connect only the services you want to
@@ -64,16 +65,42 @@ export default function SetupReadiness({
                     <p className="preserve">{p.callback_url}</p>
                   </details>
                 )}
-              <a
-                href="#provider-configuration"
+                <a
+                  href="#provider-configuration"
                   className="text-button"
                   onClick={() => configure(p.provider)}
                 >
                   Configure {p.provider}
-              </a>
+                </a>
               </li>
             ))}
           </ol>
+          <details className="evidence">
+            <summary>Public page SEO</summary>
+            <p>{report.seo.note}</p>
+            <p>
+              Search indexing:{" "}
+              {report.seo.public_indexing_active
+                ? "Enabled for approved public pages"
+                : "Off for this instance"}
+            </p>
+            {report.seo.public_indexing_active && (
+              <p>
+                <a
+                  href={report.seo.sitemap_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Open this workspace's public sitemap
+                </a>
+              </p>
+            )}
+            <p className="small muted">
+              When hosting is ready, configure the public HTTPS API base and
+              PUBLIC_INDEXING_ENABLED. Submit the displayed sitemap in your own
+              Search Console account.
+            </p>
+          </details>
           <details className="evidence">
             <summary>Deployment and live validation</summary>
             <p>

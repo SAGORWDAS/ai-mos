@@ -1,12 +1,13 @@
 from functools import lru_cache
 from typing import Literal
+from urllib.parse import urlsplit
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore", hide_input_in_errors=True)
 
     database_url: str = "sqlite+aiosqlite:///./ai-mos.db"
     redis_url: str = "redis://localhost:6379/0"
@@ -14,6 +15,7 @@ class Settings(BaseSettings):
     token_encryption_key: str = ""
     allowed_origins: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
     public_api_url: str = "http://localhost:3000/api"
+    public_indexing_enabled: bool = False
     secure_cookies: bool = False
     session_hours: int = 24
     provider_mode: Literal["sandbox", "openrouter"] = "sandbox"
@@ -30,6 +32,28 @@ class Settings(BaseSettings):
 
     app_env: str = "development"
     sentry_dsn: str | None = None
+
+    @field_validator("public_api_url")
+    @classmethod
+    def valid_public_base(cls, value):
+        try:
+            parsed = urlsplit(value)
+            _ = parsed.port
+            if (
+                parsed.scheme not in {"http", "https"}
+                or not parsed.hostname
+                or parsed.username
+                or parsed.password
+                or parsed.query
+                or parsed.fragment
+                or any(char.isspace() for char in value)
+            ):
+                raise ValueError()
+        except ValueError:
+            raise ValueError(
+                "Public API URL must be an HTTP(S) base without credentials or query"
+            ) from None
+        return value.rstrip("/")
 
 
 @lru_cache

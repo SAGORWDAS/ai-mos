@@ -1,5 +1,6 @@
 """Reusable campaign preparation. Business facts are runtime input, never build input."""
 
+import asyncio
 from types import SimpleNamespace
 from urllib.parse import urlsplit
 
@@ -12,6 +13,8 @@ from app.growth.effects import draft_payload, freeze
 from app.growth.models import Command, Content, Draft, Integration, Lead, Task, TaskDependency
 from app.growth.runtime import find, public, record
 from app.models import Brand
+
+RESEARCH_DEADLINE_SECONDS = 65
 
 
 class Start(CommandInput):
@@ -30,6 +33,9 @@ def install_autopilot(app, runtime, settings, db, identity, require):
             await session.scalars(select(Integration).where(Integration.organization_id == org_id))
         ).all()
         base = settings.public_api_url.rstrip("/")
+        from app.growth.publication import public_base
+
+        canonical_base = public_base(settings)
         guides = {
             "openrouter": ("AI planning and copy", "API key and exact model ID"),
             "brave": ("Prospect website research", "Brave Search API key"),
@@ -67,6 +73,14 @@ def install_autopilot(app, runtime, settings, db, identity, require):
                 "secure_cookies": settings.secure_cookies,
             },
             "production_ready": False,
+            "seo": {
+                "public_indexing_active": bool(canonical_base and settings.public_indexing_enabled),
+                "sitemap_url": f"{canonical_base}/v1/public/{org_id}/sitemap.xml"
+                if canonical_base
+                else "",
+                "note": "The private workspace stays noindex. "
+                "Only approved public pages can be indexed.",
+            },
             "production_gate": "Production deployment review and live acceptance remain required",
             "live_checks": [
                 "Model output quality and actual cost on representative examples",
@@ -276,6 +290,14 @@ async def prepare_review(session, task):
 
 
 async def research(runtime, session, task):
+    try:
+        async with asyncio.timeout(RESEARCH_DEADLINE_SECONDS):
+            return await _research(runtime, session, task)
+    except TimeoutError:
+        raise HTTPException(504, "prospect_research_deadline_exceeded") from None
+
+
+async def _research(runtime, session, task):
     from app.growth.discovery import discover, enrich
 
     result = await discover(session, runtime.settings, task, runtime.search_transport)

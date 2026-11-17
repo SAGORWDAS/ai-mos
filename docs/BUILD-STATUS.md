@@ -1,6 +1,10 @@
 # Build status - 17 November 2026
 
-Version 0.5.0 public beta. The local agency workflow is implemented and tested. **The entire original plan is not fully accepted.** [PLAN-COVERAGE.md](PLAN-COVERAGE.md) accounts for all 58 tasks and 14 acceptance areas without treating a manifest or mock test as production evidence.
+Version 0.5.1 public beta. The local agency workflow is implemented and tested. **The entire original plan is not fully accepted.** [PLAN-COVERAGE.md](PLAN-COVERAGE.md) accounts for all 58 tasks and 14 acceptance areas without treating a manifest or mock test as production evidence.
+
+## New in 0.5.1
+
+The [system review](REVIEW-2026-11-17.md) adds public SEO metadata/sitemaps and staging defaults, publication withdrawal on changed facts, streaming upload bounds, total fetch deadlines, atomic workspace snapshots/session binding, cross-tab refresh and responsive/accessibility corrections. See [SEO.md](SEO.md) for later domain configuration. Four frontend request-helper tests and recorded Chromium responsive checks were added.
 
 ## New in 0.5.0
 
@@ -14,14 +18,16 @@ Real provider adapters are tested using controlled HTTP responses and signed syn
 
 ## Verification evidence
 
-- Local regression suites: **90 Python tests passed**, including **14 native PostgreSQL tests** with separate restricted API/worker logins. One upstream Starlette/httpx deprecation warning remains.
+- Local regression suites: **108 Python tests passed**, including **16 native PostgreSQL tests** with separate restricted API/worker logins. One upstream Starlette/httpx deprecation warning remains.
 - PostgreSQL 16 backup/restore into a different empty database verified counts, audit content, restricted queue function ownership and RLS. SQLite backup/restore and pre-upgrade data preservation are also checked.
 - PGlite/pgvector regression exercises all **40 tenant tables**, two organizations, missing context, cross-tenant references, immutable payments/audit/provider receipts and vector isolation. Native PostgreSQL tests also exercise fallback retrieval when pgvector is unavailable.
 - Specification checks pass: 23 modules, 20 agents, 18 tools, seven phases, 58 matching capsules, four JSON schemas, dependency and cycle failure paths.
 - Ruff, TypeScript and optimized Next.js build pass. Frontend production-dependency audit reports zero vulnerabilities at verification time.
 - Windows launcher restart, existing QA database upgrade and automatic private pre-upgrade backup succeeded. HTTP smoke verified signup, brand, CRM, background drafting, approval and sandbox send.
 - Browser verification saved sourced contact edits, published an approved local service page, submitted an actual HTML form and observed the enquiry in the private inbox. The form test exposed and fixed a referrer/origin mismatch. Earlier sandbox walkthrough covered planning through customer onboarding. Screenshots contain synthetic fixtures only.
-- All four v0.4.0 hosted CI jobs passed. The v0.5.0 CI result is recorded with its release after push; exact earlier evidence is in RELEASE-VERIFICATION.md.
+- All four v0.5.0 hosted CI jobs passed. The v0.5.1 result is recorded with its tagged release; exact earlier evidence is in RELEASE-VERIFICATION.md.
+- Four frontend API boundary tests pass. Chromium checked 27 workspace views at six widths plus authentication/public/expanded forms; machine-readable observations are in responsive-audit.json. This is not all-device or WCAG certification.
+- Backend and frontend dependency audits reported no known vulnerabilities at verification time. One upstream Starlette/httpx warning remains.
 
 ## Remaining implementation and evidence
 

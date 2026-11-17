@@ -82,6 +82,9 @@ jobs:
       - name: Typecheck
         working-directory: frontend
         run: npx tsc --noEmit
+      - name: Browser API session boundary regressions
+        working-directory: frontend
+        run: npm test
       - name: Build
         working-directory: frontend
         run: npm run build

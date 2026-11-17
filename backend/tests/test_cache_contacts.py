@@ -95,3 +95,21 @@ def test_public_enrichment_observed_addresses_only(clients, monkeypatch):
     )
     assert response.status_code == 403
     assert response.json()["detail"] == "contactability_not_established"
+
+
+def test_existing_customer_basis_and_full_import_evidence_can_be_edited(clients):
+    a, _ = clients
+    signup(a)
+    _, lead = brand_and_lead(a)
+    response = a.put(
+        f"/v1/leads/{lead['id']}",
+        json={
+            "expected_version": 1,
+            "name": lead["name"],
+            "lawful_basis": "existing_customer",
+            "basis_evidence": "a" * 3000,
+        },
+    )
+    assert response.status_code == 200, response.text
+    assert response.json()["lawful_basis"] == "existing_customer"
+    assert len(response.json()["basis_evidence"]) == 3000

@@ -1,13 +1,14 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { api, setWorkspaceContext, SESSION_EVENT_KEY } from "./api";
 import GrowthWorkspace from "./growth-workspace";
 import Connections from "./connections";
 import AccountSecurity, { RecoveryForm } from "./account-security";
 import { currencyFactor } from "./money";
 
 type Identity = {
-  user: { name: string; email: string };
+  user: { id: string; name: string; email: string };
   organization: { id: string; name: string; emergency_stop: boolean };
   role: string;
 };
@@ -111,33 +112,9 @@ const navigation = [
 ] as const;
 type View = (typeof navigation)[number];
 
-async function api<T>(
-  path: string,
-  body?: unknown,
-  method = "POST",
-): Promise<T> {
-  const response = await fetch(`/api${path}`, {
-    method: body === undefined ? "GET" : method,
-    headers: body === undefined ? {} : { "Content-Type": "application/json" },
-    body: body === undefined ? undefined : JSON.stringify(body),
-    credentials: "same-origin",
-  });
-  if (!response.ok) {
-    const data = await response.json().catch(() => ({}));
-    const detail = data.detail;
-    const message = Array.isArray(detail)
-      ? detail.map((x: { msg: string }) => x.msg).join(". ")
-      : detail;
-    throw new Error(
-      message
-        ? String(message).replaceAll("_", " ")
-        : `Request failed (${response.status})`,
-    );
-  }
-  return response.status === 204 ? (undefined as T) : response.json();
-}
-
 export default function Workspace() {
+  const requestEpoch = useRef(0);
+  const currentIdentity = useRef("");
   const [me, setMe] = useState<Identity | null>(null);
   const [boot, setBoot] = useState(true);
   const [signup, setSignup] = useState(true);
@@ -157,38 +134,91 @@ export default function Workspace() {
     { provider: string; enabled: boolean; status: string }[]
   >([]);
 
-  const refresh = useCallback(async () => {
-    const identity = await api<Identity>("/v1/auth/me");
-    setMe(identity);
-    const [b, l, m, o, counts] = await Promise.all([
-      api<Brand[]>("/v1/brands"),
-      api<Audit[]>("/v1/audit"),
-      api<Member[]>("/v1/org/members"),
-      api<Org[]>("/v1/orgs"),
-      api<Metrics>("/v1/metrics/overview"),
-    ]);
-    setBrands(b);
-    setLogs(l);
-    setMembers(m);
-    setOrgs(o);
-    setMetrics(counts);
-    setConnections(
-      await api<{ provider: string; enabled: boolean; status: string }[]>(
-        "/v1/connections",
-      ),
-    );
+  const clearWorkspace = useCallback(() => {
+    requestEpoch.current += 1;
+    currentIdentity.current = "";
+    setWorkspaceContext(null);
+    setMe(null);
+    setBrands([]);
+    setLogs([]);
+    setMembers([]);
+    setOrgs([]);
+    setMetrics(null);
+    setConnections([]);
+    setEditing(undefined);
+    setReview(null);
+    setInviteToken("");
+    setView("Overview");
   }, []);
 
+  const refresh = useCallback(async () => {
+    const epoch = ++requestEpoch.current;
+    try {
+      const snapshot = await api<{
+        identity: Identity;
+        brands: Brand[];
+        logs: Audit[];
+        members: Member[];
+        orgs: Org[];
+        metrics: Metrics;
+        connections: { provider: string; enabled: boolean; status: string }[];
+      }>("/v1/workspace");
+      if (epoch !== requestEpoch.current) return;
+      const identityKey =
+        snapshot.identity.user.id + ":" + snapshot.identity.organization.id;
+      if (currentIdentity.current !== identityKey) {
+        setEditing(undefined);
+        setReview(null);
+        setInviteToken("");
+        setView("Overview");
+      }
+      currentIdentity.current = identityKey;
+      setWorkspaceContext(
+        snapshot.identity.organization.id,
+        snapshot.identity.user.id,
+      );
+      setBrands(snapshot.brands);
+      setLogs(snapshot.logs);
+      setMembers(snapshot.members);
+      setOrgs(snapshot.orgs);
+      setMetrics(snapshot.metrics);
+      setConnections(snapshot.connections);
+      setMe(snapshot.identity);
+    } catch (error) {
+      if (epoch !== requestEpoch.current) return;
+      if (
+        error instanceof Error &&
+        ["unauthenticated", "membership revoked"].includes(error.message)
+      )
+        clearWorkspace();
+      throw error;
+    }
+  }, [clearWorkspace]);
+
   useEffect(() => {
-    api<Identity>("/v1/auth/me")
-      .then(() => refresh())
+    let active = true;
+    const onSessionChange = (event: StorageEvent) => {
+      if (event.key === SESSION_EVENT_KEY) {
+        setWorkspaceContext(null);
+        window.location.reload();
+      }
+    };
+    window.addEventListener("storage", onSessionChange);
+    refresh()
       .catch((e: Error) => {
+        if (!active) return;
         if (e.message !== "unauthenticated")
           setError(
             "Cannot reach the local API. Start the backend, then reload.",
           );
       })
-      .finally(() => setBoot(false));
+      .finally(() => {
+        if (active) setBoot(false);
+      });
+    return () => {
+      active = false;
+      window.removeEventListener("storage", onSessionChange);
+    };
   }, [refresh]);
 
   async function perform(action: () => Promise<void>) {
@@ -288,7 +318,11 @@ export default function Workspace() {
       );
       await refresh();
       setEditing(undefined);
-      setNotice("Brand facts saved to your workspace.");
+      setNotice(
+        editing
+          ? "Brand facts saved. Changed profiles withdraw published pages and invalidate related approvals; review and republish the current copy."
+          : "Brand facts saved to your workspace.",
+      );
     });
   }
 
@@ -319,10 +353,18 @@ export default function Workspace() {
                   disabled={busy}
                   onClick={() =>
                     perform(async () => {
-                      await api("/v1/auth/logout", {});
-                      setMe(null);
-                      setBrands([]);
-                      setLogs([]);
+                      requestEpoch.current += 1;
+                      try {
+                        await api("/v1/auth/logout", {});
+                      } catch (error) {
+                        if (
+                          !(error instanceof Error) ||
+                          error.message !== "unauthenticated"
+                        )
+                          throw error;
+                      } finally {
+                        clearWorkspace();
+                      }
                     })
                   }
                 >
@@ -350,7 +392,11 @@ export default function Workspace() {
           </div>
         </nav>
       )}
-      <main id="main" className={me ? "container" : "auth-container"}>
+      <main
+        id="main"
+        tabIndex={-1}
+        className={me ? "container" : "auth-container"}
+      >
         {error && (
           <div className="message error" role="alert">
             {error}
@@ -480,8 +526,8 @@ export default function Workspace() {
               </p>
               {!signup && <RecoveryForm />}
               <p className="small muted">
-                This build runs on your computer. Outreach, bookings and
-                payments use local sandbox adapters.
+                Sandbox is available without keys. Connected outreach, bookings
+                and payments require provider setup and owner controls.
               </p>
             </section>
           </div>
@@ -951,9 +997,18 @@ export default function Workspace() {
                       disabled={busy}
                       onChange={(e) =>
                         perform(async () => {
-                          await api(`/v1/orgs/${e.target.value}/switch`, {});
-                          setEditing(undefined);
-                          await refresh();
+                          const target = e.target.value;
+                          clearWorkspace();
+                          setBoot(true);
+                          try {
+                            await api(`/v1/orgs/${target}/switch`, {});
+                          } finally {
+                            try {
+                              await refresh();
+                            } finally {
+                              setBoot(false);
+                            }
+                          }
                         })
                       }
                     >

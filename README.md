@@ -2,7 +2,9 @@
 
 An agency and SaaS marketing workspace with a black-and-white editorial interface. Manage multiple brands, source prospects, prepare grounded campaigns, review outreach, capture enquiries, book meetings and follow customers from verified payments into onboarding.
 
-**v0.5.0 public beta.** The local sandbox workflow runs without API keys. Connected adapters are implemented and tested against controlled HTTP fixtures; real account verification and production rollout remain separate steps. The original 58-task plan is **not fully accepted**: see [the task-by-task coverage](docs/PLAN-COVERAGE.md) and [build status](docs/BUILD-STATUS.md).
+**v0.5.1 public beta.** The local sandbox workflow runs without API keys. Connected adapters are implemented and tested against controlled HTTP fixtures; real account verification and production rollout remain separate steps. The original 58-task plan is **not fully accepted**: see [the task-by-task coverage](docs/PLAN-COVERAGE.md) and [build status](docs/BUILD-STATUS.md).
+
+See the [17 November system review](docs/REVIEW-2026-11-17.md) for fixes, responsive coverage and remaining work, and the [public SEO guide](docs/SEO.md) for later domain setup.
 
 ## Start
 

@@ -359,13 +359,14 @@ function ContactEditor({
               <option value="not_established">Not established</option>
               <option value="consent">Consent</option>
               <option value="legitimate_interest">Legitimate interest</option>
+              <option value="existing_customer">Existing customer</option>
             </select>
           </label>
           <label>
             Evidence for this basis
             <textarea
               name="basis_evidence"
-              maxLength={2000}
+              maxLength={3000}
               defaultValue={text(snapshot, "basis_evidence")}
             />
           </label>

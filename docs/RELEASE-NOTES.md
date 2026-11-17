@@ -1,3 +1,15 @@
+# AI-MOS v0.5.1 - system review beta
+
+Fixes publication withdrawal and approval invalidation when brand facts change; adds grounded public SEO metadata, trusted canonicals and workspace sitemaps with indexing off by default. Private workspace pages remain noindex.
+
+Fixes cached workspace identity/data mismatches, adds server session-context guards and cross-tab refresh, enforces streaming request limits and total fetch deadlines, corrects CRM basis editing and PDF working-directory behavior, and improves narrow-screen forms, long-text wrapping and keyboard navigation. The Windows launcher checks occupied ports before rebuilding.
+
+Validation: 108 Python tests including 16 native PostgreSQL tests, four frontend API tests, TypeScript, optimized Next build, Ruff, specification and PGlite isolation checks passed. Dependency audits found no known vulnerabilities. Chromium layout evidence covers 27 workspace views across six widths plus focused authentication/public/form checks. Hosted CI is linked in the public release.
+
+The original plan remains 26 Implemented, 26 Partial and 6 External gate. This is a public beta, not a complete implementation or production certification. Credentials alone do not complete missing specialized tools, external publishing/ads, full attribution, representative AI-quality evaluation or production operations. See REVIEW-2026-11-17.md and PLAN-COVERAGE.md.
+
+---
+
 # AI-MOS v0.5.0 - automated campaign setup beta
 
 Business details are now explicitly runtime inputs: install the platform without them, save a name-only business profile, and complete facts when starting a campaign.
