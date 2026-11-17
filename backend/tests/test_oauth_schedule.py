@@ -77,6 +77,35 @@ def test_oauth_disconnection_cancels_pending_callback(clients):
     )
 
 
+def test_account_recovery_invalidates_pending_oauth(clients):
+    from test_accounts import PASSWORD, register
+
+    a, b = clients
+    owner = register(a)
+    recovery = a.post("/v1/auth/recovery-code", json={"password": PASSWORD}).json()["code"]
+    start = oauth_config(a)
+    state = parse_qs(urlsplit(start["authorization_url"]).query)["state"][0]
+    assert (
+        b.post(
+            "/v1/auth/recover",
+            json={
+                "email": "owner@example.test",
+                "code": recovery,
+                "password": "Recovered strong test password!",
+            },
+        ).status_code
+        == 200
+    )
+    a.app.state.runtime.oauth_transport = httpx.MockTransport(
+        lambda request: (_ for _ in ()).throw(AssertionError("Recovered flow reached provider"))
+    )
+    response = b.get(
+        f"/v1/oauth/google/{owner['organization']['id']}/gmail/callback",
+        params={"state": state, "code": "unit-code"},
+    )
+    assert response.status_code == 409
+
+
 def test_scheduled_html_inbox_requires_opt_in_and_honours_stop(clients, monkeypatch):
     a, _ = clients
     signup(a)

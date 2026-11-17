@@ -154,7 +154,16 @@ def test_unknown_bulk_receipt_never_retries(clients, monkeypatch):
     a, _ = clients
     signup(a)
     approval, _ = batch(a)
-    connect(a, monkeypatch, "resend", {"api_key": "unit-esp-key", "sender": "sender@example.test"})
+    connect(
+        a,
+        monkeypatch,
+        "resend",
+        {
+            "api_key": "unit-esp-key",
+            "sender": "sender@example.test",
+            "webhook_secret": "whsec_" + base64.b64encode(SVIX_KEY).decode(),
+        },
+    )
     calls = []
 
     def handle(request):

@@ -14,7 +14,7 @@ from app.growth import connections
 from app.growth.models import Integration
 from app.growth.providers import ProviderError, require_secret
 from app.growth.runtime import record
-from app.models import Membership, Organization
+from app.models import Membership, Organization, User
 from app.tenancy import tenant_scope
 
 SCOPES = {
@@ -62,6 +62,9 @@ def install_oauth(app, runtime, settings, db, identity, require):
                 "_oauth_verifier": verifier,
                 "_oauth_expires": time.time() + 600,
                 "_oauth_actor": who["user"].id,
+                "_oauth_auth_version": hashlib.sha256(
+                    who["user"].password_hash.encode()
+                ).hexdigest(),
                 "_oauth_redirect": redirect,
             }
         )
@@ -134,6 +137,16 @@ def install_oauth(app, runtime, settings, db, identity, require):
         ):
             raise HTTPException(400, "oauth_state_invalid_or_expired")
         actor = credentials.get("_oauth_actor")
+        auth_version = credentials.get("_oauth_auth_version", "")
+
+        async def check_recovery():
+            current = await session.scalar(select(User.password_hash).where(User.id == actor))
+            if not current or not hmac.compare_digest(
+                auth_version, hashlib.sha256(current.encode()).hexdigest()
+            ):
+                raise HTTPException(409, "oauth_account_recovered_start_again")
+
+        await check_recovery()
         if not await session.scalar(
             select(Membership.id).where(
                 Membership.organization_id == org_id,
@@ -181,6 +194,7 @@ def install_oauth(app, runtime, settings, db, identity, require):
             .values(emergency_stop=Organization.emergency_stop)
         )
         await session.refresh(item)
+        await check_recovery()
         if not await session.scalar(
             select(Membership.id).where(
                 Membership.organization_id == org_id,

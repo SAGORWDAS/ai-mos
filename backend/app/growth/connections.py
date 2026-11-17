@@ -143,6 +143,7 @@ async def verify(settings, item, transport=None):
                 elif item.provider == "resend":
                     key = credentials.get("api_key", "")
                     require_secret(key)
+                    require_secret(credentials.get("webhook_secret", ""))
                     sender = credentials.get("sender", "")
                     if "@" not in sender or any(char in sender for char in "\r\n<> "):
                         raise ProviderError("simple_sender_address_required")
