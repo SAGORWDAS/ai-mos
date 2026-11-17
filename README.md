@@ -2,9 +2,11 @@
 
 An agency and SaaS marketing workspace with a black-and-white editorial interface. Manage multiple brands, source prospects, prepare grounded campaigns, review outreach, capture enquiries, book meetings and follow customers from verified payments into onboarding.
 
-**v0.5.1 public beta.** The local sandbox workflow runs without API keys. Connected adapters are implemented and tested against controlled HTTP fixtures; real account verification and production rollout remain separate steps. The original 58-task plan is **not fully accepted**: see [the task-by-task coverage](docs/PLAN-COVERAGE.md) and [build status](docs/BUILD-STATUS.md).
+**v0.6.0 public beta.** The local sandbox workflow runs without API keys. Connected adapters are implemented and tested against controlled HTTP fixtures; real account verification and production rollout remain separate steps. The original 58-task plan is **not fully accepted**: see [the task-by-task coverage](docs/PLAN-COVERAGE.md) and [build status](docs/BUILD-STATUS.md).
 
 See the [17 November system review](docs/REVIEW-2026-11-17.md) for fixes, responsive coverage and remaining work, and the [public SEO guide](docs/SEO.md) for later domain setup.
+
+For minimal setup, follow the [day-one guide](docs/DAY-ONE.md): one short business brief starts campaign preparation. Try a fictional sample without credentials. [Current verification](docs/VERIFICATION-0.6.0.md) records what passed and what remains.
 
 ## Start
 
@@ -27,10 +29,10 @@ The platform installs and runs with no business details. Enter any agency, servi
 - Twenty agent manifests on a shared durable runtime; reviewed plans, dependency graphs, cancellation, bounded retries, audit and emergency stop.
 - CRM/CSV imports, Brave website research, observed public business email extraction, qualification and sourced personalisation.
 - Drafts, version guards, exact single-use approvals, suppression, caps, Gmail and reviewed Resend bulk batches.
-- Google OAuth consent flow, opt-in inbox scheduling, HTML/plain-text import, conservative reply classification and human escalation.
-- Approved service pages published on this server with private enquiry capture; SVG brand cards and content/SEO/social/creative drafts.
+- Google OAuth, opt-in inbox scheduling and automatic safe reply drafts into Approvals; HTML/plain-text import, conservative classification and escalation.
+- Approved owned pages and enquiry capture; reviewed WordPress.com/LinkedIn member publishing; SVG cards and content/SEO/social/creative drafts.
 - Google Calendar booking, Stripe Checkout and signed payment/subscription/invoice/refund/dispute receipt processing.
-- Onboarding, support, internal automation, follow-up drafting, learning records, expenses, analytics and export.
+- Onboarding, support, internal automation, follow-up approvals, learning, campaign attribution, evidence-backed expenses, analytics and export.
 - Encrypted tenant connections, atomic budgets, model cost reconciliation, six-hour validated response cache, PostgreSQL RLS and verified SQLite/PostgreSQL restore tools.
 
 Sandbox output is deterministic and labelled. It is useful for testing the workflow; it is not an AI quality benchmark or evidence of marketing results. Connected model activation can make queued model work billable. Every recipient-facing send or booking requires a separate explicit execution choice. Publishing on this server creates a page accessible wherever that server is reachable.

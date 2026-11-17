@@ -366,7 +366,7 @@ class Runtime:
                         agent_id="AGT-09",
                         type="draft",
                         idempotency_key=step_key,
-                        input={"lead_id": lead.id, "sequence_id": sequence.id},
+                        input={"lead_id": lead.id, "sequence_id": sequence.id, "auto_review": True},
                     )
                 )
             enrollment.step += 1
@@ -538,6 +538,7 @@ class Runtime:
                         }
                     ),
                     seed,
+                    sandbox_only=bool(brand.voice.get("sandbox_only")),
                 )
                 await self.checkpoint(
                     session, task.organization_id, task.id, task.created_by, task.attempt
@@ -665,20 +666,60 @@ class Runtime:
                         }
                     ),
                     seed,
+                    sandbox_only=bool(brand.voice.get("sandbox_only")),
                 )
                 await self.checkpoint(
                     session, task.organization_id, task.id, task.created_by, task.attempt
                 )
                 await session.refresh(brand)
                 await session.refresh(lead)
-                validate(
-                    output, json.loads((ROOT / "spec/schemas/outreach_draft.json").read_text())
-                )
-                await guard_draft(
-                    session, brand, lead, output["subject"], output["body"], output["claims"]
-                )
-                if "unsubscribe" not in output["body"].lower():
-                    raise ValueError("opt_out_required")
+                for correction in range(2):
+                    try:
+                        validate(
+                            output,
+                            json.loads((ROOT / "spec/schemas/outreach_draft.json").read_text()),
+                        )
+                        await guard_draft(
+                            session,
+                            brand,
+                            lead,
+                            output["subject"],
+                            output["body"],
+                            output["claims"],
+                        )
+                        if "unsubscribe" not in output["body"].lower():
+                            raise HTTPException(422, "opt_out_required")
+                        break
+                    except (HTTPException, ValidationError) as error:
+                        if correction:
+                            raise
+                        reason = (
+                            str(error.detail)
+                            if isinstance(error, HTTPException)
+                            else "schema_invalid"
+                        )
+                        await session.commit()
+                        output = await self.gateway.generate(
+                            task,
+                            json.dumps(
+                                {
+                                    "instruction": "Correct once using only approved facts; "
+                                    "return the template and preserve the opt-out.",
+                                    "rejection": reason,
+                                    "approved_output_template": seed,
+                                    "schema": json.loads(
+                                        (ROOT / "spec/schemas/outreach_draft.json").read_text()
+                                    ),
+                                }
+                            ),
+                            seed,
+                            sandbox_only=bool(brand.voice.get("sandbox_only")),
+                        )
+                        await self.checkpoint(
+                            session, task.organization_id, task.id, task.created_by, task.attempt
+                        )
+                        await session.refresh(brand)
+                        await session.refresh(lead)
                 await self.gateway.remember(session, task, output)
                 existing = await session.scalar(
                     select(Draft).where(
@@ -697,6 +738,19 @@ class Runtime:
                 )
                 session.add(draft)
                 await session.flush()
+                if task.input.get("auto_review"):
+                    from app.growth.effects import draft_payload, freeze
+
+                    await freeze(
+                        session,
+                        task.organization_id,
+                        task.created_by,
+                        "draft",
+                        draft.id,
+                        "send_email",
+                        draft_payload(draft),
+                    )
+                    draft.status = "pending_approval"
                 await record(
                     session, task.organization_id, task.created_by, "draft.created", draft.id
                 )
@@ -757,6 +811,7 @@ class Runtime:
                     }
                 ),
                 seed,
+                sandbox_only=bool(brand.voice.get("sandbox_only")),
             )
             await self.checkpoint(
                 session, task.organization_id, task.id, task.created_by, task.attempt

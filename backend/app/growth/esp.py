@@ -144,6 +144,9 @@ async def finish_bulk(session, effect, state, receipt):
             message.status = "sent" if state == "succeeded" else state
             if state == "succeeded":
                 message.provider_id = ids[index]
+                from app.growth.attribution import record_message_touch
+
+                await record_message_touch(session, message, effect.payload["campaign_id"])
             draft = await find(session, Draft, org_id, message.draft_id)
             draft.status = message.status
             lead = await find(session, Lead, org_id, message.lead_id)

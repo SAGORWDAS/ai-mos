@@ -196,3 +196,4 @@ def install_discovery(app, runtime, db, identity, require):
         return {"id": task.id, "status": task.status}
 
     app.include_router(router)
+    return {"search": search, "enrich": enrichment}

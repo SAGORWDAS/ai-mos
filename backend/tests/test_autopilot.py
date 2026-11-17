@@ -57,6 +57,7 @@ def test_autopilot_runs_internal_work_and_prepares_reviews_once(clients):
     assert {item["action_class"] for item in approvals} == {"send_email", "publish_content"}
     assert all(item["status"] == "pending" for item in approvals)
     assert rows(a, "messages") == []
+
     assert rows(a, "effects") == []
     assert all(item["status"] == "succeeded" for item in rows(a, "tasks"))
 
@@ -140,8 +141,43 @@ def test_autopilot_collects_observed_contacts_without_inventing_permission(clien
     assert rows(a, "plans")[0]["status"] == "completed", rows(a, "tasks")
     observed = next(x for x in rows(a, "leads") if x["email"] == "hello@retailer.example")
     assert observed["lawful_basis"] == "not_established"
-    assert rows(a, "outreach_drafts") == []
+    assert len(rows(a, "outreach_drafts")) == 1
+    assert observed["status"] == "scored"
+    assert any(item["action_class"] == "send_email" for item in rows(a, "approvals"))
     assert rows(a, "messages") == []
+
+    # An already full reviewed segment must not quietly expand its draft/cost ceiling.
+    selected = a.post(
+        "/v1/leads/import",
+        json={
+            "leads": [
+                {
+                    "brand_id": brand["id"],
+                    "name": f"Fixture {i}",
+                    "email": f"fixture{i}@example.invalid",
+                    "source": "Synthetic cap fixture",
+                    "lawful_basis": "consent",
+                    "basis_evidence": "Synthetic test only; no real consent",
+                }
+                for i in range(20)
+            ]
+        },
+    ).json()["created"]
+    full = a.post(
+        "/v1/autopilot/start",
+        json={
+            "brand_id": brand["id"],
+            "objective": "Research without expanding a full reviewed segment",
+            "search_query": "retailer websites",
+            "connected_research": True,
+            "lead_ids": [lead["id"] for lead in selected],
+            "idempotency_key": key(),
+        },
+    )
+    assert full.status_code == 202, full.text
+    drain(a)
+    assert len(rows(a, "outreach_drafts")) == 21
+    assert all(len(campaign["lead_ids"]) <= 20 for campaign in rows(a, "campaigns"))
 
 
 def test_member_cannot_authorize_autopilot(clients):

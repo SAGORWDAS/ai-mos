@@ -126,6 +126,8 @@ async def send_one(session, org_id, actor_id, draft, approval, key, daily_cap, s
     if lead.lawful_basis == "not_established" or not lead.basis_evidence.strip():
         raise HTTPException(403, "contactability_not_established")
     brand = await find(session, Brand, org_id, lead.brand_id)
+    if not simulated and brand.voice.get("sandbox_only"):
+        raise HTTPException(409, "sample_business_is_sandbox_only")
     await guard_draft(session, brand, lead, draft.subject, draft.body, draft.claims)
     if "unsubscribe" not in draft.body.lower():
         raise HTTPException(422, "opt_out_required")
@@ -181,6 +183,12 @@ async def send_one(session, org_id, actor_id, draft, approval, key, daily_cap, s
         "message.simulated" if simulated else "message.queued",
         message.id,
     )
+    if simulated:
+        from app.growth.attribution import record_message_touch
+
+        await record_message_touch(
+            session, message, approval.subject_id if approval.subject_type == "campaign" else None
+        )
     return public(message)
 
 
@@ -214,6 +222,10 @@ async def execute(session, settings, org_id, actor_id, approval_id, key, executi
         "send_bulk_campaign": "resend",
         "book_meeting": "calendar",
     }.get(approval.action_class)
+    if approval.action_class == "publish_channel":
+        provider_name = approval.payload.get("channel")
+        if provider_name not in {"wordpress", "linkedin"}:
+            raise HTTPException(422, "unknown_publishing_channel")
     connection = (
         await active(session, settings, org_id, provider_name)
         if provider_name and execution_mode == "live"
@@ -293,6 +305,10 @@ async def execute(session, settings, org_id, actor_id, approval_id, key, executi
         campaign.status = "completed" if simulated else "active"
     elif approval.action_class == "book_meeting":
         item = await find(session, Meeting, org_id, approval.subject_id)
+        meeting_lead = await find(session, Lead, org_id, item.lead_id)
+        meeting_brand = await find(session, Brand, org_id, meeting_lead.brand_id)
+        if not simulated and meeting_brand.voice.get("sandbox_only"):
+            raise HTTPException(409, "sample_business_is_sandbox_only")
         payload = {
             "meeting_id": item.id,
             "lead_id": item.lead_id,
@@ -333,6 +349,24 @@ async def execute(session, settings, org_id, actor_id, approval_id, key, executi
         result = {**public(item), "simulated": simulated}
         if not simulated:
             result["url"] = f"/api/v1/public/{org_id}/{item.id}"
+    elif approval.action_class == "publish_channel":
+        from app.growth.publishing import check_publication
+
+        item, brand = await check_publication(session, org_id, approval.payload)
+        if connection:
+            if brand.voice.get("sandbox_only"):
+                raise HTTPException(409, "sample_business_is_sandbox_only")
+            if (connection["id"], connection["version"]) != (
+                approval.payload.get("connection_id"),
+                approval.payload.get("connection_version"),
+            ):
+                raise HTTPException(409, "publication_connection_changed_request_new_approval")
+        result = {
+            "content_id": item.id,
+            "channel": provider_name,
+            "simulated": simulated,
+            "status": "simulated" if simulated else "queued",
+        }
     else:
         raise HTTPException(403, "unregistered_external_action")
     if connection:

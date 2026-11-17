@@ -1,0 +1,44 @@
+{"id":"s01","text":"Please unsubscribe me from this list.","label":"unsubscribe","source":"synthetic"}
+{"id":"s02","text":"Remove me immediately.","label":"unsubscribe","source":"synthetic"}
+{"id":"s03","text":"Do not contact this address again.","label":"unsubscribe","source":"synthetic"}
+{"id":"s04","text":"Take me off your mailing list.","label":"unsubscribe","source":"synthetic"}
+{"id":"s05","text":"No more emails, please.","label":"unsubscribe","source":"synthetic"}
+{"id":"s06","text":"I am reporting this as spam.","label":"complaint","source":"synthetic"}
+{"id":"s07","text":"This is a formal complaint.","label":"complaint","source":"synthetic"}
+{"id":"s08","text":"I will take legal action.","label":"complaint","source":"synthetic"}
+{"id":"s09","text":"Automatic reply: I am away.","label":"auto_reply","source":"synthetic"}
+{"id":"s10","text":"I am out of the office until Tuesday.","label":"auto_reply","source":"synthetic"}
+{"id":"s11","text":"Currently on vacation; replies may be delayed.","label":"auto_reply","source":"synthetic"}
+{"id":"s12","text":"Delivery failed: the address is unavailable.","label":"bounce_notice","source":"synthetic"}
+{"id":"s13","text":"Undeliverable message returned by server.","label":"bounce_notice","source":"synthetic"}
+{"id":"s14","text":"Mailbox not found.","label":"bounce_notice","source":"synthetic"}
+{"id":"s15","text":"What is the price?","label":"pricing_question","source":"synthetic"}
+{"id":"s16","text":"Could you explain your pricing?","label":"pricing_question","source":"synthetic"}
+{"id":"s17","text":"Is a discount possible?","label":"pricing_question","source":"synthetic"}
+{"id":"s18","text":"Please explain the refund policy.","label":"pricing_question","source":"synthetic"}
+{"id":"s19","text":"Can we schedule a meeting?","label":"meeting_request","source":"synthetic"}
+{"id":"s20","text":"I would like to book a demo.","label":"meeting_request","source":"synthetic"}
+{"id":"s21","text":"A short call would help.","label":"meeting_request","source":"synthetic"}
+{"id":"s22","text":"No thanks.","label":"not_interested","source":"synthetic"}
+{"id":"s23","text":"We are not interested.","label":"not_interested","source":"synthetic"}
+{"id":"s24","text":"Not interested in your offer, thank you.","label":"not_interested","source":"synthetic"}
+{"id":"s25","text":"Not now, thank you.","label":"not_now","source":"synthetic"}
+{"id":"s26","text":"Maybe next quarter.","label":"not_now","source":"synthetic"}
+{"id":"s27","text":"Please try later this year.","label":"not_now","source":"synthetic"}
+{"id":"s28","text":"Please contact my colleague about this.","label":"referral","source":"synthetic"}
+{"id":"s29","text":"Speak with our team lead instead.","label":"referral","source":"synthetic"}
+{"id":"s30","text":"You have the wrong person.","label":"wrong_person","source":"synthetic"}
+{"id":"s31","text":"That is not my department.","label":"wrong_person","source":"synthetic"}
+{"id":"s32","text":"Tell me more.","label":"interested","source":"synthetic"}
+{"id":"s33","text":"I am interested in the service.","label":"interested","source":"synthetic"}
+{"id":"s34","text":"Please send more information.","label":"interested","source":"synthetic"}
+{"id":"s35","text":"Could you share more details?","label":"interested","source":"synthetic"}
+{"id":"s36","text":"Thanks, received.","label":"needs_human","source":"synthetic"}
+{"id":"s37","text":"What do you mean by that?","label":"needs_human","source":"synthetic"}
+{"id":"s38","text":"Interested, but what is the price?","label":"needs_human","source":"synthetic"}
+{"id":"s39","text":"Can we call to discuss the cost?","label":"needs_human","source":"synthetic"}
+{"id":"s40","text":"Wrong person; speak to finance.","label":"needs_human","source":"synthetic"}
+{"id":"s41","text":"Stop emailing, although I am interested in your work.","label":"unsubscribe","source":"synthetic"}
+{"id":"s42","text":"Unsubscribe. What is the price anyway?","label":"unsubscribe","source":"synthetic"}
+{"id":"s43","text":"An interested colleague can schedule a call.","label":"needs_human","source":"synthetic"}
+{"id":"s44","text":"We will discuss this internally.","label":"needs_human","source":"synthetic"}

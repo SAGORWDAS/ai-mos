@@ -6,6 +6,7 @@ from collections import Counter
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from pydantic import ValidationError
 from sqlalchemy import func, select, update
 
 from app.growth import contracts as c
@@ -53,8 +54,9 @@ from app.growth.runtime import AGENTS, find, public, record
 from app.models import Brand
 
 
-def install(app, runtime, settings, db, identity, require):
+def install(app, runtime, settings, db, identity, require, tool_services=None):
     router = APIRouter(prefix="/v1")
+    tool_services = tool_services or {}
 
     async def write(request, who, session, owner=False):
         await require(session, request, who, {"owner"} if owner else {"owner", "admin", "member"})
@@ -766,7 +768,10 @@ def install(app, runtime, settings, db, identity, require):
         data: c.CheckoutInput, request: Request, who=Depends(identity), session=Depends(db)
     ):
         await write(request, who, session, owner=True)
-        await find(session, Lead, who["organization"].id, data.lead_id)
+        lead = await find(session, Lead, who["organization"].id, data.lead_id)
+        brand = await find(session, Brand, who["organization"].id, lead.brand_id)
+        if data.execution_mode == "live" and brand.voice.get("sandbox_only"):
+            raise HTTPException(409, "sample_business_is_sandbox_only")
         item = Checkout(
             organization_id=who["organization"].id,
             provider_ref="sandbox:" + str(uuid4()),
@@ -1022,6 +1027,91 @@ def install(app, runtime, settings, db, identity, require):
             }
         if tool_id == "TLS-17":
             return await analytics(who, session)
+        args = dict(data.args)
+
+        def parsed(model, values=None):
+            try:
+                return model.model_validate(args if values is None else values)
+            except ValidationError as error:
+                raise HTTPException(
+                    422, [{"loc": list(e["loc"]), "msg": e["msg"]} for e in error.errors()]
+                ) from None
+
+        def identifier(name):
+            value = args.get(name)
+            if not isinstance(value, str) or not value:
+                raise HTTPException(422, name + "_required")
+            return value
+
+        await audited(session, who, request, "tool.invoked", tool_id)
+        if tool_id in {"TLS-01", "TLS-03"}:
+            from app.growth.discovery import Enrich, Search
+
+            name, model = ("search", Search) if tool_id == "TLS-01" else ("enrich", Enrich)
+            return await tool_services[name](parsed(model), request, who, session)
+        if tool_id == "TLS-04":
+            return await score_lead(identifier("lead_id"), request, who, session)
+        if tool_id == "TLS-05":
+            return await import_leads(parsed(c.LeadImport), request, who, session)
+        if tool_id == "TLS-06":
+            return await content(parsed(c.ContentInput), request, who, session)
+        if tool_id == "TLS-07":
+            lead_id = identifier("lead_id")
+            return await stage(
+                lead_id,
+                parsed(c.StageInput, {k: v for k, v in args.items() if k != "lead_id"}),
+                request,
+                who,
+                session,
+            )
+        if tool_id == "TLS-08":
+            from app.growth.provider_api import AvailabilityInput
+
+            return await tool_services["availability"](
+                parsed(AvailabilityInput), request, who, session
+            )
+        if tool_id == "TLS-10":
+            return await listing("messages", before=None, who=who, session=session)
+        if tool_id == "TLS-11":
+            body = args.get("body")
+            if not isinstance(body, str) or not 1 <= len(body) <= 5000:
+                raise HTTPException(422, "body_between_1_and_5000_characters_required")
+            await session.commit()
+            return classify(body)
+        if tool_id == "TLS-12":
+            message_id = identifier("message_id")
+            return await reply(
+                message_id,
+                parsed(c.Keyed, {"idempotency_key": args.get("idempotency_key")}),
+                request,
+                who,
+                session,
+            )
+        if tool_id == "TLS-13":
+            kind, subject = args.get("subject_type"), identifier("subject_id")
+            handlers = {
+                "draft": draft_approval,
+                "content": content_approval,
+                "campaign": campaign_approval,
+            }
+            if kind not in handlers:
+                raise HTTPException(422, "approval_subject_must_be_draft_content_or_campaign")
+            return await handlers[kind](subject, request, who, session)
+        if tool_id in {"TLS-09", "TLS-14", "TLS-15"}:
+            execution = parsed(c.Execute)
+            approval = await find(session, Approval, who["organization"].id, execution.approval_id)
+            expected = {
+                "TLS-09": "book_meeting",
+                "TLS-14": "send_email",
+                "TLS-15": "send_bulk_campaign",
+            }[tool_id]
+            if approval.action_class != expected:
+                raise HTTPException(403, "tool_action_mismatch")
+            return await effect(execution, request, who, session)
+        if tool_id == "TLS-16":
+            return await checkout(parsed(c.CheckoutInput), request, who, session)
+        if tool_id == "TLS-18":
+            return await learning(parsed(c.LearningInput), request, who, session)
         await audited(session, who, request, "tool.unregistered_or_unavailable", tool_id)
         await session.commit()
         raise HTTPException(403, "tool_requires_workflow_gateway")
@@ -1172,6 +1262,8 @@ def install(app, runtime, settings, db, identity, require):
         data: c.ExpenseInput, request: Request, who=Depends(identity), session=Depends(db)
     ):
         await write(request, who, session, owner=True)
+        if data.campaign_id:
+            await find(session, Campaign, who["organization"].id, data.campaign_id)
         item = Expense(
             organization_id=who["organization"].id,
             **data.model_dump(),

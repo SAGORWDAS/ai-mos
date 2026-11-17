@@ -1,11 +1,11 @@
-# Original plan coverage - v0.5.1
+# Original plan coverage - v0.6.0
 
 **Not all original requirements are complete.** Implemented means the listed application behavior exists with local tests; it does not certify real-account acceptance, every clause of the original capsule, business quality or production operation. Partial means additional development or evidence remains. External gate requires actual business/account input.
 
 See BUILD-STATUS.md for test evidence and RELEASE-VERIFICATION.md for the public release CI result.
 
 
-Review totals: **26 Implemented, 26 Partial, 6 External gate**. See [the current review](REVIEW-2026-11-17.md).
+Review totals: **29 Implemented, 23 Partial, 6 External gate**. See [v0.6.0 verification](VERIFICATION-0.6.0.md) and the historical [v0.5.1 review](REVIEW-2026-11-17.md).
 
 ## PH-0 - Decisions and spikes
 
@@ -31,7 +31,7 @@ Review totals: **26 Implemented, 26 Partial, 6 External gate**. See [the current
 | T-1.3 | migrations 01-06 with RLS | Implemented | Versioned migrations and forced RLS cover all current tenant tables. |
 | T-1.4 | ai gateway registry ledger | Implemented | Gateway, schema validation, cost ledger, timeout holds and reconciliation tested. |
 | T-1.5 | task runtime and scheduler | Implemented | Durable claims, DAG scheduling, retries and cancellation tested. |
-| T-1.6 | tool gateway and read tools | Partial | Registry ceilings and controlled tools enforced; not every original service/tool is independent. |
+| T-1.6 | tool gateway and read tools | Partial | All 18 tool IDs route through guarded workflows/read/compute handlers with registry ceilings. Full independent service/tool acceptance remains unasserted. |
 | T-1.7 | brand brain | Implemented | Text/PDF/website ingestion and cited keyword/embedding retrieval implemented. |
 | T-1.8 | approvals model and api | Implemented | Frozen payload/hash, expiry, edit invalidation and single execution tested. |
 | T-1.9 | audit logs tracing logging | Partial | Audit/trace and hidden SQL parameters implemented; deployment-wide observability review remains. |
@@ -45,7 +45,7 @@ Review totals: **26 Implemented, 26 Partial, 6 External gate**. See [the current
 |---|---|---|---|
 | T-2.1 | command center parse confirm | Implemented | Structured command fields, missing-information handling and plan review implemented. |
 | T-2.2 | planner (CMO) | Implemented | Planner output validates against the plan schema. |
-| T-2.3 | task graph execution | Partial | Dependency execution and cycle guards tested; exact original 20-task acceptance drill remains. |
+| T-2.3 | task graph execution | Implemented | Dependency/cycle guards and a completed 20-task graph with no duplicate content or lost jobs are tested. |
 | T-2.4 | research agent | Partial | Claim citations enforced and public research available; broad research quality benchmark remains. |
 | T-2.5 | strategy agent | Partial | Pricing is human supplied and claims constrained; full strategy budget-range acceptance remains. |
 | T-2.6 | content agent | Implemented | Grounded content and prohibited-claim guards tested. |
@@ -62,7 +62,7 @@ Review totals: **26 Implemented, 26 Partial, 6 External gate**. See [the current
 | T-3.4 | crm entities and pipeline | Implemented | CRM stages and actor activity records implemented. |
 | T-3.5 | mailbox connection read | Implemented | Known-contact incremental paged Gmail import, threads and opt-in schedule tested. |
 | T-3.6 | send path suppression and caps | Implemented | Suppression and atomic caps enforced at dispatch; provider receipts tested. |
-| T-3.7 | outreach drafting claim check | Partial | Grounding rejects invalid copy; original single corrective-generation retry is not asserted. |
+| T-3.7 | outreach drafting claim check | Implemented | Exactly one corrective generation is attempted after rejection; both attempts are costed, and a second invalid result creates no draft. |
 | T-3.8 | dispatch with approval | Implemented | Versioned edits void approvals; dispatch and ambiguous receipts tested. |
 | T-3.9 | reply sync and classification | Partial | Sync/classification/opt-out order tested; representative classification quality benchmark remains. |
 | T-3.10 | reply drafting and L4 option | Partial | Reviewed reply drafts and human escalation work; autonomous L4 sending stays disabled. |
@@ -71,7 +71,7 @@ Review totals: **26 Implemented, 26 Partial, 6 External gate**. See [the current
 
 | Task | Original deliverable | Status | Evidence or remaining work |
 |---|---|---|---|
-| T-4.1 | calendar adapter availability | Partial | Live free/busy adapter works against fixtures; original sub-60-second availability cache remains. |
+| T-4.1 | calendar adapter availability | Implemented | Controlled free/busy contracts and a 45-second read cache are tested. Booking bypasses the read cache and rechecks. |
 | T-4.2 | meeting propose confirm book | Partial | Proposal/approval/idempotent booking and local conflicts tested; global external calendar races remain. |
 | T-4.3 | payment adapter and webhook | Implemented | Stripe signatures, matching payments, renewals, refunds/disputes and replay tested with fixtures. |
 | T-4.4 | customers subscriptions gating | Implemented | Payments/subscriptions are changed through controlled payment receipt paths, not agent tools. |
@@ -83,12 +83,12 @@ Review totals: **26 Implemented, 26 Partial, 6 External gate**. See [the current
 
 | Task | Original deliverable | Status | Evidence or remaining work |
 |---|---|---|---|
-| T-5.1 | attribution | Partial | Customer-to-lead linkage exists; complete campaign/multitouch attribution remains. |
+| T-5.1 | attribution | Partial | First/last/linear gross-payment campaign attribution, automatic outreach touchpoints and manual evidence records work. Full owned-site capture, model-cost/refund allocation and funnel attribution remain. |
 | T-5.2 | cost per outcome | Partial | Expenses and recorded CAC/CPL supported; actual complete costs must be supplied. |
-| T-5.3 | evaluation in CI | Partial | Small supplied reply regressions run in CI; full model/prompt promotion benchmarks remain. |
+| T-5.3 | evaluation in CI | Partial | Three supplied reply cases plus 44 synthetic cases and an evaluation/prediction CLI run locally/in CI. Representative model/prompt promotion benchmarks remain. |
 | T-5.4 | learning records | Implemented | Learning records require workspace evidence and effect size. |
 | T-5.5 | support and retention | Partial | Support and lifecycle views/escalations implemented; broader live retention quality remains. |
-| T-5.6 | seo social creative | Partial | SEO/social/creative drafts and SVG cards work; external social and raster-image adapters remain. |
+| T-5.6 | seo social creative | Partial | SEO/social/creative drafts, SVG cards, reviewed WordPress.com/Jetpack and LinkedIn member publishing work against HTTP fixtures. Raster images, company-page/other-network publication and live acceptance remain. |
 
 ## PH-6 - Scale and hardening
 

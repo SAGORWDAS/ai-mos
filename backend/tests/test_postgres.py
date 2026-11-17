@@ -23,6 +23,32 @@ ADMIN = os.environ.get("AI_MOS_TEST_ADMIN_URL")
 pytestmark = pytest.mark.skipif(not ADMIN, reason="Native PostgreSQL integration URL not supplied")
 
 
+def test_native_campaign_attribution(pg_clients):
+    from test_attribution import test_attribution_tenant_scope_replay_and_paid_outcome
+
+    test_attribution_tenant_scope_replay_and_paid_outcome(pg_clients)
+
+
+def test_native_one_brief_setup(pg_clients):
+    from test_quick_setup import test_one_brief_setup_is_atomic_scoped_and_replay_safe
+
+    test_one_brief_setup_is_atomic_scoped_and_replay_safe(pg_clients)
+
+
+def test_native_publishing_approval_scope(pg_clients):
+    from test_publishing import test_channel_sandbox_is_scoped_approved_and_idempotent
+
+    test_channel_sandbox_is_scoped_approved_and_idempotent(pg_clients)
+
+
+def test_native_automatic_reply_policy(pg_clients, monkeypatch):
+    from test_automatic_replies import (
+        test_owner_opt_in_prepares_safe_reply_once_and_escalates_ambiguous,
+    )
+
+    test_owner_opt_in_prepares_safe_reply_once_and_escalates_ambiguous(pg_clients, monkeypatch)
+
+
 @pytest.fixture
 def pg_clients():
     name = "ai_mos_test_" + uuid4().hex

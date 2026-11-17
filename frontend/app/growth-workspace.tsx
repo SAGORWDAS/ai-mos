@@ -8,9 +8,12 @@ import {
   useCallback,
   useEffect,
   useState,
+  useRef,
 } from "react";
 import { api } from "./api";
 import Autopilot from "./autopilot";
+import Attribution from "./attribution";
+import Publisher from "./publisher";
 import { currencies, currencyFactor, displayMoney } from "./money";
 
 type Item = { id: string; created_at: number; [key: string]: unknown };
@@ -35,6 +38,7 @@ const sections = [
   "Automation",
   "Learning",
   "Analytics",
+  "Attribution",
   "Agents",
   "Usage & cost",
   "Knowledge",
@@ -59,12 +63,13 @@ const resources: Record<Section, string[]> = {
   Automation: ["workflows", "workflow_runs"],
   Learning: ["learning_records"],
   Analytics: [],
+  Attribution: [],
   Agents: [],
   "Usage & cost": ["model_usage"],
   Knowledge: ["brand_documents", "tasks"],
   Sequences: ["sequences", "sequence_enrollments"],
   Notifications: ["notifications"],
-  Expenses: ["expenses"],
+  Expenses: ["expenses", "campaigns"],
 };
 const descriptions: Record<Section, string> = {
   Sequences:
@@ -103,6 +108,8 @@ const descriptions: Record<Section, string> = {
     "Record lessons with an evidence reference and a measured effect size. Evidence must belong to this workspace.",
   Analytics:
     "Inspect recorded results. Sandbox deliveries and revenue are labelled separately from real outcomes.",
+  Attribution:
+    "Connect evidenced campaign interactions with payment outcomes using first-touch, last-touch or equal campaign credit.",
   Agents:
     "One shared runtime with twenty role manifests. Permissions come from the registry; disabling a role blocks its jobs.",
   "Usage & cost":
@@ -403,7 +410,12 @@ export default function GrowthWorkspace({
   const [data, setData] = useState<Record<string, Item[]>>({});
   const [brands, setBrands] = useState<Item[]>([]);
   const [connections, setConnections] = useState<
-    { provider: string; enabled: boolean; status: string }[]
+    {
+      provider: string;
+      enabled: boolean;
+      status: string;
+      account_ref: string;
+    }[]
   >([]);
   const [analytics, setAnalytics] = useState<Record<string, unknown>>({});
   const [budget, setBudget] = useState<Item | null>(null);
@@ -423,10 +435,20 @@ export default function GrowthWorkspace({
     identity.role !== "viewer" && !identity.organization.emergency_stop;
   const owner = identity.role === "owner";
   const admin = ["owner", "admin"].includes(identity.role);
+  const refreshEpoch = useRef(0);
 
   const refresh = useCallback(async () => {
+    const epoch = ++refreshEpoch.current;
     const names = [...new Set([...resources[section], "leads", "customers"])];
-    const [brandRows, entries] = await Promise.all([
+    const [
+      brandRows,
+      entries,
+      connectionRows,
+      report,
+      budgetRow,
+      stats,
+      agentRows,
+    ] = await Promise.all([
       api<Item[]>("/v1/brands"),
       Promise.all(
         names.map(
@@ -439,13 +461,28 @@ export default function GrowthWorkspace({
             ] as const,
         ),
       ),
+      api<
+        {
+          provider: string;
+          enabled: boolean;
+          status: string;
+          account_ref: string;
+        }[]
+      >("/v1/connections"),
+      section === "Analytics"
+        ? api<Record<string, unknown>>("/v1/analytics")
+        : null,
+      section === "Usage & cost" ? api<Item>("/v1/budgets/current") : null,
+      section === "Usage & cost"
+        ? api<Record<string, number>>("/v1/model-cache")
+        : null,
+      section === "Agents"
+        ? api<Record<string, unknown>[]>("/v1/agents")
+        : null,
     ]);
+    if (epoch !== refreshEpoch.current) return;
     setBrands(brandRows);
-    setConnections(
-      await api<{ provider: string; enabled: boolean; status: string }[]>(
-        "/v1/connections",
-      ),
-    );
+    setConnections(connectionRows);
     setData(
       Object.fromEntries(entries.map(([name, page]) => [name, page.items])),
     );
@@ -454,14 +491,10 @@ export default function GrowthWorkspace({
         entries.map(([name, page]) => [name, page.next_cursor]),
       ),
     );
-    if (section === "Analytics")
-      setAnalytics(await api<Record<string, unknown>>("/v1/analytics"));
-    if (section === "Usage & cost") {
-      setBudget(await api<Item>("/v1/budgets/current"));
-      setCacheStats(await api<Record<string, number>>("/v1/model-cache"));
-    }
-    if (section === "Agents")
-      setAgents(await api<Record<string, unknown>[]>("/v1/agents"));
+    if (report) setAnalytics(report);
+    if (budgetRow) setBudget(budgetRow);
+    if (stats) setCacheStats(stats);
+    if (agentRows) setAgents(agentRows);
   }, [section, pageBefore]);
 
   useEffect(() => {
@@ -1511,6 +1544,11 @@ export default function GrowthWorkspace({
                   <h3>{text(item, "title")}</h3>
                   <p className="preserve">{text(item, "body")}</p>
                   <Evidence value={item.citations} />
+                  <Publisher
+                    contentId={item.id}
+                    disabled={!writable || !admin}
+                    connections={connections}
+                  />
                   {item.status === "published_local" && (
                     <div className="actions">
                       <a
@@ -2473,6 +2511,7 @@ export default function GrowthWorkspace({
             </>
           )}
 
+          {section === "Attribution" && <Attribution writable={writable} />}
           {section === "Knowledge" && (
             <>
               <details className="form-disclosure">
@@ -2847,6 +2886,7 @@ export default function GrowthWorkspace({
                         Number(form.get("amount_micros")) * 1_000_000,
                       ),
                       simulated: form.get("simulated") !== "false",
+                      campaign_id: form.get("campaign_id") || null,
                     },
                     "Expense recorded with evidence.",
                   )
@@ -2894,6 +2934,17 @@ export default function GrowthWorkspace({
                     minLength={3}
                     maxLength={1000}
                   />
+                </label>
+                <label>
+                  Campaign (optional)
+                  <select name="campaign_id">
+                    <option value="">Unassigned workspace cost</option>
+                    {rows("campaigns").map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {text(c, "name")}
+                      </option>
+                    ))}
+                  </select>
                 </label>
               </Form>
               {rows("expenses").map((expense) => (

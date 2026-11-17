@@ -17,6 +17,7 @@ from app.body_limit import RequestBodyLimit
 from app.config import Settings, get_settings
 from app.contracts import AcceptInvite, BrandInput, Invite, Login, Signup, Stop
 from app.growth.api import install
+from app.growth.attribution import install_attribution
 from app.growth.autopilot import install_autopilot
 from app.growth.billing_api import install_billing
 from app.growth.connection_api import install_connections
@@ -40,6 +41,7 @@ from app.growth.models import (
 from app.growth.oauth import install_oauth
 from app.growth.provider_api import install_provider_routes
 from app.growth.publication import install_publication
+from app.growth.publishing import install_publishing
 from app.growth.runtime import Runtime
 from app.models import AuditLog, Base, Brand, Invitation, Membership, Organization, Session, User
 from app.schema import upgrade_local
@@ -95,7 +97,7 @@ def create_app(settings: Settings | None = None):
             if worker_engine:
                 await worker_engine.dispose()
 
-    app = FastAPI(title="AI-MOS", version="0.5.1", lifespan=lifespan)
+    app = FastAPI(title="AI-MOS", version="0.6.0", lifespan=lifespan)
     app.state.runtime = runtime
     app.state.factory = factory
     app.add_middleware(
@@ -661,15 +663,17 @@ def create_app(settings: Settings | None = None):
     install_billing(app, db, identity, require)
     install_costs(app, runtime, settings, db, identity, require)
     install_contacts(app, db, identity, require)
-    install_discovery(app, runtime, db, identity, require)
+    tool_services = install_discovery(app, runtime, db, identity, require)
     install_esp(app, settings, db)
     install_oauth(app, runtime, settings, db, identity, require)
     install_inbox_schedule(app, db, identity, require)
     install_embeddings(app, runtime, settings, db, identity, require)
-    install(app, runtime, settings, db, identity, require)
+    tool_services.update(install_provider_routes(app, runtime, settings, db, identity, require))
+    install(app, runtime, settings, db, identity, require, tool_services)
+    install_attribution(app, db, identity, require)
+    install_publishing(app, settings, db, identity, require)
     install_connections(app, settings, db, identity, require)
     install_autopilot(app, runtime, settings, db, identity, require)
-    install_provider_routes(app, runtime, settings, db, identity, require)
     dummy_password = hash_password(secrets.token_urlsafe(32))
     app.add_middleware(RequestBodyLimit)
     return app

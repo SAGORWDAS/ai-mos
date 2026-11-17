@@ -312,6 +312,7 @@ class Integration(Row, Tenant, Base):
     enabled: Mapped[bool] = mapped_column(Boolean, default=False)
     version: Mapped[int] = mapped_column(Integer, default=1)
     sync_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    auto_draft_replies: Mapped[bool] = mapped_column(Boolean, default=False)
     sync_interval_minutes: Mapped[int] = mapped_column(Integer, default=10)
     sync_next_at: Mapped[float] = mapped_column(Float, default=0)
     sync_cursor: Mapped[str] = mapped_column(String(2000), default="")
@@ -339,6 +340,19 @@ class Expense(Row, Tenant, Base):
     amount_micros: Mapped[int] = mapped_column(Integer)
     evidence: Mapped[str] = mapped_column(String(1000))
     simulated: Mapped[bool] = mapped_column(Boolean, default=True)
+    campaign_id: Mapped[str | None] = mapped_column(ForeignKey("campaigns.id"))
+
+
+class AttributionTouch(Row, Tenant, Base):
+    __tablename__ = "attribution_touches"
+    __table_args__ = (UniqueConstraint("organization_id", "idempotency_key"),)
+    lead_id: Mapped[str] = mapped_column(ForeignKey("leads.id"))
+    campaign_id: Mapped[str] = mapped_column(ForeignKey("campaigns.id"))
+    channel: Mapped[str] = mapped_column(String(40))
+    evidence: Mapped[str] = mapped_column(String(1000))
+    occurred_at: Mapped[float] = mapped_column(Float)
+    simulated: Mapped[bool] = mapped_column(Boolean, default=True)
+    idempotency_key: Mapped[str] = mapped_column(String(200))
 
 
 class Sequence(Row, Tenant, Base):
@@ -418,6 +432,7 @@ RESOURCES = {
         Effect,
         Notification,
         Expense,
+        AttributionTouch,
         Sequence,
         Enrollment,
         Subscription,

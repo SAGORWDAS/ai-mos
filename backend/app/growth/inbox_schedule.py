@@ -16,6 +16,7 @@ from app.tenancy import tenant_scope
 
 class Schedule(Input):
     enabled: bool
+    auto_draft_replies: bool = False
     interval_minutes: int = Field(default=10, ge=5, le=1440)
 
 
@@ -26,22 +27,28 @@ def install_inbox_schedule(app, db, identity, require):
     async def schedule(
         data: Schedule, request: Request, who=Depends(identity), session=Depends(db)
     ):
-        await require(session, request, who, {"owner"}, writes=data.enabled)
+        enabled_work = data.enabled or data.auto_draft_replies
+        await require(session, request, who, {"owner"}, writes=enabled_work)
         item = await session.scalar(
             select(Integration).where(
                 Integration.organization_id == who["organization"].id,
                 Integration.provider == "gmail",
             )
         )
-        if not item or (data.enabled and (item.status != "verified" or not item.enabled)):
+        if not item or (enabled_work and (item.status != "verified" or not item.enabled)):
             raise HTTPException(409, "enabled_gmail_required")
         item.sync_enabled, item.sync_interval_minutes = data.enabled, data.interval_minutes
+        item.auto_draft_replies = data.auto_draft_replies
         item.sync_cursor, item.sync_next_at = "", 0
         await record(
             session, who["organization"].id, who["user"].id, "inbox.schedule_updated", item.id
         )
         await session.commit()
-        return {"enabled": item.sync_enabled, "interval_minutes": item.sync_interval_minutes}
+        return {
+            "enabled": item.sync_enabled,
+            "interval_minutes": item.sync_interval_minutes,
+            "auto_draft_replies": item.auto_draft_replies,
+        }
 
     app.include_router(router)
 
@@ -129,7 +136,14 @@ class InboxScheduler:
                     )
                 ):
                     return True
-                await import_page(session, org_id, connection["account_ref"], page["messages"])
+                await import_page(
+                    session,
+                    org_id,
+                    connection["account_ref"],
+                    page["messages"],
+                    auto_draft=item.auto_draft_replies,
+                    actor_id=actor,
+                )
                 item.sync_last_at, item.sync_error = time.time(), ""
                 item.sync_cursor = page.get("next_cursor") or ""
                 # Drain one page per idle tick, then return to the selected polling interval.

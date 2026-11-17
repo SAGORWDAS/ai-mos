@@ -2,6 +2,8 @@
 
 Business facts are runtime inputs. You do not need to give the developer a business name, offer, audience, prices or API credentials to install or test AI-MOS. An empty workspace remains usable. Any workspace owner can enter business details inside the application when starting work, and can add another business later.
 
+For the shortest setup, use **Overview / Start with a short business brief**. One replay-safe operation creates the business and starts preparation. See [DAY-ONE.md](DAY-ONE.md).
+
 ## Start a business campaign
 
 Open **Operations / Command Center / Autopilot**. Use an existing Brand Brain profile, or choose **Add a business now or later**. A name alone is enough to save a draft profile. Offer, audience and approved facts can be completed later in Brand Brain. The app never fills unknown commercial facts with invented claims.
@@ -10,7 +12,7 @@ When ready, select the business, describe the objective, choose the target/windo
 
 Autopilot generates the plan, authorizes its bounded internal graph, runs evidence research, strategy, content and reporting, drafts for selected contacts, and assembles the final approval queue. Follow progress in Plans & tasks. You do not approve every internal task. Duplicate start requests and replayed preparation jobs do not duplicate the saved plan or approvals. Pause, role changes, disabled agents, budget exhaustion and failed dependencies still stop affected work.
 
-Optional connected prospect research uses your enabled Brave connection, then reads up to three suggested HTTPS business pages using the safe fetcher. Observed same-domain email addresses are imported with provenance and **contactability not established**. Inaccessible pages are reported as skipped. Publication of an address does not establish permission to market to it. Review new contacts before including them in outreach; the system does not invent consent.
+Optional connected prospect research uses your enabled Brave connection, then reads up to three suggested HTTPS business pages using the safe fetcher. Observed same-domain email addresses are imported with provenance and **contactability not established**. Inaccessible pages are reported as skipped. Publication of an address does not establish permission to market to it. Observed contacts are scored and drafted automatically; review contactability before sending. The system does not invent consent.
 
 If offer, audience or approved facts are missing, only that campaign asks for information; no paid generation is queued and the platform stays available.
 
@@ -34,6 +36,6 @@ Refresh setup checks after connection changes. The deployment section separates 
 | Internal business rules | Enabled rules score leads, notify owners and prepare onboarding |
 | Costs and recovery | Budgets, cache reuse, attempt ledger, bounded retries and reconciliation holds apply |
 
-External publication, recipient-facing sends/bookings and bulk campaigns retain explicit execution controls. Spending changes, refunds, disputes and contractual decisions remain owner responsibilities. This release automates campaign preparation and existing configured workflows; it does not claim unrestricted autonomous business operation or guarantee clients.
+Reviewed WordPress.com/LinkedIn member publication, recipient-facing sends/bookings and bulk campaigns retain explicit execution controls. Spending changes, refunds, disputes and contractual decisions remain owner responsibilities. This release automates campaign preparation and existing configured workflows; it does not claim unrestricted autonomous business operation or guarantee clients.
 
 Production remains separately gated on the remaining engineering review, hosting/security setup, representative AI-quality tests and live provider drills. Adding business details or connecting credentials does not by itself satisfy those gates. See PLAN-COVERAGE.md for the original-plan status.

@@ -184,6 +184,7 @@ class ExpenseInput(Input):
     amount_micros: int = Field(ge=0, le=1_000_000_000)
     evidence: str = Field(min_length=3, max_length=1000)
     simulated: bool = True
+    campaign_id: str | None = None
 
 
 class SequenceInput(Input):

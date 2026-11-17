@@ -9,8 +9,19 @@ from app.growth.models import Integration
 from app.growth.providers import GoogleProvider, ProviderError, require_secret
 from app.tenancy import tenant_scope
 
-PROVIDERS = {"openrouter", "gmail", "calendar", "stripe", "resend", "brave"}
+PROVIDERS = {
+    "openrouter",
+    "gmail",
+    "calendar",
+    "stripe",
+    "resend",
+    "brave",
+    "wordpress",
+    "linkedin",
+}
 FIELDS = {
+    "wordpress": {"access_token", "site_id"},
+    "linkedin": {"access_token", "author_urn"},
     "resend": {"api_key", "sender", "webhook_secret"},
     "brave": {"api_key"},
     "openrouter": {"api_key", "model_id", "embedding_model_id"},
@@ -54,6 +65,7 @@ def public_connection(item):
         "enabled": item.enabled,
         "version": item.version,
         "sync_enabled": item.sync_enabled,
+        "auto_draft_replies": item.auto_draft_replies,
         "sync_interval_minutes": item.sync_interval_minutes,
         "sync_last_at": item.sync_last_at,
         "sync_error": item.sync_error,
@@ -92,7 +104,13 @@ async def verify(settings, item, transport=None):
     if is_placeholder(credentials):
         return {"status": "placeholder", "account_ref": item.account_ref}
     try:
-        if item.provider in {"gmail", "calendar"}:
+        if item.provider in {"wordpress", "linkedin"}:
+            from app.growth.publishing import PublishingProvider
+
+            provider = PublishingProvider(item.provider, credentials, transport)
+            identity = await provider.verify()
+            item.token_ciphertext = seal(settings, item.provider, item.organization_id, credentials)
+        elif item.provider in {"gmail", "calendar"}:
             google = GoogleProvider(credentials.get("access_token", ""), transport=transport)
             if not google.access_token and credentials.get("refresh_token"):
                 refreshed = await google.refresh(

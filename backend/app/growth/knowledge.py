@@ -199,7 +199,12 @@ def classify(body):
         ("not_now", r"not now|next (month|quarter)|later this", False),
         ("referral", r"speak (to|with)|contact my colleague", True),
         ("wrong_person", r"wrong person|not my (role|department)", True),
-        ("interested", r"\b(interested|tell me more|more details|can you tell me how)\b", False),
+        (
+            "interested",
+            r"(?<!not )\binterested\b|\b(tell me more|more details|can you tell me how|"
+            r"send more information)\b",
+            False,
+        ),
     ]
     found = [(label, escalate) for label, pattern, escalate in rules if re.search(pattern, lower)]
     if len(found) == 1:

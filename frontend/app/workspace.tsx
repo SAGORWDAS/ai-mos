@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { api, setWorkspaceContext, SESSION_EVENT_KEY } from "./api";
 import GrowthWorkspace from "./growth-workspace";
 import Connections from "./connections";
+import QuickStart from "./quick-start";
 import AccountSecurity, { RecoveryForm } from "./account-security";
 import { currencyFactor } from "./money";
 
@@ -581,6 +582,13 @@ export default function Workspace() {
             </div>
             {view === "Overview" && (
               <>
+                <QuickStart
+                  disabled={
+                    me.role !== "owner" || me.organization.emergency_stop
+                  }
+                  onStarted={refresh}
+                  onConnect={() => go("Integrations")}
+                />
                 <div className="overview-grid">
                   <section className="lead-story">
                     <p className="eyebrow">Start here</p>

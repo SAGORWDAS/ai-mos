@@ -12,11 +12,14 @@ type Connection = {
   enabled: boolean;
   version: number;
   sync_enabled: boolean;
+  auto_draft_replies: boolean;
   sync_interval_minutes: number;
   sync_last_at: number;
   sync_error: string;
 };
 const providers = {
+  wordpress: "WordPress.com publishing",
+  linkedin: "LinkedIn member publishing",
   openrouter: "OpenRouter",
   gmail: "Gmail",
   calendar: "Google Calendar",
@@ -26,6 +29,18 @@ const providers = {
 };
 type Provider = keyof typeof providers;
 const fields: Record<Provider, [string, string, boolean][]> = {
+  wordpress: [
+    ["access_token", "WordPress.com OAuth access token", true],
+    ["site_id", "Numeric site ID", false],
+  ],
+  linkedin: [
+    [
+      "access_token",
+      "LinkedIn access token (openid, profile, w_member_social)",
+      true,
+    ],
+    ["author_urn", "Member URN (optional; verified from account)", false],
+  ],
   resend: [
     ["api_key", "Resend API key", true],
     ["sender", "Verified sending address", false],
@@ -59,6 +74,8 @@ const fields: Record<Provider, [string, string, boolean][]> = {
   ],
 };
 const activation: Record<Provider, string> = {
+  wordpress: "Enable reviewed article publishing",
+  linkedin: "Enable reviewed member posts",
   openrouter: "Enable model calls",
   gmail: "Enable approved email dispatch",
   calendar: "Enable approved bookings",
@@ -112,6 +129,7 @@ export default function Connections({ role }: { role: string }) {
     if (provider === "gmail") values.sender = "sandbox@example.test";
     if (provider === "resend") values.sender = "sandbox@example.test";
     if (provider === "calendar") values.calendar_id = "primary";
+    if (provider === "wordpress") values.site_id = "123456";
     if (provider === "stripe") {
       values.success_url = "https://example.test/success";
       values.cancel_url = "https://example.test/cancel";
@@ -292,6 +310,7 @@ export default function Connections({ role }: { role: string }) {
                           api("/v1/connections/gmail/sync-schedule", {
                             enabled: !connection.sync_enabled,
                             interval_minutes: 10,
+                            auto_draft_replies: connection.auto_draft_replies,
                           }),
                         connection.sync_enabled
                           ? "Scheduled inbox checks disabled."
@@ -302,6 +321,35 @@ export default function Connections({ role }: { role: string }) {
                     {connection.sync_enabled
                       ? "Disable scheduled inbox checks"
                       : "Enable scheduled inbox checks"}
+                  </button>
+                  <p className="small muted">
+                    Automatic reply drafts:{" "}
+                    {connection.auto_draft_replies ? "enabled" : "disabled"}.
+                    Clear interest and meeting requests can be drafted into
+                    Approvals. Pricing, complaints and unclear replies need your
+                    attention. Connected AI may charge within your budget.
+                  </p>
+                  <button
+                    className="secondary"
+                    disabled={!owner || busy}
+                    onClick={() =>
+                      act(
+                        () =>
+                          api("/v1/connections/gmail/sync-schedule", {
+                            enabled: connection.sync_enabled,
+                            interval_minutes:
+                              connection.sync_interval_minutes || 10,
+                            auto_draft_replies: !connection.auto_draft_replies,
+                          }),
+                        connection.auto_draft_replies
+                          ? "Automatic reply drafting disabled."
+                          : "Automatic reply drafting enabled. Nothing is sent without approval.",
+                      )
+                    }
+                  >
+                    {connection.auto_draft_replies
+                      ? "Disable automatic reply drafts"
+                      : "Enable automatic reply drafts"}
                   </button>
                 </div>
               )}

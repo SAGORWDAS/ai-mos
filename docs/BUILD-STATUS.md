@@ -1,6 +1,10 @@
 # Build status - 17 November 2026
 
-Version 0.5.1 public beta. The local agency workflow is implemented and tested. **The entire original plan is not fully accepted.** [PLAN-COVERAGE.md](PLAN-COVERAGE.md) accounts for all 58 tasks and 14 acceptance areas without treating a manifest or mock test as production evidence.
+Version 0.6.0 public beta. The local agency workflow is implemented and tested. **The entire original plan is not fully accepted.** [PLAN-COVERAGE.md](PLAN-COVERAGE.md) accounts for all 58 tasks and 14 acceptance areas without treating a manifest or mock test as production evidence.
+
+## New in 0.6.0
+
+[One-brief setup](DAY-ONE.md), automatic discovered-contact scoring/drafts, owner-enabled reply drafting, follow-up approvals, guarded tool workflow dispatch, one corrective drafting attempt, 45-second Calendar reads, first/last/linear gross campaign attribution, and reviewed WordPress.com/LinkedIn member publishing. New [verification evidence](VERIFICATION-0.6.0.md) separates synthetic tests, local latency and the outstanding visual review.
 
 ## New in 0.5.1
 
@@ -18,20 +22,20 @@ Real provider adapters are tested using controlled HTTP responses and signed syn
 
 ## Verification evidence
 
-- Local regression suites: **108 Python tests passed**, including **16 native PostgreSQL tests** with separate restricted API/worker logins. One upstream Starlette/httpx deprecation warning remains.
+- Local regression suites: **128 Python tests passed**, including **20 native PostgreSQL tests** with separate restricted API/worker logins. One upstream Starlette/httpx deprecation warning remains.
 - PostgreSQL 16 backup/restore into a different empty database verified counts, audit content, restricted queue function ownership and RLS. SQLite backup/restore and pre-upgrade data preservation are also checked.
-- PGlite/pgvector regression exercises all **40 tenant tables**, two organizations, missing context, cross-tenant references, immutable payments/audit/provider receipts and vector isolation. Native PostgreSQL tests also exercise fallback retrieval when pgvector is unavailable.
+- PGlite/pgvector regression exercises all **41 tenant tables**, two organizations, missing context, cross-tenant references, immutable payments/audit/provider receipts and vector isolation. Native PostgreSQL tests also exercise fallback retrieval when pgvector is unavailable.
 - Specification checks pass: 23 modules, 20 agents, 18 tools, seven phases, 58 matching capsules, four JSON schemas, dependency and cycle failure paths.
 - Ruff, TypeScript and optimized Next.js build pass. Frontend production-dependency audit reports zero vulnerabilities at verification time.
 - Windows launcher restart, existing QA database upgrade and automatic private pre-upgrade backup succeeded. HTTP smoke verified signup, brand, CRM, background drafting, approval and sandbox send.
 - Browser verification saved sourced contact edits, published an approved local service page, submitted an actual HTML form and observed the enquiry in the private inbox. The form test exposed and fixed a referrer/origin mismatch. Earlier sandbox walkthrough covered planning through customer onboarding. Screenshots contain synthetic fixtures only.
-- All four v0.5.0 hosted CI jobs passed. The v0.5.1 result is recorded with its tagged release; exact earlier evidence is in RELEASE-VERIFICATION.md.
-- Four frontend API boundary tests pass. Chromium checked 27 workspace views at six widths plus authentication/public/expanded forms; machine-readable observations are in responsive-audit.json. This is not all-device or WCAG certification.
+- All four v0.5.1 hosted CI jobs passed. The v0.6.0 result is recorded with its tagged release; exact earlier evidence is in RELEASE-VERIFICATION.md.
+- Seven frontend API/setup component tests pass. Historical v0.5.1 Chromium evidence checked 27 workspace views at six widths plus authentication/public/expanded forms; machine-readable observations are in responsive-audit.json. This is not all-device or WCAG certification; browser verification of the new v0.6.0 screens remains outstanding after an automatic URL-confidence block.
 - Backend and frontend dependency audits reported no known vulnerabilities at verification time. One upstream Starlette/httpx warning remains.
 
 ## Remaining implementation and evidence
 
-External social-network/WordPress publication, paid-ad execution, AI raster-image generation, attachments/OCR, managed identity/email verification and automatic password-reset email, provider-level global calendar slot locking, automated search-price reconciliation, full campaign attribution and large-scale monitoring/load/failure certification remain outside this beta. The original qualification/model accuracy benchmarks and per-role golden sets are not complete. Only three supplied labelled reply examples plus focused boundary regressions are evaluated; that is not a representative benchmark.
+Company-page/other-network publication, paid-ad execution, AI raster-image generation, attachments/OCR, managed identity/email verification and automatic password-reset email, provider-level global calendar slot locking, automated search-price reconciliation, full campaign attribution and large-scale monitoring/load/failure certification remain outside this beta. The original qualification/model accuracy benchmarks and per-role golden sets are not complete. Three supplied labelled reply examples, 44 additional synthetic cases and focused boundary regressions are evaluated; these are not a representative live-model benchmark.
 
 Some specialized agent roles share constrained templates and internal tools rather than independent production services. Copy is deliberately restricted to approved facts and reviewed prospect observations. A broad creative agency writing system still needs representative quality evaluation and richer evidence-aware generation.
 

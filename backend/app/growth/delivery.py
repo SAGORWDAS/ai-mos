@@ -114,6 +114,8 @@ class Dispatcher:
                 receipt = await provider.book(**arguments)
             elif item.action == "send_bulk_campaign":
                 receipt = await provider.send_batch(**arguments)
+            elif item.action == "publish_channel":
+                receipt = await provider.publish(**arguments)
             else:
                 raise ProviderError("unregistered_live_action")
             await self.finish(org_id, item_id, actor_id, "succeeded", receipt)
@@ -165,6 +167,12 @@ class Dispatcher:
             from app.growth.esp import prepare_bulk
 
             return await prepare_bulk(session, self.settings, effect, approval, self.transport)
+        if effect.action == "publish_channel":
+            from app.growth.publishing import prepare_publication
+
+            return await prepare_publication(
+                session, self.settings, effect, approval, self.transport
+            )
         provider_name = "gmail" if effect.action == "send_email" else "calendar"
         connection = await active(session, self.settings, org_id, provider_name)
         if (
@@ -244,6 +252,10 @@ class Dispatcher:
                     message.provider_id = receipt.get("provider_id", "")
                     draft = await find(session, Draft, org_id, message.draft_id)
                     draft.status = message.status
+                    if state == "succeeded":
+                        from app.growth.attribution import record_message_touch
+
+                        await record_message_touch(session, message)
                     lead = await find(session, Lead, org_id, message.lead_id)
                     if state == "succeeded" and lead.status not in {
                         "suppressed",
@@ -279,7 +291,7 @@ class Dispatcher:
             if integration.account_ref != effect.result.get("_account_ref"):
                 raise HTTPException(409, "provider_account_changed")
             credentials = unseal(self.settings, integration)
-            if effect.action == "send_bulk_campaign":
+            if effect.action in {"send_bulk_campaign", "publish_channel"}:
                 return {"status": "provider_console_review_required", "retry_send_allowed": False}
             provider = GoogleProvider(
                 credentials.get("access_token", ""),

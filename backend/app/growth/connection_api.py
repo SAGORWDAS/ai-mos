@@ -74,6 +74,7 @@ def install_connections(app, settings, db, identity, require):
             item.account_ref, item.token_ciphertext = data.account_ref, ciphertext
         item.enabled = False
         item.sync_enabled = False
+        item.auto_draft_replies = False
         item.status = (
             "placeholder" if connections.is_placeholder(data.credentials) else "configured"
         )
@@ -126,6 +127,7 @@ def install_connections(app, settings, db, identity, require):
         item = await lookup(session, who["organization"].id, provider)
         item.enabled, item.status, item.token_ciphertext = False, "revoked", ""
         item.sync_enabled = False
+        item.auto_draft_replies = False
         item.version += 1
         await audit(session, who, request, "connection.disconnected", item.id)
         await session.commit()

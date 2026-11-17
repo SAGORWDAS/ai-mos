@@ -10,6 +10,7 @@ import hashlib
 import hmac
 import json
 import time
+from collections import OrderedDict
 from datetime import UTC, datetime
 from email.message import EmailMessage
 from urllib.parse import quote
@@ -29,6 +30,8 @@ def require_secret(value):
 
 
 class GoogleProvider:
+    _availability_cache = OrderedDict()
+
     def __init__(self, access_token, sender="", calendar_id="primary", transport=None):
         self.access_token, self.sender, self.calendar_id = access_token, sender, calendar_id
         self.transport = transport
@@ -143,7 +146,16 @@ class GoogleProvider:
         )
         return {"messages": messages, "next_cursor": result.get("nextPageToken")}
 
-    async def availability(self, starts_at, ends_at):
+    async def availability(self, starts_at, ends_at, *, use_cache=False):
+        cache_key = (
+            hashlib.sha256(self.access_token.encode()).hexdigest(),
+            self.calendar_id,
+            starts_at,
+            ends_at,
+        )
+        cached = self._availability_cache.get(cache_key) if use_cache else None
+        if cached and cached[0] > time.monotonic():
+            return cached[1]
         result = await self.request(
             "POST",
             "https://www.googleapis.com/calendar/v3/freeBusy",
@@ -156,7 +168,13 @@ class GoogleProvider:
         calendar = result.get("calendars", {}).get(self.calendar_id)
         if not calendar or calendar.get("errors") or "busy" not in calendar:
             raise ProviderError("availability_unknown")
-        return not calendar["busy"]
+        available = not calendar["busy"]
+        if use_cache:
+            self._availability_cache[cache_key] = (time.monotonic() + 45, available)
+            self._availability_cache.move_to_end(cache_key)
+            while len(self._availability_cache) > 256:
+                self._availability_cache.popitem(last=False)
+        return available
 
     async def book(self, title, starts_at, ends_at, attendee, idempotency_key):
         if not await self.availability(starts_at, ends_at):

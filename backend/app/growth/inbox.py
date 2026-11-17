@@ -9,7 +9,7 @@ from sqlalchemy import select, update
 from app.growth.automation import dispatch
 from app.growth.effects import suppress
 from app.growth.knowledge import classify
-from app.growth.models import Enrollment, Lead, Message
+from app.growth.models import Enrollment, Lead, Message, Task
 
 
 def plain_text(part, depth=0):
@@ -36,7 +36,7 @@ def plain_text(part, depth=0):
     return "\n".join(plain_text(child, depth + 1) for child in children)
 
 
-async def import_page(session, org_id, account, messages):
+async def import_page(session, org_id, account, messages, *, auto_draft=False, actor_id=None):
     counts = {"imported": 0, "duplicates": 0, "unknown_contacts": 0, "unsupported": 0}
     for raw in messages:
         payload = raw.get("payload", {})
@@ -97,5 +97,23 @@ async def import_page(session, org_id, account, messages):
                 .values(status="stopped")
             )
         await dispatch(session, org_id, "message.received", item, item.id)
+        if (
+            auto_draft
+            and actor_id
+            and lead.status not in {"suppressed", "converted"}
+            and classification["label"] in {"interested", "meeting_request"}
+            and not classification["escalate"]
+            and classification["confidence"] >= 0.85
+        ):
+            session.add(
+                Task(
+                    organization_id=org_id,
+                    created_by=actor_id,
+                    agent_id="AGT-08",
+                    type="reply",
+                    idempotency_key="inbox-reply:" + item.id,
+                    input={"lead_id": lead.id, "message_id": item.id, "auto_review": True},
+                )
+            )
         counts["imported"] += 1
     return counts

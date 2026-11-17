@@ -91,3 +91,42 @@ call("/v1/effects/execute", {"approval_id": approval["id"], "idempotency_key": u
 messages = call("/v1/data/messages")["items"]
 assert len(messages) == 1 and messages[0]["simulated"] is True
 print("HTTP smoke passed: account, brand, CRM, durable draft, approval, sandbox send")
+
+brief = {
+    "name": "Fictional smoke agency", "offer": "We build websites for independent shops.",
+    "audience": "Independent shops", "objective": "Prepare a complete fictional campaign",
+    "sample": True, "idempotency_key": uuid4().hex,
+}
+setup = call("/v1/setup/start", brief)
+assert call("/v1/setup/start", brief)["task"]["id"] == setup["task"]["id"]
+for attempt in range(60):
+    master = call("/v1/data/tasks/" + setup["task"]["id"])
+    plan_id = master.get("output", {}).get("plan_id")
+    if plan_id:
+        plan = call("/v1/data/plans/" + plan_id)
+        if plan["status"] == "completed":
+            break
+        if plan["status"] == "blocked":
+            raise SystemExit("Quick setup graph was blocked")
+    if master["status"] in {"failed", "blocked"}:
+        raise SystemExit("Quick setup failed: " + master["error_code"])
+    time.sleep(1)
+else:
+    raise SystemExit("Quick setup did not complete")
+sample_lead = call("/v1/data/leads/" + setup["task"]["input"]["request"]["lead_ids"][0])
+assert sample_lead["email"].endswith("@example.invalid")
+assert any(row["lead_id"] == sample_lead["id"] and row["status"] == "pending_approval"
+           for row in call("/v1/data/outreach_drafts")["items"])
+assert len(call("/v1/data/messages")["items"]) == 1
+print("Quick setup smoke passed: one brief, replay, automatic graph, draft and approval queue")
+
+if os.environ.get("AI_MOS_SMOKE_TIMINGS") == "true":
+    for path in ["/v1/workspace", "/v1/analytics", "/v1/attribution/report"]:
+        durations = []
+        for _ in range(20):
+            started = time.perf_counter()
+            call(path)
+            durations.append((time.perf_counter() - started) * 1000)
+        durations.sort()
+        print(f"Local synthetic latency {path}: p50={durations[9]:.1f}ms "
+              f"p95={durations[18]:.1f}ms n=20 (not a load certification)")

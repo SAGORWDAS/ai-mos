@@ -22,3 +22,19 @@ def test_ambiguous_reply_requires_human():
     result = classify("Interested, but what is the price and can we schedule a call?")
     assert result["label"] == "needs_human"
     assert result["escalate"] is True
+
+
+def test_expanded_synthetic_reply_regression_and_report_validation():
+    from app.growth.evaluation import evaluate
+
+    examples = [
+        json.loads(line)
+        for line in (ROOT / "evals/data/replies-synthetic.jsonl").read_text().splitlines()
+        if line.strip()
+    ]
+    report = evaluate(examples)
+    assert report["accuracy"] == 1, report["failures"]
+    assert report["provenance"] == {"synthetic": 44}
+    assert report["by_label"]["unsubscribe"]["recall"] == 1
+    with pytest.raises(ValueError):
+        evaluate(examples, [{"id": "unknown", "label": "interested"}])
