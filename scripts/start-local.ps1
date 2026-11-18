@@ -57,7 +57,8 @@ $priorDatabase = $env:DATABASE_URL
 $priorEnvironment = $env:APP_ENV
 $priorBackend = $env:BACKEND_URL
 $priorEncryptionKey = $env:TOKEN_ENCRYPTION_KEY
-$schemaHash = (Get-FileHash -LiteralPath (Join-Path $projectRoot 'backend\app\schema.py') -Algorithm SHA256).Hash
+$schemaSources = @((Join-Path $projectRoot 'backend\app\schema.py')) + @(Get-ChildItem -LiteralPath (Join-Path $projectRoot 'backend\migrations') -File -Filter '*.sql' | Sort-Object Name | Select-Object -ExpandProperty FullName)
+$schemaHash = (Get-FileHash -LiteralPath $schemaSources -Algorithm SHA256 | ForEach-Object { $_.Hash }) -join ':'
 $schemaStamp = Join-Path $runRoot 'schema.hash'
 $localDatabase = Join-Path $runRoot 'local.db'
 if ((Test-Path -LiteralPath $localDatabase) -and (-not (Test-Path -LiteralPath $schemaStamp) -or (Get-Content -LiteralPath $schemaStamp -Raw).Trim() -ne $schemaHash)) {

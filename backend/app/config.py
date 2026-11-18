@@ -33,6 +33,8 @@ class Settings(BaseSettings):
     payment_webhook_secret: str = "placeholder-local-test-secret-do-not-use-live"
 
     app_env: str = "development"
+    validation_access_code: str = Field(default="", repr=False)
+    validation_review_ref: str = ""
     sentry_dsn: str | None = None
 
     @field_validator("public_api_url")

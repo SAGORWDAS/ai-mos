@@ -1,11 +1,11 @@
-# Original plan coverage - v0.9.0
+# Original plan coverage - v0.10.0
 
 **Not all original requirements are complete.** Implemented means the listed application behavior exists with local tests; it does not certify real-account acceptance, every clause of the original capsule, business quality or production operation. Partial means additional development or evidence remains. External gate requires actual business/account input.
 
 See BUILD-STATUS.md for test evidence and RELEASE-VERIFICATION.md for the public release CI result.
 
 
-Review totals: **37 Implemented, 15 Partial, 6 External gate**. See [v0.9.0 verification](VERIFICATION-0.9.0.md) and the historical [v0.5.1 review](REVIEW-2026-11-17.md).
+Review totals: **37 Implemented, 15 Partial, 6 External gate**. See [v0.10.0 verification](VERIFICATION-0.10.0.md) and the historical [v0.5.1 review](REVIEW-2026-11-17.md).
 
 ## PH-0 - Decisions and spikes
 
@@ -97,14 +97,14 @@ Review totals: **37 Implemented, 15 Partial, 6 External gate**. See [v0.9.0 veri
 | T-6.1 | second tenant audit | Partial | Two-tenant API/native SQL/RLS tests pass; independent exhaustive tenant audit remains. |
 | T-6.2 | load and queue tuning | Implemented | Controlled 10x burst (baseline two, twenty tasks) under four workers, replayed requests and twenty HTTP-mocked provider deliveries has zero duplicate provider IDs or lost jobs on SQLite/PostgreSQL. Production capacity/SLO certification remains separate. |
 | T-6.3 | backup and restore drill | Implemented | SQLite and PostgreSQL restore drills verify counts/audit/RLS without active DB replacement. |
-| T-6.4 | security review | Partial | Recovery/MFA/encryption/throttles/scope/dependency checks implemented; production security review remains. |
+| T-6.4 | security review | Partial | Recovery/MFA/encryption/throttles/scope checks, controlled-pilot signup and real runtime-role/schema/RLS/queue preflight are implemented. Validation deployment and evidence capture exist; independent production security review remains. |
 | T-6.5 | P1 P2 agent rollout | Partial | All twenty manifests ship; representative per-role golden sets and staged rollout remain. |
 
 ## Acceptance areas
 
 | Area | Implemented evidence and limit |
 |---|---|
-| AC-01/02 | 43 tenant tables; native PostgreSQL restricted-role and PGlite RLS/foreign-key tests. Independent exhaustive audit remains. |
+| AC-01/02 | 44 tenant tables; native PostgreSQL restricted-role and PGlite RLS/foreign-key tests. Independent exhaustive audit remains. |
 | AC-03 | Suppression blocks sandbox/live dispatch; signed bounce/complaint handling tested. |
 | AC-04 | Unique tenant idempotency, task identity and effect receipt/replay tests; large-load certification remains. |
 | AC-05 | Frozen payload, version invalidation, expiry and single-use approval tests. |

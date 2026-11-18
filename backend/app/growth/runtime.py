@@ -46,6 +46,7 @@ log = logging.getLogger("ai_mos.runtime")
 def public(row):
     result = {column.name: getattr(row, column.name) for column in row.__table__.columns}
     result.pop("source_fingerprint", None)
+    result.pop("scope_hash", None)
     if isinstance(row, Task) and isinstance(result.get("output"), dict):
         result["output"] = {
             key: value for key, value in result["output"].items() if key != "image_base64"

@@ -5,6 +5,73 @@ on:
   pull_request:
 
 jobs:
+  validation:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Generate isolated synthetic pilot configuration
+        run: |
+          pip install cryptography
+          python scripts/prepare-validation.py --domain pilot.example.com --review CI-SYNTHETIC-VALIDATION
+          docker compose --env-file .env.validation -f infra/docker-compose.validation.yml config -q
+      - name: Build and start controlled validation services
+        run: docker compose --env-file .env.validation -f infra/docker-compose.validation.yml up -d --build --wait api worker web
+      - name: Verify API and worker preflight, optimized web and private signup
+        run: |
+          docker compose --env-file .env.validation -f infra/docker-compose.validation.yml exec -T api python -m app.deployment --check-db
+          docker compose --env-file .env.validation -f infra/docker-compose.validation.yml exec -T worker python -m app.deployment --check-db --worker
+          docker compose --env-file .env.validation -f infra/docker-compose.validation.yml exec -T api python - <<'PY'
+          import httpx, secrets, time
+          from http.cookies import SimpleCookie
+          from app.config import get_settings
+          settings = get_settings()
+          # Docker-internal HTTP checks plumbing; public TLS still requires real DNS.
+          client = httpx.Client(base_url='http://web:3000', trust_env=False, timeout=30)
+          assert client.get('/').status_code == 200
+          assert client.get('/api/healthz').json()['mode'] == 'validation'
+          body = {'name':'CI pilot','organization_name':'Synthetic CI workspace',
+                  'email':'ci-pilot@example.test','password':secrets.token_urlsafe(32)}
+          assert client.post('/api/v1/auth/signup',json=body).status_code == 403
+          response = client.post('/api/v1/auth/signup',json={**body,'access_code':settings.validation_access_code})
+          assert response.status_code == 201
+          assert 'Secure' in response.headers['set-cookie'] and 'HttpOnly' in response.headers['set-cookie']
+          # Explicit test-only cookie forwarding over the isolated Docker bridge.
+          # Public clients must use TLS; no real accounts or recipients are present here.
+          cookie = SimpleCookie(); cookie.load(response.headers['set-cookie'])
+          client.headers['Cookie'] = 'ai_mos_session=' + cookie['ai_mos_session'].value
+          brief = {'name':'Fictional pilot agency','offer':'We build websites for independent shops.',
+                   'audience':'Independent shops','objective':'Prepare a fictional controlled campaign',
+                   'sample':True,'idempotency_key':secrets.token_hex(16)}
+          setup = client.post('/api/v1/setup/start',json=brief)
+          assert setup.status_code == 202
+          task_id = setup.json()['task']['id']
+          for _ in range(60):
+              task = client.get('/api/v1/data/tasks/' + task_id).json()
+              assert task['status'] not in {'failed','blocked'}
+              plan_id = task.get('output',{}).get('plan_id')
+              if plan_id:
+                  plan = client.get('/api/v1/data/plans/' + plan_id).json()
+                  assert plan['status'] != 'blocked'
+                  if plan['status'] == 'completed': break
+              time.sleep(1)
+          else: raise AssertionError('Standalone validation worker did not complete the graph')
+          report = client.get('/api/v1/live-validation').json()
+          assert not report['production_approved'] and not report['ready_to_begin_core_validation']
+          assert report['receipts']['model_completions'] == 0
+          assert report['receipts']['sent_messages'] == 0
+          print('Controlled validation stack: secure startup, optimized web, private signup and durable sandbox graph passed.')
+          PY
+          docker compose --env-file .env.validation -f infra/docker-compose.validation.yml run --rm --no-deps proxy caddy adapt --config /etc/caddy/Caddyfile --adapter caddyfile --validate >/dev/null
+      - name: Capture validation service failures
+        if: failure()
+        run: docker compose --env-file .env.validation -f infra/docker-compose.validation.yml logs --tail=80 api worker web migrate
+      - name: Remove disposable validation services
+        if: always()
+        run: docker compose --env-file .env.validation -f infra/docker-compose.validation.yml down -v
+
   specification:
     runs-on: ubuntu-latest
     steps:

@@ -18,6 +18,7 @@ from app.accounts import check_otp, install_accounts
 from app.body_limit import RequestBodyLimit
 from app.config import Settings, get_settings
 from app.contracts import AcceptInvite, BrandInput, Invite, Login, Signup, Stop
+from app.deployment import enforce_configuration, enforce_database
 from app.growth.advertising import install_advertising
 from app.growth.api import install
 from app.growth.attribution import install_attribution
@@ -32,6 +33,7 @@ from app.growth.embeddings import install_embeddings
 from app.growth.esp_api import install_esp
 from app.growth.inbox_schedule import install_inbox_schedule
 from app.growth.knowledge_api import install_knowledge
+from app.growth.live_validation import install_live_validation
 from app.growth.model_registry import install_model_registry
 from app.growth.models import (
     Approval,
@@ -54,6 +56,7 @@ from app.growth.tracking import install_tracking
 from app.growth.usage import install_usage
 from app.models import AuditLog, Base, Brand, Invitation, Membership, Organization, Session, User
 from app.observability import emit
+from app.release import VERSION
 from app.schema import upgrade_local
 from app.security import hash_password, token_hash, verify_password
 from app.tenancy import tenant_scope
@@ -65,11 +68,7 @@ COOKIE = "ai_mos_session"
 
 def create_app(settings: Settings | None = None):
     settings = settings or get_settings()
-    if settings.app_env not in ("development", "test"):
-        raise RuntimeError(
-            "Production is gated on managed identity, HTTPS, live provider drills "
-            "and deployment review"
-        )
+    enforce_configuration(settings)
     engine = create_async_engine(settings.database_url, pool_pre_ping=True, hide_parameters=True)
     factory = async_sessionmaker(engine, expire_on_commit=False)
     worker_engine = (
@@ -90,11 +89,17 @@ def create_app(settings: Settings | None = None):
 
     @asynccontextmanager
     async def lifespan(app):
-        async with engine.begin() as conn:
-            await conn.run_sync(upgrade_local)
-            await conn.run_sync(Base.metadata.create_all)
-        worker = asyncio.create_task(runtime.loop()) if settings.worker_enabled else None
+        worker = None
         try:
+            if settings.app_env == "validation":
+                app.state.deployment_checks = await enforce_database(engine)
+                if settings.worker_enabled:
+                    await enforce_database(worker_engine, worker=True)
+            else:
+                async with engine.begin() as conn:
+                    await conn.run_sync(upgrade_local)
+                    await conn.run_sync(Base.metadata.create_all)
+            worker = asyncio.create_task(runtime.loop()) if settings.worker_enabled else None
             yield
         finally:
             if worker:
@@ -107,7 +112,7 @@ def create_app(settings: Settings | None = None):
             if worker_engine:
                 await worker_engine.dispose()
 
-    app = FastAPI(title="AI-MOS", version="0.9.0", lifespan=lifespan)
+    app = FastAPI(title="AI-MOS", version=VERSION, lifespan=lifespan)
     app.state.runtime = runtime
     app.state.factory = factory
     app.add_middleware(
@@ -174,6 +179,16 @@ def create_app(settings: Settings | None = None):
 
     @app.exception_handler(RequestValidationError)
     async def invalid_request(request, error):
+        if request.url.path.startswith("/v1/auth/"):
+            return JSONResponse(
+                {
+                    "detail": [
+                        {"loc": list(e["loc"]), "msg": e["msg"], "type": e["type"]}
+                        for e in error.errors()
+                    ]
+                },
+                status_code=422,
+            )
         org_id = getattr(request.state, "audit_org_id", None)
         actor_id = getattr(request.state, "audit_actor_id", None)
         if org_id and actor_id and request.url.path.startswith("/v1/tools/"):
@@ -315,12 +330,16 @@ def create_app(settings: Settings | None = None):
         return {
             "status": "ok",
             "checks": {"database": True},
-            "mode": "local" if local else "development",
+            "mode": "local" if local else settings.app_env,
             "redis_required": False,
         }
 
     @app.post("/v1/auth/signup", status_code=201)
     async def signup(data: Signup, request: Request, response: Response, session=Depends(db)):
+        if settings.validation_access_code and not secrets.compare_digest(
+            token_hash(data.access_code), token_hash(settings.validation_access_code)
+        ):
+            raise HTTPException(403, "pilot_access_code_required")
         password = await asyncio.to_thread(hash_password, data.password)
         user = User(email=data.email, name=data.name.strip(), password_hash=password)
         org = Organization(name=data.organization_name.strip())
@@ -666,6 +685,7 @@ def create_app(settings: Settings | None = None):
         ).all()
         return {
             "identity": public_identity(who),
+            "environment": settings.app_env,
             "brands": await brands(who=who, session=session),
             "logs": await logs(before=None, who=who, session=session),
             "members": await members(who=who, session=session),
@@ -722,6 +742,7 @@ def create_app(settings: Settings | None = None):
     install_publishing(app, settings, db, identity, require)
     install_connections(app, settings, db, identity, require)
     install_autopilot(app, runtime, settings, db, identity, require)
+    install_live_validation(app, settings, db, identity, require)
     dummy_password = hash_password(secrets.token_urlsafe(32))
     app.add_middleware(RequestBodyLimit)
     return app

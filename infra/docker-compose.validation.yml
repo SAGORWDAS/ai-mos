@@ -1,0 +1,97 @@
+name: ai-mos-validation
+
+x-runtime: &runtime
+  APP_ENV: validation
+  PUBLIC_API_URL: https://${VALIDATION_DOMAIN}/api
+  ALLOWED_ORIGINS: '["https://${VALIDATION_DOMAIN}"]'
+  SECURE_COOKIES: 'true'
+  PUBLIC_INDEXING_ENABLED: 'false'
+  ALLOW_UNVERIFIED_MODELS: 'false'
+  PROVIDER_MODE: sandbox
+  WORKER_ENABLED: 'false'
+  TOKEN_ENCRYPTION_KEY: ${TOKEN_ENCRYPTION_KEY:?Set a persistent Fernet key}
+  VALIDATION_ACCESS_CODE: ${VALIDATION_ACCESS_CODE:?Set a private pilot access code}
+  VALIDATION_REVIEW_REF: ${VALIDATION_REVIEW_REF:?Record the deployment review reference}
+  MODEL_MAX_COST_MICROS: ${MODEL_MAX_COST_MICROS:-20000}
+  MODEL_CACHE_SECONDS: ${MODEL_CACHE_SECONDS:-21600}
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: ai_mos_migrator
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set a private migrator password}
+      POSTGRES_DB: ai_mos
+    volumes: [validation_pgdata:/var/lib/postgresql/data]
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U ai_mos_migrator -d ai_mos"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  migrate:
+    build: ../backend
+    environment:
+      MIGRATION_DATABASE_URL: postgresql://ai_mos_migrator:${POSTGRES_PASSWORD}@db:5432/ai_mos
+      PROVISION_DATABASE_ROLES: 'true'
+      APP_DATABASE_PASSWORD: ${APP_DATABASE_PASSWORD:?Set a private API password}
+      WORKER_DATABASE_PASSWORD: ${WORKER_DATABASE_PASSWORD:?Set a private worker password}
+    depends_on:
+      db: {condition: service_healthy}
+    command: [python, -m, app.migrate, upgrade]
+
+  api:
+    build: ../backend
+    environment:
+      <<: *runtime
+      DATABASE_URL: postgresql+asyncpg://ai_mos_app:${APP_DATABASE_PASSWORD}@db:5432/ai_mos
+    restart: unless-stopped
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz',timeout=5)"]
+      interval: 15s
+      timeout: 8s
+      retries: 10
+
+  worker:
+    build: ../backend
+    environment:
+      <<: *runtime
+      DATABASE_URL: postgresql+asyncpg://ai_mos_worker:${WORKER_DATABASE_PASSWORD}@db:5432/ai_mos
+    restart: unless-stopped
+    depends_on:
+      api: {condition: service_healthy}
+    command: [python, -m, app.workers.worker]
+
+  web:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile.validation
+    restart: unless-stopped
+    depends_on:
+      api: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3000/').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 8s
+      retries: 10
+
+  proxy:
+    image: caddy:2-alpine
+    environment:
+      VALIDATION_DOMAIN: ${VALIDATION_DOMAIN:?Set the DNS hostname}
+    ports: ["80:80", "443:443", "443:443/udp"]
+    volumes:
+      - ./Caddyfile.validation:/etc/caddy/Caddyfile:ro
+      - validation_caddy_data:/data
+      - validation_caddy_config:/config
+    restart: unless-stopped
+    depends_on:
+      web: {condition: service_healthy}
+
+volumes:
+  validation_pgdata:
+  validation_caddy_data:
+  validation_caddy_config:

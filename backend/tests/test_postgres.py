@@ -23,6 +23,85 @@ ADMIN = os.environ.get("AI_MOS_TEST_ADMIN_URL")
 pytestmark = pytest.mark.skipif(not ADMIN, reason="Native PostgreSQL integration URL not supplied")
 
 
+def test_native_validation_environment_startup_and_secure_signup(pg_clients):
+    from test_live_validation import CODE, validation_settings
+
+    from app.deployment import database_checks
+
+    a, _ = pg_clients
+    api_engine = a.app.state.factory.kw["bind"]
+    worker_engine = a.app.state.runtime.factory.kw["bind"]
+
+    async def inspect():
+        assert all(c["ready"] for c in await database_checks(api_engine))
+        assert all(c["ready"] for c in await database_checks(worker_engine, worker=True))
+        assert not all(c["ready"] for c in await database_checks(api_engine, worker=True))
+
+    a.portal.call(inspect)
+    app = create_app(validation_settings(database_url=a.app.state.runtime.settings.database_url))
+    with TestClient(app, base_url="https://pilot.example.com") as pilot:
+        assert pilot.get("/healthz").json()["mode"] == "validation"
+        body = {
+            "name": "Pilot owner",
+            "organization_name": "Controlled QA",
+            "email": "pilot-native@example.test",
+            "password": "Secure controlled pilot QA 123",
+        }
+        assert pilot.post("/v1/auth/signup", json=body).status_code == 403
+        created = pilot.post("/v1/auth/signup", json={**body, "access_code": CODE})
+        assert created.status_code == 201, created.text
+        cookie = created.headers["set-cookie"]
+        assert "Secure" in cookie and "HttpOnly" in cookie
+        report = pilot.get("/v1/live-validation")
+        assert report.status_code == 200, report.text
+        assert report.json()["production_approved"] is False
+        assert report.json()["ready_to_begin_core_validation"] is False
+        assert all(
+            c["ready"]
+            for c in report.json()["checks"]
+            if c["id"]
+            in {"validation_environment", "runtime_role", "schema", "tenant_rls", "grants"}
+        )
+
+
+def test_native_validation_startup_rejects_missing_forced_rls(pg_clients):
+    from sqlalchemy.engine import make_url
+    from test_live_validation import validation_settings
+
+    a, _ = pg_clients
+    url = a.app.state.runtime.settings.database_url
+    admin_url = ADMIN.rsplit("/", 1)[0] + "/" + make_url(url).database
+
+    async def alter(force):
+        conn = await asyncpg.connect(admin_url)
+        try:
+            await conn.execute("ALTER TABLE validation_records " + force + " ROW LEVEL SECURITY")
+        finally:
+            await conn.close()
+
+    a.portal.call(alter, "NO FORCE")
+    try:
+        app = create_app(validation_settings(database_url=url))
+        with pytest.raises(RuntimeError, match="tenant_rls"):
+            with TestClient(app):
+                pass
+    finally:
+        a.portal.call(alter, "FORCE")
+
+
+@pytest.mark.parametrize(
+    "scenario",
+    [
+        "test_validation_checks_and_sandbox_receipts_do_not_claim_live_success",
+        "test_evidence_stales_on_setup_change_and_owner_checks_apply_while_stopped",
+    ],
+)
+def test_native_validation_evidence_isolation(pg_clients, scenario):
+    import test_live_validation
+
+    getattr(test_live_validation, scenario)(pg_clients)
+
+
 def test_native_campaign_attribution(pg_clients):
     from test_attribution import test_attribution_tenant_scope_replay_and_paid_outcome
 

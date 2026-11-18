@@ -33,6 +33,7 @@ class Login(EmailInput):
 
 
 class Signup(Login):
+    access_code: str = Field(default="", max_length=256, repr=False)
     name: str = Field(min_length=1, max_length=120)
     organization_name: str = Field(min_length=1, max_length=120)
     password: str = Field(min_length=12, max_length=256)

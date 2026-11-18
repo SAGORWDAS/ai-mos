@@ -1,0 +1,6 @@
+{$VALIDATION_DOMAIN} {
+    header Strict-Transport-Security "max-age=86400"
+    header X-Content-Type-Options "nosniff"
+    header Referrer-Policy "same-origin"
+    reverse_proxy web:3000
+}

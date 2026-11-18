@@ -23,6 +23,8 @@ test('AC01/AC02: PostgreSQL forced RLS covers every tenant table and rejects cro
     await db.exec(fs.readFileSync(path.join(root,'0018_standing_reply_policy.sql'),'utf8'));
     await db.exec(fs.readFileSync(path.join(root,'0019_qualification_evidence.sql'),'utf8'));
     await db.exec(fs.readFileSync(path.join(root,'0020_verified_model_registry.sql'),'utf8'));
+    await db.exec(fs.readFileSync(path.join(root,'0021_validation_records.sql'),'utf8'));
+    fixtures.tenants.forEach((tenant,index)=>fixtures.rows.push({table:'validation_records',values:{id:'validation-'+index,created_at:1,organization_id:tenant.organization_id,created_by:tenant.user_id,kind:'seed_delivery',outcome:'failed',reference:'Synthetic fixture',note:'No real drill was performed.',scope_hash:'f'.repeat(64)}}));
     fixtures.tenants.forEach((tenant,index)=>fixtures.rows.push({table:'model_registry',values:{id:'registry-'+index,created_at:1,organization_id:tenant.organization_id,operation:'chat',model_id:'fixture/model',source_fingerprint:'r'.repeat(64)}}));
     fixtures.tenants.forEach((tenant,index)=>fixtures.rows.push({table:'reply_policies',values:{id:'policy-'+index,created_at:1,organization_id:tenant.organization_id,brand_id:fixtures.rows.find(row=>row.table==='brands'&&row.values.organization_id===tenant.organization_id).values.id,owner_id:tenant.user_id,brand_hash:'a'.repeat(64),template_hash:'b'.repeat(64),expires_at:9999999999}}));
     fixtures.tenants.forEach((tenant,index)=>fixtures.rows.push({table:'attribution_touches',values:{id:'touch-'+index,created_at:1,organization_id:tenant.organization_id,lead_id:fixtures.rows.find(row=>row.table==='leads'&&row.values.organization_id===tenant.organization_id).values.id,campaign_id:fixtures.rows.find(row=>row.table==='campaigns'&&row.values.organization_id===tenant.organization_id).values.id,channel:'email',evidence:'synthetic fixture',occurred_at:1,simulated:true,idempotency_key:'touch-key-'+index}}));
@@ -33,7 +35,7 @@ test('AC01/AC02: PostgreSQL forced RLS covers every tenant table and rejects cro
       await db.query(`INSERT INTO ${row.table} (${columns.join(',')}) VALUES (${columns.map((_,i)=>'$'+(i+1)).join(',')})`,Object.values(row.values));
     }
     const policies=(await db.query("SELECT tablename FROM pg_tables WHERE schemaname='public' AND rowsecurity ORDER BY tablename")).rows;
-    assert.equal(policies.length,43);
+    assert.equal(policies.length,44);
     const flags=(await db.query("SELECT rolsuper,rolbypassrls FROM pg_roles WHERE rolname='ai_mos_app'")).rows[0];
     assert.equal(flags.rolsuper,false);assert.equal(flags.rolbypassrls,false);
     await db.exec('SET ROLE ai_mos_app');
@@ -59,6 +61,8 @@ test('AC01/AC02: PostgreSQL forced RLS covers every tenant table and rejects cro
     await assert.rejects(db.query("INSERT INTO brand_documents(id,organization_id,brand_id,title,source_uri,checksum,status) VALUES('bad-fk',$1,$2,'Bad','test','unique-checksum','indexed')",[orgA,otherBrand]));
     await assert.rejects(db.exec("UPDATE payments SET amount_minor=0"));
     await assert.rejects(db.exec("DELETE FROM audit_logs"));
+    await assert.rejects(db.exec("UPDATE validation_records SET outcome='passed'"));
+    await assert.rejects(db.exec("DELETE FROM validation_records"));
     await assert.rejects(db.exec("UPDATE provider_events SET amount_minor=1"));
     await db.query("UPDATE brand_chunks SET embedding_model='fixture',embedding_vector='[1,0]'");
     const nearest=(await db.query("SELECT organization_id,1-(embedding_vector <=> '[1,0]') AS score FROM brand_chunks WHERE organization_id=$1 ORDER BY embedding_vector <=> '[1,0]'",[orgA])).rows;

@@ -4,6 +4,16 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.models import Base, Row, Tenant
 
 
+class ValidationRecord(Row, Tenant, Base):
+    __tablename__ = "validation_records"
+    created_by: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    kind: Mapped[str] = mapped_column(String(40))
+    outcome: Mapped[str] = mapped_column(String(16))
+    reference: Mapped[str] = mapped_column(String(300))
+    note: Mapped[str] = mapped_column(Text)
+    scope_hash: Mapped[str] = mapped_column(String(64))
+
+
 class Command(Row, Tenant, Base):
     __tablename__ = "commands"
     brand_id: Mapped[str] = mapped_column(ForeignKey("brands.id"))
@@ -446,6 +456,7 @@ RESOURCES = {
     model.__tablename__: model
     for model in [
         Command,
+        ValidationRecord,
         Plan,
         Task,
         Agent,

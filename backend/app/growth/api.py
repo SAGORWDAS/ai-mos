@@ -77,6 +77,8 @@ def install(app, runtime, settings, db, identity, require, tool_services=None):
     async def listing(
         resource: str, before: float | None = None, who=Depends(identity), session=Depends(db)
     ):
+        if resource == "validation_records" and who["role"] != "owner":
+            raise HTTPException(403, "forbidden_role")
         model = RESOURCES.get(resource)
         if not model:
             raise HTTPException(404, "unknown_resource")
@@ -93,6 +95,8 @@ def install(app, runtime, settings, db, identity, require, tool_services=None):
 
     @router.get("/data/{resource}/{record_id}")
     async def detail(resource: str, record_id: str, who=Depends(identity), session=Depends(db)):
+        if resource == "validation_records" and who["role"] != "owner":
+            raise HTTPException(403, "forbidden_role")
         if resource not in RESOURCES:
             raise HTTPException(404, "unknown_resource")
         return public(await find(session, RESOURCES[resource], who["organization"].id, record_id))

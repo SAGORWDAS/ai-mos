@@ -221,7 +221,14 @@ class ModelGateway:
         request_id = str(uuid4())
         cache_key = hashlib.sha256(
             json.dumps(
-                [operation, model_id, sandbox, instruction, sandbox_output],
+                [
+                    operation,
+                    model_id,
+                    sandbox,
+                    instruction,
+                    sandbox_output,
+                    SYSTEM_PROMPT if operation == "chat" else None,
+                ],
                 sort_keys=True,
                 ensure_ascii=False,
             ).encode()

@@ -5,6 +5,7 @@ import { api } from "./api";
 import SetupReadiness from "./setup-readiness";
 import { credentialPayload } from "./connection-values";
 import ModelCatalog from "./model-catalog";
+import LiveValidation from "./live-validation";
 
 type Connection = {
   id: string;
@@ -187,6 +188,7 @@ export default function Connections({ role }: { role: string }) {
           setConfigureOpen(true);
         }}
       />
+      {owner && <LiveValidation />}
       <p className="lede narrow">
         Sandbox is available immediately. Each real provider needs verified
         credentials and a separate owner activation. Saving a configuration does

@@ -119,6 +119,7 @@ export default function Workspace() {
   const [me, setMe] = useState<Identity | null>(null);
   const [boot, setBoot] = useState(true);
   const [signup, setSignup] = useState(true);
+  const [environment, setEnvironment] = useState("development");
   const [view, setView] = useState<View>("Overview");
   const [brands, setBrands] = useState<Brand[]>([]);
   const [logs, setLogs] = useState<Audit[]>([]);
@@ -157,6 +158,7 @@ export default function Workspace() {
     try {
       const snapshot = await api<{
         identity: Identity;
+        environment: string;
         brands: Brand[];
         logs: Audit[];
         members: Member[];
@@ -185,6 +187,7 @@ export default function Workspace() {
       setMetrics(snapshot.metrics);
       setConnections(snapshot.connections);
       setMe(snapshot.identity);
+      setEnvironment(snapshot.environment || "development");
     } catch (error) {
       if (epoch !== requestEpoch.current) return;
       if (
@@ -438,7 +441,7 @@ export default function Workspace() {
                 </p>
               </div>
               <p className="muted small">
-                Local sandbox edition · No API keys needed
+                Sandbox available · Provider accounts connect separately
               </p>
             </section>
             <section className="auth-panel">
@@ -494,6 +497,21 @@ export default function Workspace() {
                   />
                   {signup && <small>Use at least 12 characters.</small>}
                 </label>
+                {signup && (
+                  <label>
+                    Pilot access code (if required)
+                    <input
+                      name="access_code"
+                      type="password"
+                      autoComplete="off"
+                      maxLength={256}
+                    />
+                    <small>
+                      A hosted validation pilot requires the private code from
+                      its operator. Local sandbox setup does not.
+                    </small>
+                  </label>
+                )}
                 {!signup && (
                   <label>
                     Authenticator code (if enabled)
@@ -539,7 +557,11 @@ export default function Workspace() {
                 {me.organization.name}{" "}
                 <span className="muted">/ {me.role}</span>
               </span>
-              <span>LOCAL DEVELOPMENT · SANDBOX DEFAULT</span>
+              <span>
+                {environment === "validation"
+                  ? "CONTROLLED LIVE VALIDATION"
+                  : "LOCAL DEVELOPMENT · SANDBOX DEFAULT"}
+              </span>
             </div>
             {me.organization.emergency_stop && (
               <div className="stop-banner" role="status">
@@ -1229,7 +1251,13 @@ export default function Workspace() {
       <footer>
         <span>AI-MOS</span>
         <p>Clarity in the work. Accountability in the outcome.</p>
-        <small>Development edition · Sandbox default</small>
+        <small>
+          {environment === "validation"
+            ? "Controlled validation · Production acceptance pending"
+            : me
+              ? "Development edition · Sandbox default"
+              : "Sandbox available · Connected actions need setup"}
+        </small>
       </footer>
     </>
   );

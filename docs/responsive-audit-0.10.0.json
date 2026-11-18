@@ -1,0 +1,114 @@
+{
+  "date": "2026-11-18",
+  "scope": "Changed signup and expanded live-validation views; prior full-workspace checks remain in earlier release audits.",
+  "checks": [
+    {
+      "documentWidth": 305,
+      "heading": "Integrations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Live validation center, evidence form and history expanded",
+      "viewport": 320,
+      "width": 320
+    },
+    {
+      "documentWidth": 345,
+      "heading": "Integrations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Live validation center, evidence form and history expanded",
+      "viewport": 360,
+      "width": 360
+    },
+    {
+      "documentWidth": 375,
+      "heading": "Integrations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Live validation center, evidence form and history expanded",
+      "viewport": 390,
+      "width": 390
+    },
+    {
+      "documentWidth": 753,
+      "heading": "Integrations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Live validation center, evidence form and history expanded",
+      "viewport": 768,
+      "width": 768
+    },
+    {
+      "documentWidth": 1009,
+      "heading": "Integrations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Live validation center, evidence form and history expanded",
+      "viewport": 1024,
+      "width": 1024
+    },
+    {
+      "documentWidth": 1425,
+      "heading": "Integrations",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Live validation center, evidence form and history expanded",
+      "viewport": 1440,
+      "width": 1440
+    },
+    {
+      "documentWidth": 305,
+      "heading": "Your business.Your direction.One workspace.",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Signup with optional private pilot code",
+      "viewport": 320,
+      "width": 320
+    },
+    {
+      "documentWidth": 345,
+      "heading": "Your business.Your direction.One workspace.",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Signup with optional private pilot code",
+      "viewport": 360,
+      "width": 360
+    },
+    {
+      "documentWidth": 375,
+      "heading": "Your business.Your direction.One workspace.",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Signup with optional private pilot code",
+      "viewport": 390,
+      "width": 390
+    },
+    {
+      "documentWidth": 753,
+      "heading": "Your business.Your direction.One workspace.",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Signup with optional private pilot code",
+      "viewport": 768,
+      "width": 768
+    },
+    {
+      "documentWidth": 1009,
+      "heading": "Your business.Your direction.One workspace.",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Signup with optional private pilot code",
+      "viewport": 1024,
+      "width": 1024
+    },
+    {
+      "documentWidth": 1425,
+      "heading": "Your business.Your direction.One workspace.",
+      "overflow": false,
+      "unlabelled": [],
+      "view": "Signup with optional private pilot code",
+      "viewport": 1440,
+      "width": 1440
+    }
+  ]
+}
