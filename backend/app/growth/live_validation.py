@@ -283,6 +283,27 @@ def install_live_validation(app, settings, db, identity, require):
                 ModelUsage, ModelUsage.simulated.is_(False), ModelUsage.settled.is_(False)
             ),
         }
+        outstanding = {}
+        for name, model, conditions in [
+            ("uncertain_effects", Effect, [Effect.status == "uncertain"]),
+            (
+                "unknown_model_charges",
+                ModelUsage,
+                [ModelUsage.simulated.is_(False), ModelUsage.settled.is_(False)],
+            ),
+        ]:
+            outstanding[name] = await session.scalar(
+                select(func.count())
+                .select_from(model)
+                .where(model.organization_id == org_id, *conditions)
+            )
+        check(
+            "receipt_reconciliation",
+            not any(outstanding.values()),
+            f"Across all history: {outstanding['uncertain_effects']} uncertain effects and "
+            f"{outstanding['unknown_model_charges']} unresolved connected-model holds. "
+            "Reconcile these before beginning further drills.",
+        )
         fingerprint = await scope_hash(session, org_id, settings)
         records = (
             await session.scalars(
@@ -300,6 +321,7 @@ def install_live_validation(app, settings, db, identity, require):
             "production_approved": False,
             "receipt_window_days": 14,
             "receipts": receipts,
+            "outstanding_holds": outstanding,
             "records": [
                 {
                     **public(r),

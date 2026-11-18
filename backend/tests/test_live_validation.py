@@ -11,7 +11,7 @@ from test_growth import brand_and_lead, make_draft, rows
 
 from app.config import Settings
 from app.deployment import configuration_checks, enforce_configuration
-from app.growth.models import ValidationRecord
+from app.growth.models import ModelUsage, ValidationRecord
 from app.models import Membership
 from app.tenancy import tenant_scope
 
@@ -177,6 +177,34 @@ def test_sandbox_briefs_and_demo_contacts_do_not_qualify_for_live_drills(clients
     brand_and_lead(a)
     checks = {c["id"]: c["ready"] for c in a.get("/v1/live-validation").json()["checks"]}
     assert checks["business_brief"] and not checks["test_contact"]
+
+
+def test_old_unresolved_model_holds_still_block_readiness_and_remain_tenant_scoped(clients):
+    a, b = clients
+    signup(a)
+    signup(b, "hold-other@example.test")
+    brand, lead = brand_and_lead(a)
+    make_draft(a, lead)
+
+    async def hold():
+        async with a.app.state.factory() as session:
+            await tenant_scope(session, brand["organization_id"])
+            await session.execute(
+                update(ModelUsage).values(
+                    simulated=False,
+                    settled=False,
+                    created_at=time.time() - 40 * 86400,
+                    status="provider_cost_unknown",
+                )
+            )
+            await session.commit()
+
+    a.portal.call(hold)
+    report = a.get("/v1/live-validation").json()
+    assert report["receipts"]["unknown_model_charges"] == 0
+    assert report["outstanding_holds"]["unknown_model_charges"] == 1
+    assert not next(c for c in report["checks"] if c["id"] == "receipt_reconciliation")["ready"]
+    assert b.get("/v1/live-validation").json()["outstanding_holds"]["unknown_model_charges"] == 0
 
 
 def test_private_validation_config_generation_does_not_overwrite_or_accept_injection(tmp_path):
