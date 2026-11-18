@@ -8,16 +8,13 @@ from uuid import uuid4
 
 import asyncpg
 import pytest
-from cryptography.fernet import Fernet
 from fastapi.testclient import TestClient
 from test_foundation import signup
 from test_growth import brand_and_lead, drain, make_draft, rows
 from test_growth import test_complete_sandbox_growth_to_revenue as complete_workflow
 
-from app.config import Settings
 from app.growth.effects import signature
 from app.main import create_app
-from app.migrate import upgrade
 
 ADMIN = os.environ.get("AI_MOS_TEST_ADMIN_URL")
 pytestmark = pytest.mark.skipif(not ADMIN, reason="Native PostgreSQL integration URL not supplied")
@@ -246,62 +243,6 @@ def test_native_automatic_reply_ambiguity(pg_clients):
     test_keyword_confidence_cannot_authorize_ambiguous_or_quoted_reply(pg_clients)
 
 
-@pytest.fixture
-def pg_clients():
-    name = "ai_mos_test_" + uuid4().hex
-    password = uuid4().hex
-    api_role, worker_role = "api_" + uuid4().hex, "worker_" + uuid4().hex
-
-    async def setup():
-        conn = await asyncpg.connect(ADMIN)
-        await conn.execute(f'CREATE DATABASE "{name}"')
-        await conn.close()
-        database_url = ADMIN.rsplit("/", 1)[0] + "/" + name
-        await upgrade(database_url)
-        conn = await asyncpg.connect(database_url)
-        await conn.execute(f"CREATE ROLE {api_role} LOGIN PASSWORD '{password}' IN ROLE ai_mos_app")
-        await conn.execute(
-            f"CREATE ROLE {worker_role} LOGIN PASSWORD '{password}' IN ROLE ai_mos_worker"
-        )
-        await conn.close()
-        from urllib.parse import urlsplit
-
-        parsed = urlsplit(ADMIN)
-        base = f"@{parsed.hostname}:{parsed.port or 5432}/{name}"
-        return (
-            f"postgresql+asyncpg://{api_role}:{password}{base}",
-            f"postgresql+asyncpg://{worker_role}:{password}{base}",
-        )
-
-    api_url, worker_url = asyncio.run(setup())
-    app = create_app(
-        Settings(
-            database_url=api_url,
-            worker_database_url=worker_url,
-            # Controlled legacy contracts; registry tests explicitly enable the strict gate.
-            allow_unverified_models=True,
-            worker_enabled=False,
-            token_encryption_key=Fernet.generate_key().decode(),
-        )
-    )
-    try:
-        with TestClient(app) as a:
-            b = TestClient(app)
-            b.portal = a.portal
-            try:
-                yield a, b
-            finally:
-                b.close()
-    finally:
-
-        async def cleanup():
-            conn = await asyncpg.connect(ADMIN)
-            await conn.execute(f'DROP DATABASE "{name}" WITH (FORCE)')
-            await conn.execute(f'DROP ROLE "{api_role}"')
-            await conn.execute(f'DROP ROLE "{worker_role}"')
-            await conn.close()
-
-        asyncio.run(cleanup())
 
 
 def test_native_postgres_auth_roles_queue_and_model_ledger(pg_clients):

@@ -41,6 +41,7 @@ def prepare(domain, review, destination):
         "WORKER_DATABASE_PASSWORD": secrets.token_urlsafe(36),
         "MODEL_MAX_COST_MICROS": "20000",
         "MODEL_CACHE_SECONDS": "21600",
+        "PAYMENT_WEBHOOK_SECRET": secrets.token_urlsafe(36),
     }
     descriptor = os.open(destination, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     with os.fdopen(descriptor, "w", encoding="utf-8", newline="\n") as target:

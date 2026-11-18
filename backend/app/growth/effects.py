@@ -464,8 +464,6 @@ async def settle_payment(session, data, simulated, provider_verified=False):
     prior = await session.scalar(select(Payment).where(Payment.provider_event_id == event_id))
     if prior:
         return {"status": "duplicate", "payment_id": prior.id}
-    if data.get("type") != "payment.succeeded":
-        return {"status": "ignored"}
     if session.bind.dialect.name == "postgresql":
         org_id = await session.scalar(
             text("SELECT resolve_checkout_org(:reference)"), {"reference": ref}

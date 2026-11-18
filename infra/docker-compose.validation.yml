@@ -14,6 +14,7 @@ x-runtime: &runtime
   VALIDATION_REVIEW_REF: ${VALIDATION_REVIEW_REF:?Record the deployment review reference}
   MODEL_MAX_COST_MICROS: ${MODEL_MAX_COST_MICROS:-20000}
   MODEL_CACHE_SECONDS: ${MODEL_CACHE_SECONDS:-21600}
+  PAYMENT_WEBHOOK_SECRET: ${PAYMENT_WEBHOOK_SECRET:?Set a private sandbox webhook signing secret}
 
 services:
   db:

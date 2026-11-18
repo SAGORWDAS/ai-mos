@@ -28,6 +28,7 @@ def validation_settings(**overrides):
         allowed_origins=["https://pilot.example.com"],
         token_encryption_key=Fernet.generate_key().decode(),
         validation_access_code=CODE,
+        payment_webhook_secret=secrets.token_urlsafe(36),
         validation_review_ref="QA-REVIEW-001",
     )
     return Settings(**{**values, **overrides})

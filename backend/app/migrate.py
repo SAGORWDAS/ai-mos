@@ -11,6 +11,37 @@ import asyncpg
 MIGRATIONS = Path(__file__).resolve().parents[1] / "migrations"
 
 
+async def plan(url):
+    """Read pending files without creating tables, applying SQL or provisioning logins."""
+    connection = await asyncpg.connect(url.replace("postgresql+asyncpg://", "postgresql://"))
+    try:
+        await connection.execute("SELECT pg_advisory_lock(7198321)")
+        exists = await connection.fetchval("SELECT to_regclass('public.schema_migrations')")
+        applied = (
+            dict(await connection.fetch("SELECT version,checksum FROM schema_migrations"))
+            if exists
+            else {}
+        )
+        result = []
+        for path in sorted(MIGRATIONS.glob("*.sql")):
+            checksum = hashlib.sha256(path.read_text(encoding="utf-8").encode()).hexdigest()
+            if path.name in applied and applied[path.name] != checksum:
+                raise RuntimeError(f"Applied migration changed: {path.name}")
+            result.append(
+                {
+                    "version": path.name,
+                    "checksum": checksum,
+                    "status": "applied" if path.name in applied else "pending",
+                }
+            )
+        unknown = set(applied) - {item["version"] for item in result}
+        if unknown:
+            raise RuntimeError("Applied migration files missing: " + ",".join(sorted(unknown)))
+        return result
+    finally:
+        await connection.close()
+
+
 async def upgrade(url):
     connection = await asyncpg.connect(url.replace("postgresql+asyncpg://", "postgresql://"))
     try:
@@ -59,11 +90,16 @@ async def upgrade(url):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("command", choices=["upgrade"])
-    parser.parse_args()
+    parser.add_argument("command", choices=["upgrade", "plan"])
+    args = parser.parse_args()
     url = os.environ.get("MIGRATION_DATABASE_URL")
     if not url or not url.startswith(("postgresql://", "postgresql+asyncpg://")):
         raise SystemExit(
             "Set MIGRATION_DATABASE_URL to the dedicated PostgreSQL migrator connection"
         )
-    asyncio.run(upgrade(url))
+    if args.command == "plan":
+        import json
+
+        print(json.dumps(asyncio.run(plan(url)), indent=2))
+    else:
+        asyncio.run(upgrade(url))

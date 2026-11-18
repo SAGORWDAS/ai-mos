@@ -1,6 +1,28 @@
 """Non-destructive upgrades for the local SQLite development database."""
 
+import hashlib
+from pathlib import Path
+
 from sqlalchemy import inspect, text
+
+
+def assert_model_columns(connection):
+    from app.models import Base
+
+    inspector = inspect(connection)
+    tables = set(inspector.get_table_names())
+    missing = []
+    for table in Base.metadata.tables.values():
+        columns = (
+            {c["name"] for c in inspector.get_columns(table.name)}
+            if table.name in tables
+            else set()
+        )
+        missing.extend(f"{table.name}.{c.name}" for c in table.c if c.name not in columns)
+    if missing:
+        raise RuntimeError(
+            "Schema missing model columns; run the appropriate migrations: " + ", ".join(missing)
+        )
 
 
 def upgrade_local(connection):
@@ -102,9 +124,8 @@ def upgrade_local(connection):
             "(version TEXT PRIMARY KEY, checksum TEXT NOT NULL)"
         )
     )
+    checksum = hashlib.sha256(Path(__file__).read_bytes().replace(b"\r\n", b"\n")).hexdigest()
     connection.execute(
-        text(
-            "INSERT OR IGNORE INTO schema_migrations VALUES "
-            "('sqlite-v4.1', 'additive-and-subscription-constraint-upgrade')"
-        )
+        text("INSERT OR IGNORE INTO schema_migrations VALUES (:version,:checksum)"),
+        {"version": "sqlite-" + checksum[:16], "checksum": checksum},
     )

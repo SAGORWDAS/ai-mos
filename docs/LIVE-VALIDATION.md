@@ -22,6 +22,10 @@ Replace the hostname and review reference with your actual deployment informatio
 
 `APP_ENV=validation` refuses unsafe configuration and checks the real database role, schema, forced RLS, table ownership, audit grants and queue permissions before startup. It does not create or repair schema with the runtime login. Run migrations through the dedicated migrator. `APP_ENV=production` remains refused pending the separate production review. This path does not require changing the existing local sandbox.
 
+Before applying an upgrade, preview it with the dedicated migration connection using `python -m app.migrate plan`. This command lists applied/pending files and checksums without changing schema or provisioning roles. PostgreSQL development also requires real migrations; model-driven table creation is limited to the local SQLite demonstration.
+
+Upgrading an existing v0.10.0 pilot: add a new private random `PAYMENT_WEBHOOK_SECRET` (at least 32 characters) to its existing `.env.validation`. This signs only the sandbox webhook path; real Stripe signing secrets remain in encrypted provider settings. Preserve the existing Fernet key and database passwords. Do not regenerate or replace the entire environment file.
+
 Open the HTTPS hostname, create an account using the private `VALIDATION_ACCESS_CODE` from the environment file, and set up recovery/TOTP in Team & settings. The signup code is not a password and should not be published. Rotate it when pilot enrolment ends. Account passwords, provider credentials and encryption keys must never be recorded as validation evidence.
 
 ## In-app setup

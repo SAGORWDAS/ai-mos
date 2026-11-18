@@ -57,7 +57,7 @@ from app.growth.usage import install_usage
 from app.models import AuditLog, Base, Brand, Invitation, Membership, Organization, Session, User
 from app.observability import emit
 from app.release import VERSION
-from app.schema import upgrade_local
+from app.schema import assert_model_columns, upgrade_local
 from app.security import hash_password, token_hash, verify_password
 from app.tenancy import tenant_scope
 from app.throttling import AuthLimiter
@@ -95,10 +95,14 @@ def create_app(settings: Settings | None = None):
                 app.state.deployment_checks = await enforce_database(engine)
                 if settings.worker_enabled:
                     await enforce_database(worker_engine, worker=True)
-            else:
+            elif local:
                 async with engine.begin() as conn:
                     await conn.run_sync(upgrade_local)
                     await conn.run_sync(Base.metadata.create_all)
+                    await conn.run_sync(assert_model_columns)
+            else:
+                async with engine.connect() as conn:
+                    await conn.run_sync(assert_model_columns)
             worker = asyncio.create_task(runtime.loop()) if settings.worker_enabled else None
             yield
         finally:

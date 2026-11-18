@@ -4,6 +4,8 @@ Version 0.10.0 public beta. The local agency workflow is implemented and tested.
 
 ## New in 0.10.0
 
+Review fixes for 0.10.1: strict migrated-schema drift tests, full private-route authentication inventory, shared two-database fixtures, PostgreSQL startup without model-created tables, recorded SQLite upgrade source hashes, a migration-plan command and validation enforcement for the shipped sandbox webhook secret. See [review response](REVIEW-RESPONSE.md). Original-plan coverage counts remain unchanged.
+
 Controlled live-validation deployment: private pilot signup, secure startup preflight for configuration and actual restricted PostgreSQL roles/schema/forced RLS/grants, an optimized HTTPS Compose stack, private configuration generation, and an owner validation center with receipt observations and append-only manual drill history. The preparation checks do not call providers or approve production. See [live-validation guide](LIVE-VALIDATION.md) and [verification](VERIFICATION-0.10.0.md). Coverage remains 37 Implemented, 15 Partial and 6 External gate; the remaining original features and real quality acceptance are not erased by adding a pilot path.
 
 ## New in 0.9.0

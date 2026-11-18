@@ -41,6 +41,15 @@ def configuration_checks(settings):
         ),
         ("encryption", encryption, "Install a persistent, valid Fernet encryption key."),
         (
+            "sandbox_webhook_secret",
+            len(settings.payment_webhook_secret) >= 32
+            and len(set(settings.payment_webhook_secret)) >= 12
+            and not settings.payment_webhook_secret.lower().startswith(
+                ("placeholder", "replace-", "your-")
+            ),
+            "Replace the shipped sandbox webhook signing secret with a private random value.",
+        ),
+        (
             "database_secret",
             database_secret,
             "Use a random private database password, at least 20 characters.",
