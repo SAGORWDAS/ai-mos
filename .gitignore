@@ -14,3 +14,4 @@ __pycache__/
 .next/
 frontend/out/
 data/
+*.zip

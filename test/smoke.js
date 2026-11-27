@@ -1,5 +1,6 @@
 // End-to-end smoke test with OpenAI + Gmail faked. Run: npm test
 const os = require('node:os'), fs = require('node:fs'), path = require('node:path'), assert = require('node:assert');
+process.env.NO_LISTEN = '1';
 process.env.DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'mkt-'));
 
 const realFetch = global.fetch;

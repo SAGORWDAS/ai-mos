@@ -1,3 +1,11 @@
+// Load KEY=VALUE lines from .env if present (some hosts provide settings this way).
+try {
+  for (const line of require('node:fs').readFileSync(require('node:path').join(__dirname, '.env'), 'utf8').split(/\r?\n/)) {
+    const m = line.match(/^\s*([A-Z_][A-Z0-9_]*)\s*=\s*(.*?)\s*$/i);
+    if (m && !(m[1] in process.env)) process.env[m[1]] = m[2].replace(/^(['"])(.*)\1$/, '$2');
+  }
+} catch { /* no .env */ }
+
 // AI Marketing Team — local server. Run: node server.js  →  http://localhost:3000
 const http = require('node:http');
 const fs = require('node:fs');
@@ -7,7 +15,7 @@ const ai = require('./lib/ai');
 const mail = require('./lib/mail');
 const team = require('./lib/agents');
 
-const PORT = +process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000; // a number, or a socket path on some hosts
 const HOST = process.env.HOST || '127.0.0.1';
 const PUB = path.join(__dirname, 'public');
 const SECRETS = ['openai_key', 'gmail_pass'];
@@ -209,12 +217,13 @@ const server = http.createServer(async (req, res) => {
   fs.createReadStream(file).pipe(res);
 });
 
-if (require.main === module) {
+if (!process.env.NO_LISTEN) { // tests set NO_LISTEN; hosts load this file via require()
   if (!LOCAL && PASSWORD.length < 8) {
     console.error('\n  Refusing to start on a public address without a password.\n  Set the APP_PASSWORD environment variable (8+ characters).\n');
     process.exit(1);
   }
-  server.listen(PORT, HOST, () => console.log(`\n  AI Marketing Team is running → http://localhost:${PORT}\n  (keep this window open; press Ctrl+C to stop)\n`));
+  const onListen = () => console.log(`\n  AI Marketing Team is running → http://localhost:${PORT}\n  (keep this window open; press Ctrl+C to stop)\n`);
+  /^\d+$/.test(String(PORT)) ? server.listen(+PORT, HOST, onListen) : server.listen(PORT, onListen);
   // Autopilot: every 10 minutes check replies, find leads, send, follow up, report.
   setInterval(() => engine.tick().catch((e) => console.error('tick:', e.message)), 10 * 60 * 1000);
   setTimeout(() => engine.tick().catch(() => {}), 15000);
