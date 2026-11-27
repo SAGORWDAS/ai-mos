@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Marketing Team</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='9' fill='%231d1c19'/><path d='M8 21l5-9 4 6 3-4 4 7' stroke='%23f5f4ef' stroke-width='2.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<link rel="stylesheet" href="/app.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></symbol>
+    <symbol id="i-find" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+    <symbol id="i-leads" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5M16 4.5a3.5 3.5 0 0 1 0 7M18 14.8c1.9.7 3.1 2.5 3.5 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="m3.5 6.5 8.5 6.5 8.5-6.5" fill="none" stroke="currentColor" stroke-width="1.7"/></symbol>
+    <symbol id="i-reply" viewBox="0 0 24 24"><path d="M9 7 4 12l5 5M4 12h11a5 5 0 0 1 5 5v1" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-brand" viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.5 6.7 19.4l1.2-6L3.4 9.3l6-.7z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></symbol>
+    <symbol id="i-plan" viewBox="0 0 24 24"><path d="M4 19 9.5 12l4 3.5L20 6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 6h5v5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-pen" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></symbol>
+    <symbol id="i-cog" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+  </defs>
+</svg>
+<div class="shell">
+  <aside class="side">
+    <div class="logo"><span class="mark"><svg width="18" height="18"><use href="#i-plan"/></svg></span><div><b>Marketing Team</b><small>AI sales, on your PC</small></div></div>
+    <nav id="nav">
+      <a href="#/" data-p="home"><svg><use href="#i-home"/></svg>Overview</a>
+      <div class="grp">Sell</div>
+      <a href="#/sources" data-p="sources"><svg><use href="#i-find"/></svg>Lead sources</a>
+      <a href="#/signals" data-p="signals"><svg><use href="#i-find"/></svg>Website requests <em id="b-signals"></em></a>
+      <a href="#/leads" data-p="leads"><svg><use href="#i-leads"/></svg>Leads</a>
+      <a href="#/outreach" data-p="outreach"><svg><use href="#i-mail"/></svg>Outreach <em id="b-drafts"></em></a>
+      <a href="#/inbox" data-p="inbox"><svg><use href="#i-reply"/></svg>Replies <em id="b-unread"></em></a>
+      <div class="grp">Market</div>
+      <a href="#/brand" data-p="brand"><svg><use href="#i-brand"/></svg>Brand</a>
+      <a href="#/strategy" data-p="strategy"><svg><use href="#i-plan"/></svg>Strategy</a>
+      <a href="#/content" data-p="content"><svg><use href="#i-pen"/></svg>Content</a>
+      <div class="grp">Setup</div>
+      <a href="#/settings" data-p="settings"><svg><use href="#i-cog"/></svg>Settings</a>
+    </nav>
+    <div class="spend" id="spend"></div>
+  </aside>
+  <main id="view" class="view"></main>
+</div>
+<div id="toast"></div>
+<script src="/app.js"></script>
+</body>
+</html>
