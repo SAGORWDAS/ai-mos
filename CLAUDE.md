@@ -33,6 +33,9 @@ Owner still to add: their name, OpenAI key, Gmail App Password, booking link. Cl
 - Emails must read human: short, specific, no clichés, signature added automatically.
 - Ask before big or risky changes; small fixes can just be done, then tested and deployed.
 
+## Later (owner said "later")
+Sell other products (e.g. a SaaS): best as a second copy on its own subdomain. Before that, add a product-type setting so the "skip modern websites" gate (`engine.prospect`) and Website requests (`signals.js` prompt) follow the brand instead of web design.
+
 ## Gotchas
 - `String.replace` with `$$` in replacement strings eats a `$`; use split/join in patch scripts.
 - hPanel File Manager opens as a popup (blocked in the browser pane); use Runtime logs or `/api/state` `storage`.
