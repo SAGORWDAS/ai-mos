@@ -432,6 +432,7 @@ pages.settings = () => {
     ${f('followup_days', 'Follow up after (days)', '', 'number')}
     ${f('max_followups', 'Follow-ups per lead', '', 'number')}</div>
     ${f('footer', 'Footer on outreach emails', 'Keep an opt-out line. Anti-spam laws require it.')}</div>
+    <div class="f" style="margin-top:14px"><label>Your email signature</label><textarea name="signature" style="min-height:96px" placeholder="${esc([s.sender_name || 'Your name', S.brand.name || 'Business', 'Website · phone'].join('\n'))}">${esc(s.signature || '')}</textarea><div class="hint">Added under every email the team sends, including replies. {name} becomes “Your name” above. Leave empty to use your name, business and website.</div></div>
   <button class="btn p">Save settings</button></form>
   ${S.cronPath ? `<div class="card"><h2>Keep it running (hosting)</h2><p class="mute" style="margin-top:0">In your hosting panel, add a cron job that runs every 10 minutes and opens this link. It wakes the app so autopilot never pauses. Keep the link private.</p><code style="word-break:break-all">${esc(location.origin + S.cronPath)}</code></div>` : ''}
   <p class="mute" style="margin-top:22px">Total AI spend so far: $${S.usage.total.toFixed(3)}, across ${plural(S.usage.calls, 'task')}.</p>`;

@@ -56,6 +56,7 @@ const call = (k, b = {}, id = 0, q = '') => routes[k](b, id, new URLSearchParams
   const d = call('GET /api/messages', {}, 0, 'status=draft')[0];
   assert.equal((await call('POST /api/messages/send', { ids: [d.id] })).sent, 1);
   assert.ok(sent[0].text.includes('unsubscribe'));
+  assert.ok(sent[0].text.includes('Sam Lee\nAcme Cakes'), 'signature added');
   // follow-up becomes due after N days
   run("UPDATE leads SET last_contacted=datetime('now','-5 days')");
   assert.equal((await call('POST /api/outreach/followups')).drafted, 1);
