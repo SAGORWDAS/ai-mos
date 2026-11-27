@@ -1,0 +1,19 @@
+{
+  "name": "ai-marketing-team",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Low-cost AI marketing team: strategy, content, leads, Gmail outreach and reply handling. Runs on your PC with an OpenAI key and a Gmail account.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node --experimental-sqlite --no-warnings server.js",
+    "test": "node test/smoke.js"
+  },
+  "engines": {
+    "node": ">=22.5"
+  },
+  "dependencies": {
+    "imapflow": "^1.0.0",
+    "mailparser": "^3.7.0",
+    "nodemailer": "^7.0.0"
+  }
+}
