@@ -312,25 +312,22 @@ pages.inbox.on = () => {
 let sigTab = 'new';
 pages.signals = async () => {
   const list = await api('/signals?status=' + sigTab);
-  return `${head('Website requests', 'People who posted publicly that they want a new website or a redesign. Each day the team finds new posts and writes a reply. Open the post, paste the reply, post it yourself. Takes a minute and keeps your accounts safe.', '<button class="btn p" id="sf">Search now</button>')}
+  return `${head('Website requests', 'People who posted publicly that they want a new website or a redesign. Each weekday the team finds new posts, looks up the poster’s business, and emails them automatically when they publish an email. Nothing for you to do.', '<button class="btn p" id="sf">Search now</button>')}
   <div class="row" style="margin-bottom:14px"><label class="switch"><input type="checkbox" id="son" ${S.settings.signals !== '0' ? 'checked' : ''}><span></span></label><span class="mute sp">Search every day (about $0.03 a search)</span>
-    <div class="tabs">${[['new', 'To reply'], ['done', 'Done']].map(([k, l]) => `<button class="${sigTab === k ? 'on' : ''}" data-tab="${k}">${l}</button>`).join('')}</div></div>
+    <div class="tabs">${[['new', 'Recent'], ['done', 'Hidden']].map(([k, l]) => `<button class="${sigTab === k ? 'on' : ''}" data-tab="${k}">${l}</button>`).join('')}</div></div>
   ${list.length ? list.map((s) => `<div class="card" data-id="${s.id}"><div class="row"><span class="pill ${s.need === 'new' ? 'acc' : 'gold'}">${s.need === 'new' ? 'New website' : 'Redesign'}</span><span class="pill">${esc(s.platform)}</span>
-      <span class="mute sp">${esc([s.location, s.posted].filter(Boolean).join(' · '))}</span>${s.lead_id ? '<span class="pill ok" title="Their site has a public email, so outreach will email them too">also emailing</span>' : ''}</div>
+      <span class="mute sp">${esc([s.location, s.posted].filter(Boolean).join(' · '))}</span>${s.lead_id ? '<span class="pill ok">emailed automatically</span>' : '<span class="pill" title="No public email found. Optional: reply on the post yourself.">no email found</span>'}</div>
     <p style="margin:12px 0 4px;font-family:var(--serif);font-size:18px">${esc(s.title || s.name || '')}</p><p class="mute" style="margin:0 0 12px">${esc(s.summary)}</p>
-    <textarea class="rp" style="min-height:120px">${esc(s.reply || '')}</textarea>
-    <div class="row" style="margin-top:12px"><a class="btn s p" href="${esc(s.url)}" target="_blank" rel="noopener">Open post</a><button class="btn s ghost" data-copy>Copy reply</button><span class="sp"></span>
-      ${s.status === 'new' ? '<button class="btn s ghost" data-st="skipped">Skip</button><button class="btn s" data-st="done">Replied ✓</button>' : `<span class="mute">${s.status}</span>`}</div></div>`).join('')
-    : `<div class="card empty">${sigTab === 'new' ? 'No open requests. Press “Search now”, or wait for the daily search.' : 'Nothing here yet.'}</div>`}`;
+    <div class="row" style="margin-top:12px"><a class="btn s ghost" href="${esc(s.url)}" target="_blank" rel="noopener">Open post</a><span class="sp"></span>
+      ${s.status === 'new' ? '<button class="btn s ghost" data-st="done">Hide</button>' : `<span class="mute">${s.status}</span>`}</div></div>`).join('')
+    : `<div class="card empty">${sigTab === 'new' ? 'No requests yet. Press “Search now”, or wait for the daily search.' : 'Nothing here yet.'}</div>`}`;
 };
 pages.signals.on = () => {
   $('#sf').onclick = (e) => act(e.target, async () => bgMsg(await api('/signals/find', {}), 'Search for website requests'));
   $('#son').onchange = (e) => api('/settings', { signals: e.target.checked ? '1' : '0' });
   $$('[data-tab]').forEach((b) => (b.onclick = () => { sigTab = b.dataset.tab; go(); }));
   $$('.card[data-id]').forEach((c) => {
-    const id = c.dataset.id, rp = $('.rp', c);
-    rp.onchange = () => api('/signals/' + id, { reply: rp.value }, 'PATCH');
-    $('[data-copy]', c).onclick = () => copy(rp.value);
+    const id = c.dataset.id;
     $$('[data-st]', c).forEach((b) => (b.onclick = async () => { await api('/signals/' + id, { status: b.dataset.st }, 'PATCH'); await refresh(); go(); }));
   });
 };

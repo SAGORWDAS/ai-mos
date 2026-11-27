@@ -5,7 +5,7 @@ process.env.DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'mkt-'));
 const realFetch = global.fetch;
 global.fetch = async (url, opt) => {
   url = String(url);
-  if (url.includes('/v1/responses') && opt.body.includes('HIRE')) return new Response(JSON.stringify({ output: [{ content: [{ type: 'output_text', text: "[{\"url\":\"https://www.airtasker.com/tasks/new-site-1\",\"platform\":\"Airtasker\",\"need\":\"redesign\",\"title\":\"Redesign our plumbing site\",\"summary\":\"Old site, wants mobile\",\"business_website\":\"fastplumb.com.au\"},{\"url\":\"not-a-link\"}]" }] }], usage: {} }));
+  if (url.includes('/v1/responses') && opt.body.includes('HIRE')) return new Response(JSON.stringify({ output: [{ content: [{ type: 'output_text', text: "[{\"url\":\"https://www.airtasker.com/tasks/new-site-1\",\"platform\":\"Airtasker\",\"need\":\"redesign\",\"title\":\"Redesign our plumbing site\",\"summary\":\"Old site, wants mobile\",\"business_website\":\"janedoe.design\"},{\"url\":\"not-a-link\"}]" }] }], usage: {} }));
   if (url.includes('/v1/responses')) return new Response(JSON.stringify({ output: [{ content: [{ type: 'output_text', text: 'Here: [{"company":"Bolt Co","website":"https://boltco.io","contact_name":"Ben","email":"","why":"growing team"}]' }] }], usage: { input_tokens: 500, output_tokens: 200 } }));
   if (url.startsWith('https://dir.test')) {
     const pages = {
@@ -114,7 +114,8 @@ const call = (k, b = {}, id = 0, q = '') => routes[k](b, id, new URLSearchParams
   // website requests: public posts -> reply drafted; their site email joins outreach
   const sg = await require('../lib/signals').findSignals();
   assert.equal(sg.length, 1);
-  assert.equal(sg[0].reply, 'Happy to help with the redesign');
+  assert.ok(sg[0].lead_id, 'poster with a public email becomes a lead');
+  assert.equal(call('GET /api/leads').find((l) => l.id === sg[0].lead_id).source, 'signal');
   assert.equal(call('GET /api/signals')[0].need, 'redesign');
   assert.equal((await require('../lib/signals').findSignals()).length, 0, 'never lists a post twice');
   console.log('smoke test passed ✓');
