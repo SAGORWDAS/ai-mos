@@ -5,6 +5,7 @@ process.env.DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'mkt-'));
 const realFetch = global.fetch;
 global.fetch = async (url, opt) => {
   url = String(url);
+  if (url.includes('/v1/responses') && opt.body.includes('HIRE')) return new Response(JSON.stringify({ output: [{ content: [{ type: 'output_text', text: "[{\"url\":\"https://www.airtasker.com/tasks/new-site-1\",\"platform\":\"Airtasker\",\"need\":\"redesign\",\"title\":\"Redesign our plumbing site\",\"summary\":\"Old site, wants mobile\",\"business_website\":\"fastplumb.com.au\"},{\"url\":\"not-a-link\"}]" }] }], usage: {} }));
   if (url.includes('/v1/responses')) return new Response(JSON.stringify({ output: [{ content: [{ type: 'output_text', text: 'Here: [{"company":"Bolt Co","website":"https://boltco.io","contact_name":"Ben","email":"","why":"growing team"}]' }] }], usage: { input_tokens: 500, output_tokens: 200 } }));
   if (url.startsWith('https://dir.test')) {
     const pages = {
@@ -23,7 +24,7 @@ global.fetch = async (url, opt) => {
   if (url.startsWith('https://boltco.io')) return new Response(url.endsWith('/contact') ? '<a href="mailto:hello@boltco.io">x</a> privacy@boltco.io' : 'no email here');
   if (!url.includes('api.openai.com')) return realFetch(url, opt);
   const sys = JSON.parse(opt.body).messages[0].content;
-  const out = sys.includes('30-day') ? '## Goal\n- win' :
+  const out = sys.includes('public posts') ? '{"replies":[{"id":1,"reply":"Happy to help with the redesign"}]}' : sys.includes('30-day') ? '## Goal\n- win' :
     sys.includes('variations') ? '{"items":["post A","post B"]}' :
     sys.includes('qualify') ? '{"scores":[{"id":1,"score":82,"reason":"good fit"}]}' :
     sys.includes('first-touch') ? '{"subject":"quick idea","body":"Hi Ann, ..."}' :
@@ -72,7 +73,7 @@ const call = (k, b = {}, id = 0, q = '') => routes[k](b, id, new URLSearchParams
   assert.ok(st.usage.total > 0 && !st.settings.openai_key.startsWith('sk'));
   // ---- autopilot ----
   const engine = require('../lib/engine');
-  await call('POST /api/settings', { autopilot: '1', work_start: '0', work_end: '24', booking_link: 'https://cal.com/sam' });
+  await call('POST /api/settings', { autopilot: '1', signals: '0', work_start: '0', work_end: '24', booking_link: 'https://cal.com/sam' });
   inbox = [];
   sent.length = 0;
   await engine.tick();
@@ -110,6 +111,12 @@ const call = (k, b = {}, id = 0, q = '') => routes[k](b, id, new URLSearchParams
   assert.equal((await src.runSource(call('GET /api/sources')[0], 10)).checked, 0, 'never re-reads a listing');
   const { auditSite } = require('../lib/audit');
   assert.match(await auditSite('https://fastplumb.com.au'), /2019.*|mobile/);
+  // website requests: public posts -> reply drafted; their site email joins outreach
+  const sg = await require('../lib/signals').findSignals();
+  assert.equal(sg.length, 1);
+  assert.equal(sg[0].reply, 'Happy to help with the redesign');
+  assert.equal(call('GET /api/signals')[0].need, 'redesign');
+  assert.equal((await require('../lib/signals').findSignals()).length, 0, 'never lists a post twice');
   console.log('smoke test passed ✓');
   process.exit(0);
 })().catch((e) => { console.error(e); process.exit(1); });
