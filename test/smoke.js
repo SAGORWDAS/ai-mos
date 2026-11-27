@@ -1,6 +1,5 @@
 // End-to-end smoke test with OpenAI + Gmail faked. Run: npm test
 const os = require('node:os'), fs = require('node:fs'), path = require('node:path'), assert = require('node:assert');
-process.env.NO_LISTEN = '1';
 process.env.DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'mkt-'));
 
 const realFetch = global.fetch;
@@ -40,7 +39,7 @@ let inbox = [{ from: 'ann@acme.com', subject: 'Re: quick idea', text: 'Sounds go
 mail.fetchFrom = async () => inbox;
 require('node:dns').promises.resolveMx = async () => [{ exchange: 'mx' }];
 
-const { routes } = require('../server');
+const { routes } = require('../lib/app');
 const { run } = require('../lib/db');
 const call = (k, b = {}, id = 0, q = '') => routes[k](b, id, new URLSearchParams(q));
 
