@@ -1,0 +1,24 @@
+# T-0.8 — Evaluation dataset seed
+# Generated from spec/ai-mos.spec.yaml + blueprint/tasks.js. Do not edit alone.
+
+id: T-0.8
+phase: PH-0
+kind: data
+blocking: true
+title: Evaluation dataset seed
+context_budget_tokens: 1500
+load_only:
+  - master §4.6
+files_create:
+  - evals/data/outreach.jsonl
+  - evals/data/replies.jsonl
+steps:
+  - collect 100 real outreach emails
+  - label 200 replies with intent
+  - split dev and holdout
+done_when:
+  - two JSONL files with a documented label set
+do_not:
+  - do not label with a model you have not evaluated
+  - do not start another task in this session
+  - do not invent a table, endpoint, tool or model id

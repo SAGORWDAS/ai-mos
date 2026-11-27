@@ -1,0 +1,169 @@
+<!-- ============ PART 8 ============ -->
+<div class="part">
+  <div class="part-head">
+    <p class="eyebrow">Part 8</p>
+    <h1 class="part-title">API surface</h1>
+  </div>
+
+  <p class="lede">One REST surface, generated from typed models, used by both the dashboard and any future client. Conventions are fixed once so that every endpoint behaves identically.</p>
+
+  <h2>8.1 Conventions</h2>
+  <table class="tight">
+    <thead><tr><th style="width:34mm">Concern</th><th>Rule</th></tr></thead>
+    <tbody>
+      <tr><td>Base path</td><td><span class="mono">/v1</span>. Breaking changes require <span class="mono">/v2</span>; additive changes do not.</td></tr>
+      <tr><td>Auth</td><td>Session cookie for the dashboard (HttpOnly, SameSite=Lax, CSRF token on state-changing routes); bearer token for machine access, scoped per tenant.</td></tr>
+      <tr><td>Tenant context</td><td>Resolved from the session or token. A client-supplied <span class="mono">organization_id</span> is validated against membership, never trusted.</td></tr>
+      <tr><td>Idempotency</td><td>All POSTs that create or dispatch accept <span class="mono">Idempotency-Key</span>. Replay within 24h returns the original response with <span class="mono">Idempotent-Replay: true</span>.</td></tr>
+      <tr><td>Pagination</td><td>Cursor-based: <span class="mono">?limit=50&amp;cursor=…</span>, response contains <span class="mono">next_cursor</span>. Never offset pagination on mutable tables.</td></tr>
+      <tr><td>Filtering</td><td>Explicit whitelisted query params per endpoint. No generic query language.</td></tr>
+      <tr><td>Rate limits</td><td>Per tenant per route class. Send endpoints carry a separate cap that is also enforced at the tool gateway.</td></tr>
+      <tr><td>Timestamps</td><td>ISO 8601 UTC everywhere. Timezones are presentation.</td></tr>
+      <tr><td>Money</td><td>Integer minor units + ISO 4217 code. Never float, never a formatted string.</td></tr>
+      <tr><td>Long operations</td><td>Return <span class="mono">202 Accepted</span> with a resource id; client polls the resource or subscribes to events.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>8.2 Error model</h2>
+  <pre>{ "error": {
+    "code": "approval_required",
+    "message": "This action requires human approval before execution.",
+    "details": { "approval_id": "…", "action_class": "send_email" },
+    "trace_id": "…"
+  }}</pre>
+
+  <table class="tight">
+    <thead><tr><th style="width:20mm">HTTP</th><th style="width:44mm">Code</th><th>When</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">400</td><td class="mono">invalid_payload</td><td>Schema validation failed; <span class="mono">details.fields</span> lists each violation.</td></tr>
+      <tr><td class="mono">401</td><td class="mono">unauthenticated</td><td>No session, expired session, or invalid token.</td></tr>
+      <tr><td class="mono">403</td><td class="mono">forbidden_role</td><td>Authenticated but the membership role lacks the permission.</td></tr>
+      <tr><td class="mono">403</td><td class="mono">autonomy_exceeded</td><td>Agent attempted an action above its ceiling. Always audited.</td></tr>
+      <tr><td class="mono">403</td><td class="mono">suppressed_recipient</td><td>Address is on the suppression list. Never silently skipped.</td></tr>
+      <tr><td class="mono">404</td><td class="mono">not_found</td><td>Also returned for records belonging to another tenant — never 403, which would leak existence.</td></tr>
+      <tr><td class="mono">409</td><td class="mono">state_conflict</td><td>Transition not legal from the current state (see the state machines in 2.5).</td></tr>
+      <tr><td class="mono">409</td><td class="mono">duplicate</td><td>Idempotency key reused with a different payload.</td></tr>
+      <tr><td class="mono">402</td><td class="mono">budget_exhausted</td><td>Org or workflow budget reached. <span class="mono">details.remaining_usd</span> included.</td></tr>
+      <tr><td class="mono">423</td><td class="mono">emergency_stop</td><td>Organisation stop engaged; only reads permitted.</td></tr>
+      <tr><td class="mono">429</td><td class="mono">rate_limited</td><td>Includes <span class="mono">Retry-After</span>.</td></tr>
+      <tr><td class="mono">502</td><td class="mono">provider_error</td><td>Upstream failure; the task is retried or dead-lettered, and the id is returned.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>8.3 Endpoint map</h2>
+  <table class="tight">
+    <thead><tr><th style="width:20mm">Method</th><th style="width:64mm">Path</th><th style="width:14mm">Phase</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">POST</td><td class="mono">/v1/commands</td><td class="mono">PH-2</td><td>Returns <span class="mono">202</span> + command id; planning is async.</td></tr>
+      <tr><td class="mono">POST</td><td class="mono">/v1/commands/{id}/confirm</td><td class="mono">PH-2</td><td>Creates plan and task graph atomically.</td></tr>
+      <tr><td class="mono">GET</td><td class="mono">/v1/plans/{id}</td><td class="mono">PH-2</td><td>Plan with tasks, deps, cost estimate, approvals needed.</td></tr>
+      <tr><td class="mono">PATCH</td><td class="mono">/v1/tasks/{id}</td><td class="mono">PH-2</td><td>Cancel, pause, or reassign. Not a general update.</td></tr>
+      <tr><td class="mono">GET</td><td class="mono">/v1/agents · PATCH /v1/agents/{id}</td><td class="mono">PH-1</td><td>Enable, set ceiling, adjust limits.</td></tr>
+      <tr><td class="mono">PUT</td><td class="mono">/v1/brands/{id}</td><td class="mono">PH-1</td><td>Full replace; partial updates via PATCH with field allowlist.</td></tr>
+      <tr><td class="mono">POST</td><td class="mono">/v1/brands/{id}/documents</td><td class="mono">PH-1</td><td>Upload → 202; indexing is a job.</td></tr>
+      <tr><td class="mono">POST</td><td class="mono">/v1/leads/discover</td><td class="mono">PH-3</td><td>202 + run id; results appear as leads in <span class="mono">discovered</span>.</td></tr>
+      <tr><td class="mono">POST</td><td class="mono">/v1/outreach/drafts</td><td class="mono">PH-3</td><td>Generates drafts for a segment; each is a task.</td></tr>
+      <tr><td class="mono">POST</td><td class="mono">/v1/outreach/dispatch</td><td class="mono">PH-3</td><td>Requires approval id; enforces caps; returns per-message status.</td></tr>
+      <tr><td class="mono">GET</td><td class="mono">/v1/conversations/{id}</td><td class="mono">PH-3</td><td>Thread with classification per message.</td></tr>
+      <tr><td class="mono">POST</td><td class="mono">/v1/conversations/{id}/reply</td><td class="mono">PH-3</td><td>Sends a reply; approval required unless the class is L4-enabled.</td></tr>
+      <tr><td class="mono">POST</td><td class="mono">/v1/meetings/propose · /confirm</td><td class="mono">PH-4</td><td>Two-step by design; confirmation re-checks availability.</td></tr>
+      <tr><td class="mono">POST</td><td class="mono">/v1/campaigns/{id}/activate</td><td class="mono">PH-3</td><td>Requires prior approval; emits <span class="mono">campaign.activated</span>.</td></tr>
+      <tr><td class="mono">GET</td><td class="mono">/v1/metrics/overview</td><td class="mono">PH-2</td><td>Snapshot reads only.</td></tr>
+      <tr><td class="mono">GET</td><td class="mono">/v1/metrics/costs</td><td class="mono">PH-1</td><td>Ledger aggregates by agent, task type, campaign.</td></tr>
+      <tr><td class="mono">POST</td><td class="mono">/v1/approvals/{id}/approve</td><td class="mono">PH-2</td><td>Single-use; rejects on payload hash mismatch.</td></tr>
+      <tr><td class="mono">POST</td><td class="mono">/v1/orgs/{id}/emergency-stop</td><td class="mono">PH-1</td><td>Owner only; immediate; audited.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>8.4 Webhooks</h2>
+  <table class="tight">
+    <thead><tr><th style="width:26mm">Direction</th><th style="width:36mm">Provider</th><th>Handling rule</th></tr></thead>
+    <tbody>
+      <tr><td>Inbound</td><td>Payment provider</td><td>Verify signature against the raw body. Store <span class="mono">provider_event_id</span> with a unique constraint. Respond <span class="mono">2xx</span> before doing work; process as a job. Replays are no-ops.</td></tr>
+      <tr><td>Inbound</td><td>Gmail / Graph push</td><td>Validate channel token, resolve the mailbox to an integration, enqueue a sync job. Never parse message content in the webhook handler.</td></tr>
+      <tr><td>Inbound</td><td>Calendar change</td><td>Invalidate availability cache for that user; do not reschedule anything automatically.</td></tr>
+      <tr><td>Outbound</td><td>Customer systems</td><td>Signed with an HMAC over the body and a timestamp; retries with backoff for 24h; failures visible in the UI.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="trap">
+    <span class="label">MUST</span>
+    <p>Payment state changes only inside the webhook handler, only after signature verification, and only for events this system recognises. A missing or unknown event type is logged and ignored — never inferred from the accompanying email, the checkout redirect, or the model's opinion.</p>
+  </div>
+
+  <h2>8.5 Versioning</h2>
+  <p>Additive fields are free. Removing or renaming a field, changing a default that alters behaviour, or changing an error code requires a new major path and a 90-day overlap. The dashboard and the public API share the same version, so a v2 is a product decision, not a developer convenience.</p>
+</div>
+
+<!-- ============ PART 9 ============ -->
+<div class="part">
+  <div class="part-head">
+    <p class="eyebrow">Part 9</p>
+    <h1 class="part-title">Integrations</h1>
+  </div>
+
+  <p class="lede">Every external system is a liability with a quota. Integrate through official APIs, assume every provider will fail, and design so that its failure is a visible state rather than a silent one.</p>
+
+  <h2>9.1 Sourcing policy</h2>
+  <div class="trap">
+    <span class="label">MUST NOT</span>
+    <p>The product MUST NOT be built around scraping platforms that prohibit it, bypassing access controls or rate limits, or reselling data without a licence. This is not only a legal position — it is a commercial one: a growth engine that is banned from the channels it depends on has no product.</p>
+  </div>
+  <p>Prospect data therefore comes from three sources only: licensed data providers, first-party interactions (form fills, replies, website activity the tenant owns), and public information fetched politely with attribution and cached. Every lead record carries <span class="mono">source</span> and <span class="mono">source_confidence</span>, and the UI says so plainly rather than implying verified contactability.</p>
+
+  <h2>9.2 Integration contracts</h2>
+  <table>
+    <thead><tr><th style="width:8mm">ID</th><th style="width:26mm">Integration</th><th style="width:20mm">Auth</th><th style="width:34mm">Key limits and failure modes</th><th style="width:12mm">Phase</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">INT-01</td><td>OpenRouter</td><td>API key</td><td>Rate limits per model; provider outages. Mitigation: model registry with fallback tiers, per-call timeouts, ledger on failure.</td><td class="mono">PH-1</td></tr>
+      <tr><td class="mono">INT-02</td><td>Gmail API</td><td>OAuth 2.0, offline access</td><td>Per-mailbox daily send quotas; push notifications expire and need renewal. Mitigation: refresh job, quota accounting per mailbox, explicit re-consent flow.</td><td class="mono">PH-3</td></tr>
+      <tr><td class="mono">INT-03</td><td>Google Calendar</td><td>OAuth 2.0</td><td>Free/busy only with the right scope; event writes are idempotent by <span class="mono">iCalUID</span>. Mitigation: re-check availability immediately before insert.</td><td class="mono">PH-4</td></tr>
+      <tr><td class="mono">INT-04</td><td>Payment provider</td><td>API key + webhook secret</td><td>Region availability and settlement are country-dependent (see 9.4). Mitigation: provider adapter behind one interface; no provider ids outside the adapter.</td><td class="mono">PH-4</td></tr>
+      <tr><td class="mono">INT-05</td><td>Prospect data provider</td><td>API key</td><td>Per-record cost, variable match rates, licensing restrictions on storage and resale. Mitigation: store the minimum, record provenance, cache enrichment for 90 days.</td><td class="mono">PH-3</td></tr>
+      <tr><td class="mono">INT-06</td><td>Dedicated email platform (ESP)</td><td>API key + verified domain</td><td>Requires domain verification, DNS records and warm-up. Mitigation: see 9.3 — this is the recommended bulk path.</td><td class="mono">PH-3</td></tr>
+      <tr><td class="mono">INT-07</td><td>Microsoft Graph</td><td>OAuth 2.0</td><td>Similar quotas to Gmail with different consent model. Adds a second mailbox adapter, not a second architecture.</td><td class="mono">PH-5</td></tr>
+      <tr><td class="mono">INT-08</td><td>n8n</td><td>Webhook + API key</td><td>Optional glue. MUST NOT hold credentials for sending or hold business logic. Treat as untrusted: validate everything it sends.</td><td class="mono">PH-4</td></tr>
+      <tr><td class="mono">INT-09</td><td>HubSpot / CRM export</td><td>OAuth 2.0</td><td>Field mapping drift, rate limits, duplicate records. Mitigation: export with external id mapping table and reconciliation report.</td><td class="mono">PH-5</td></tr>
+      <tr><td class="mono">INT-10</td><td>Google Analytics 4 / Search Console</td><td>Service account</td><td>Reporting only; sampled data. Never used to drive an automated decision.</td><td class="mono">PH-5</td></tr>
+      <tr><td class="mono">INT-11</td><td>Meta Ads</td><td>OAuth 2.0</td><td>Review process, spend limits, account restrictions. Read-only in PH-5; any write requires a separate approval class.</td><td class="mono">PH-6</td></tr>
+    </tbody>
+  </table>
+
+  <h3>The adapter rule</h3>
+  <p>Each integration is one adapter module exposing the same internal interface: <span class="mono">connect</span>, <span class="mono">refresh</span>, <span class="mono">health</span>, and a small set of typed operations. Provider-specific identifiers, error shapes and rate-limit semantics live inside the adapter and never leak into services or prompts. Swapping Gmail for an ESP is then a configuration change on one mailbox, not a rewrite of the outreach workflow.</p>
+
+  <h2>9.3 Deliverability — the part most builds get wrong</h2>
+  <p>The brief proposes Gmail for both reading and sending. That is correct for one case and dangerous for the other.</p>
+
+  <table>
+    <thead><tr><th style="width:44mm">Use case</th><th style="width:34mm">Recommended channel</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td>Conversational replies to a thread the prospect started</td><td>Gmail / Graph (the mailbox itself)</td><td>Continuity matters more than throughput; it looks and behaves like the founder writing.</td></tr>
+      <tr><td>Cold or bulk outreach at volume</td><td>Dedicated ESP on a dedicated subdomain</td><td>Per-mailbox quotas, reputation isolation, bounce and complaint APIs, and protection of the primary business domain if something goes wrong.</td></tr>
+      <tr><td>Transactional mail (receipts, onboarding)</td><td>ESP transactional stream</td><td>Separate reputation from marketing; must never be affected by a campaign.</td></tr>
+    </tbody>
+  </table>
+
+  <p>Non-negotiable mechanics for any sending path:</p>
+  <ul class="tight">
+    <li>SPF, DKIM and DMARC configured and verified before the first send; a domain that fails verification cannot be enabled in the UI.</li>
+    <li>Warm-up schedule for a new domain or mailbox, enforced in configuration rather than in an operator's memory.</li>
+    <li>Per-mailbox daily caps, per-domain caps, and a global campaign cap — all enforced atomically.</li>
+    <li>Bounce handling that distinguishes hard from soft; a hard bounce suppresses immediately and is never retried.</li>
+    <li>Complaint thresholds wired to an automatic pause. Exceeding the provider's rate is not a warning; it is a stop.</li>
+    <li>One-click unsubscribe links in every bulk message, and a plain reply-to-unsubscribe path that a human monitors.</li>
+  </ul>
+
+  <h2>9.4 Regional constraints</h2>
+  <p>The brief notes Bangladesh-based operations. This is a decision gate in PH-0, not a detail discovered in PH-4, because it can invalidate the payment path entirely.</p>
+  <table class="tight">
+    <thead><tr><th style="width:40mm">Question</th><th style="width:52mm">Why it blocks the build</th><th>When it must be answered</th></tr></thead>
+    <tbody>
+      <tr><td>Can the business open a merchant account with the chosen provider?</td><td>No merchant account, no subscriptions, no revenue — the product's core loop is impossible.</td><td>PH-0, before any code</td></tr>
+      <tr><td>Which settlement currencies and payout countries are supported?</td><td>Determines pricing currency and possibly a required intermediary entity.</td><td>PH-0</td></tr>
+      <tr><td>Are there local alternatives with webhooks and subscription objects?</td><td>A provider without webhooks breaks invariant I-4 and the entire money model.</td><td>PH-0</td></tr>
+      <tr><td>Can a sending domain be verified and warmed from this jurisdiction?</td><td>Determines whether PH-3 is achievable at all within the phase.</td><td>PH-0</td></tr>
+    </tbody>
+  </table>
+  <p class="small">The architectural answer is a payment adapter with a single internal contract, so provider choice can change without touching subscriptions, onboarding or reporting. The commercial answer must come from a human in PH-0.</p>
+</div>

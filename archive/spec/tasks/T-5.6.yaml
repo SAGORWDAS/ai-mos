@@ -1,0 +1,24 @@
+# T-5.6 — SEO, social, creative
+# Generated from spec/ai-mos.spec.yaml + blueprint/tasks.js. Do not edit alone.
+
+id: T-5.6
+phase: PH-5
+kind: agent
+blocking: false
+title: SEO, social, creative
+context_budget_tokens: 6000
+load_only:
+  - master §4.1
+files_create:
+  - backend/app/agents/manifests/AGT-13.yaml
+  - backend/app/agents/manifests/AGT-14.yaml
+  - backend/app/agents/manifests/AGT-15.yaml
+steps:
+  - each role = manifest + tool + golden set
+  - no new subsystem
+done_when:
+  - each ships with a manifest, a tool and an eval threshold
+do_not:
+  - no new service for a new channel
+  - do not start another task in this session
+  - do not invent a table, endpoint, tool or model id

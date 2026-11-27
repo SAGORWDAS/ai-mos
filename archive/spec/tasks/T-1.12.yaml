@@ -1,0 +1,24 @@
+# T-1.12 — Usage and cost screens
+# Generated from spec/ai-mos.spec.yaml + blueprint/tasks.js. Do not edit alone.
+
+id: T-1.12
+phase: PH-1
+kind: ui
+blocking: false
+title: Usage and cost screens
+context_budget_tokens: 4000
+load_only:
+  - master §6 MOD-22
+  - master §5.6
+files_create:
+  - frontend/app/(app)/usage/page.tsx
+  - backend/app/api/v1/usage.py
+steps:
+  - cost by agent, task type and day
+  - drill-down to individual usage rows
+done_when:
+  - every figure links to its query
+do_not:
+  - no fabricated or estimated numbers in the UI
+  - do not start another task in this session
+  - do not invent a table, endpoint, tool or model id

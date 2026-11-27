@@ -1,0 +1,87 @@
+<!-- ============ PART 10 ============ -->
+<div class="part">
+  <div class="part-head">
+    <p class="eyebrow">Part 10</p>
+    <h1 class="part-title">Security, permissions<br>and compliance</h1>
+  </div>
+
+  <p class="lede">This system holds other people's inboxes, contact databases and payment relationships. The security model is therefore not a phase; it is a property of every phase.</p>
+
+  <h2>10.1 Threat model</h2>
+  <p>Eight ways this system causes real harm, with the control that prevents each.</p>
+  <table>
+    <thead><tr><th style="width:34mm">Threat</th><th style="width:52mm">Mechanism</th><th>Control</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Cross-tenant leak</strong></td><td>A missing filter, a cache keyed without tenant, an aggregate query in a report.</td><td>RLS with forced policies (2.6); tenant-scoped cache keys; an automated test per table (AC-02).</td></tr>
+      <tr><td><strong>Agent overreach</strong></td><td>A model chooses a tool or payload beyond its mandate.</td><td>Tool allowlist per manifest, autonomy ceiling enforced at the gateway, payload schema validation.</td></tr>
+      <tr><td><strong>Approval bypass</strong></td><td>Code path that executes before the approval check, or reuses an old approval.</td><td>Single-use approvals bound to a payload hash; the check lives inside the tool handler, not the caller.</td></tr>
+      <tr><td><strong>Prompt injection</strong></td><td>Content from a web page, an email reply or a document instructs the model to exfiltrate data or act.</td><td>Retrieved content is delimited and labelled untrusted; agents cannot read credentials; all actions still pass the gateway; tool arguments are validated against schema, not against model intent.</td></tr>
+      <tr><td><strong>Reputation damage</strong></td><td>Too many sends, bad list, no warm-up, ignored complaints.</td><td>Caps, suppression, complaint thresholds, automatic pause, mandatory approval for any new segment.</td></tr>
+      <tr><td><strong>Credential loss</strong></td><td>Token in a log, a prompt, a repo or an n8n workflow.</td><td>Tokens encrypted at rest, never logged, never placed in prompts; adapters hold them; n8n holds none.</td></tr>
+      <tr><td><strong>Duplicate billing or duplicate sends</strong></td><td>Retry after a timeout that actually succeeded.</td><td>Idempotency keys at both task and provider level; stored provider ids; replay-safe webhooks.</td></tr>
+      <tr><td><strong>Silent data loss</strong></td><td>Destructive migration, cascade delete, purge without export.</td><td>Reversible migrations, soft delete where recovery matters, documented restore, tested backup.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout muted">
+    <span class="label">On prompt injection, specifically</span>
+    <p>The defence is not a better prompt. It is that the model's output is never trusted as an authorisation. A model that has been persuaded to "send this to everyone" still has to satisfy the tool schema, the permission check, the suppression list, the send cap and — where required — a human. Prompt injection can waste tokens; it cannot send mail.</p>
+  </div>
+
+  <h2>10.2 Approval matrix</h2>
+  <p>The intersection of action class and autonomy level decides whether an action proceeds, queues for approval, or is refused outright.</p>
+  <table>
+    <thead><tr><th style="width:44mm">Action class</th><th style="width:14mm">L1</th><th style="width:14mm">L2</th><th style="width:14mm">L3</th><th style="width:14mm">L4</th><th>Approver</th></tr></thead>
+    <tbody>
+      <tr><td>Read, search, retrieve</td><td>allow</td><td>allow</td><td>allow</td><td>allow</td><td>—</td></tr>
+      <tr><td>Write draft / CRM field</td><td>deny</td><td>allow</td><td>allow</td><td>allow</td><td>—</td></tr>
+      <tr><td>Send single email</td><td>deny</td><td>deny</td><td>approve</td><td>allow*</td><td>member+</td></tr>
+      <tr><td>Send bulk campaign</td><td>deny</td><td>deny</td><td>approve</td><td>approve</td><td>owner</td></tr>
+      <tr><td>Book or cancel a meeting</td><td>deny</td><td>deny</td><td>approve</td><td>allow*</td><td>member+</td></tr>
+      <tr><td>Publish content</td><td>deny</td><td>deny</td><td>approve</td><td>approve</td><td>member+</td></tr>
+      <tr><td>Change ad spend or budget</td><td>deny</td><td>deny</td><td>approve</td><td>deny</td><td>owner</td></tr>
+      <tr><td>Offer a discount</td><td>deny</td><td>deny</td><td>approve</td><td>deny</td><td>owner</td></tr>
+      <tr><td>Change subscription price</td><td>deny</td><td>deny</td><td>deny</td><td>deny</td><td>human only, out of band</td></tr>
+      <tr><td>Issue refund</td><td>deny</td><td>deny</td><td>deny</td><td>deny</td><td>human only, out of band</td></tr>
+      <tr><td>Delete customer data</td><td>deny</td><td>deny</td><td>deny</td><td>deny</td><td>owner, two-step confirm</td></tr>
+      <tr><td>Make a contractual commitment</td><td>deny</td><td>deny</td><td>deny</td><td>deny</td><td>human only</td></tr>
+    </tbody>
+  </table>
+  <p class="tiny">* L4 "allow" applies only to action classes explicitly enabled by an owner, under configured daily caps, with every occurrence written to the audit log and surfaced in the weekly digest. It is disabled by default at organisation creation.</p>
+
+  <h2>10.3 Consent, suppression and lawful basis</h2>
+  <p>Cold outreach sits on different legal ground in different jurisdictions. The system must model that rather than assume.</p>
+  <table class="tight">
+    <thead><tr><th style="width:32mm">Requirement</th><th>What the build must do</th></tr></thead>
+    <tbody>
+      <tr><td>Lawful basis per contact</td><td>Record <span class="mono">lawful_basis</span> and <span class="mono">basis_evidence</span> (source, date, jurisdiction) on every contact used for outreach. No basis, no send.</td></tr>
+      <tr><td>Jurisdiction rules</td><td>A per-tenant config declares the regimes it operates under. Opt-out handling is mandatory everywhere; prior consent is mandatory in opt-in regimes, and the UI must block a campaign whose segment violates the setting.</td></tr>
+      <tr><td>Suppression</td><td>Organisation-wide, channel-specific, checked inside the send tool, surviving data purges. Hard bounce and complaint write suppressions automatically.</td></tr>
+      <tr><td>Unsubscribe</td><td>One-click in bulk mail plus a monitored reply path; honoured within 24 hours, immediately at the tool level.</td></tr>
+      <tr><td>Identification</td><td>Sender identity and a physical address in every commercial message, configured per tenant and validated before enable.</td></tr>
+      <tr><td>Data subject requests</td><td>Export and delete per contact across messages, leads and enrichment; suppression retained.</td></tr>
+      <tr><td>AI disclosure</td><td>Tenant-level setting for whether automated replies disclose automation; default on for regulated segments.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>10.4 Secrets and access</h2>
+  <ul>
+    <li>Provider tokens encrypted at rest with a key held outside the database; never logged, never included in a prompt, never returned by an API.</li>
+    <li>The webhook handler and the application run with different database roles; the application role cannot update payment tables.</li>
+    <li>Human access to production follows least privilege with named accounts; no shared admin credential.</li>
+    <li>Key rotation is a documented procedure with a test, not an aspiration. Rotating the AI provider key must not require a deploy.</li>
+    <li>Every privileged human action — impersonation, data export, stop, deletion — writes an audit entry with a reason.</li>
+  </ul>
+
+  <h2>10.5 Audit and review</h2>
+  <p>Three layers, each answering a different question.</p>
+  <table class="tight">
+    <thead><tr><th style="width:34mm">Layer</th><th style="width:34mm">Answers</th><th>Contents</th></tr></thead>
+    <tbody>
+      <tr><td>Audit log</td><td>"Who did what, and was it allowed?"</td><td>Append-only rows for every privileged action, including rejected and escalated ones.</td></tr>
+      <tr><td>Execution history</td><td>"Why did the system do that?"</td><td>Task-level trace: agent, model, prompt hash, tool calls, validations, cost.</td></tr>
+      <tr><td>Weekly digest</td><td>"Is the system behaving?"</td><td>Autonomous actions taken, approvals outstanding, rejections by reason, spend by agent, deliverability metrics, failed tasks.</td></tr>
+    </tbody>
+  </table>
+  <p class="small">The digest is the cheapest control in this document. It is also the one most often skipped. An owner who reads forty lines a week will catch a misbehaving agent long before any test suite does.</p>
+</div>

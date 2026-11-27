@@ -1,0 +1,24 @@
+# T-5.2 — Cost per outcome
+# Generated from spec/ai-mos.spec.yaml + blueprint/tasks.js. Do not edit alone.
+
+id: T-5.2
+phase: PH-5
+kind: analytics
+blocking: true
+title: Cost per outcome
+context_budget_tokens: 6000
+load_only:
+  - master §12.1
+  - master §5.8
+files_create:
+  - backend/app/services/insights/cost.py
+  - frontend/app/(app)/analytics/cost/page.tsx
+steps:
+  - sum data + sending + review + inference + infra
+  - divide by qualified leads and by won customers
+done_when:
+  - both numbers computed from stored rows, split by cost line
+do_not:
+  - never report inference alone as CAC
+  - do not start another task in this session
+  - do not invent a table, endpoint, tool or model id

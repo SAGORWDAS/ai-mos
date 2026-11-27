@@ -1,0 +1,28 @@
+# T-1.8 — Approvals model and API
+# Generated from spec/ai-mos.spec.yaml + blueprint/tasks.js. Do not edit alone.
+
+id: T-1.8
+phase: PH-1
+kind: approvals
+blocking: true
+title: Approvals model and API
+context_budget_tokens: 4000
+load_only:
+  - master §2.5.5
+  - master §10.2
+  - spec/schemas/approval_request.json
+files_create:
+  - backend/app/services/approvals/service.py
+  - backend/app/api/v1/approvals.py
+  - backend/tests/test_approvals.py
+steps:
+  - payload + sha256 payload_hash
+  - single use, TTL expiry
+  - approve / reject / revoke
+  - consumption is a conditional update, not a read-then-write
+done_when:
+  - 'test_AC-05 green: changed payload voids, reuse refused, expiry enforced'
+do_not:
+  - never re-use an approval for a second action
+  - do not start another task in this session
+  - do not invent a table, endpoint, tool or model id

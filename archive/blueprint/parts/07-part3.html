@@ -1,0 +1,235 @@
+<!-- ============ PART 3 ============ -->
+<div class="part">
+  <div class="part-head">
+    <p class="eyebrow">Part 3</p>
+    <h1 class="part-title">System architecture</h1>
+  </div>
+
+  <p class="lede">The architecture has one job: make it impossible for an AI model to cause an irreversible external effect that nobody authorised, while still letting it do most of the work.</p>
+
+  <h2>3.1 Topology</h2>
+  <pre class="diagram">+---------------------------------------------------------------------------+
+|  Next.js (TypeScript)  dashboard, command center, approvals, CRM, inbox    |
++-------------------------------+-------------------------------------------+
+                                |  HTTPS, session cookie (HttpOnly, SameSite=Lax)
++-------------------------------v-------------------------------------------+
+|  API  (Python / FastAPI)                                                   |
+|  auth -> tenancy -> validation -> service call -> response                 |
+|  Never performs a long AI operation inline (see 3.2)                        |
++------+----------------+----------------+----------------+------------------+
+       |                |                |                |
+       v                v                v                v
+  SVC-growth       SVC-acquisition   SVC-content     SVC-revenue / insights
+       \________________|________________|________________/
+                        |
+              +---------v---------+        +-------------------------+
+              |  Redis queue      |        |  PostgreSQL 16 + pgvector|
+              |  jobs, locks,     |        |  tenant data, RLS        |
+              |  rate counters    |        |  brand vectors, ledger    |
+              +---------+---------+        +-------------------------+
+                        |
+              +---------v--------------------------------------------+
+              |  WORKERS :  agent runtime (tasks)  |  scheduler     |
+              +---------+-------------------------------------------+
+                        |
+              +---------v--------------------------------------------+
+              |  AI GATEWAY  -> OpenRouter  (routing, budgets, ledger)|
+              +---------+-------------------------------------------+
+                        |
+              +---------v--------------------------------------------+
+              |  TOOL GATEWAY (the only egress for effects)           |
+              |  gmail | calendar | esp | stripe | ads | n8n webhooks  |
+              +-------------------------------------------------------+</pre>
+
+  <table class="tight">
+    <thead><tr><th style="width:38mm">Layer</th><th style="width:52mm">Choice</th><th>Reason, stated as a constraint</th></tr></thead>
+    <tbody>
+      <tr><td>Frontend</td><td>Next.js + TypeScript</td><td>Server components reduce client state; one deploy target.</td></tr>
+      <tr><td>API</td><td>Python + FastAPI</td><td>Typed request/response models, generated OpenAPI, and the ecosystem for every AI and email library.</td></tr>
+      <tr><td>Database</td><td>PostgreSQL + pgvector</td><td>One store for relational data and embeddings. No second database until a measured reason exists.</td></tr>
+      <tr><td>Queue</td><td>Redis (streams or RQ)</td><td>Simple, inspectable, and sufficient to a few hundred thousand jobs per month.</td></tr>
+      <tr><td>AI</td><td>OpenRouter via one gateway module</td><td>Model choice becomes configuration. No vendor SDK in business logic.</td></tr>
+      <tr><td>Orchestration</td><td>Own task graph, not a framework, in PH-1</td><td>A DAG of rows in <span class="mono">tasks</span> with dependencies is debuggable with SQL. Adopt LangGraph only if a workflow genuinely needs cyclic agent collaboration — see ADR-05.</td></tr>
+      <tr><td>Automation</td><td>n8n, optional, at the edge</td><td>Useful for third-party glue. MUST NOT own business logic, credentials or approval decisions.</td></tr>
+      <tr><td>Storage</td><td>S3-compatible</td><td>Brand documents, generated assets, exports.</td></tr>
+      <tr><td>Deploy</td><td>Docker Compose on one VPS</td><td>No Kubernetes. A single host with documented restore beats a cluster nobody can operate.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout muted">
+    <span class="label">ADR-05 preview — the orchestration framework question</span>
+    <p>The brief proposes "LangGraph, introduced gradually". This blueprint defers it entirely until PH-2 exit, and only adopts it if the task graph proves insufficient for cyclic, stateful agent collaboration. The cost of the wrong abstraction in a one-person build is paid in every subsequent debugging session; the cost of adding it later is one refactor with a known boundary.</p>
+  </div>
+
+  <h2>3.2 The synchronous boundary</h2>
+  <p>One rule prevents most production incidents in this class of product:</p>
+  <div class="trap">
+    <span class="label">MUST</span>
+    <p>No HTTP request may wait on a model completion, an email send, or any third-party API that is not needed to render the response. Such work is enqueued and its progress is polled or pushed.</p>
+  </div>
+
+  <table class="tight">
+    <thead><tr><th style="width:60mm">Operation</th><th style="width:22mm">Boundary</th><th>Justification</th></tr></thead>
+    <tbody>
+      <tr><td>Load dashboard metrics</td><td class="mono">sync</td><td>Reads pre-aggregated snapshots.</td></tr>
+      <tr><td>Save Brand Brain field</td><td class="mono">sync</td><td>Write + embedding job enqueued.</td></tr>
+      <tr><td>Submit a command</td><td class="mono">sync → job</td><td>Returns a plan id immediately; planning runs as a task.</td></tr>
+      <tr><td>Approve a campaign</td><td class="mono">sync → job</td><td>State change is synchronous; dispatch of sends is queued with rate limiting.</td></tr>
+      <tr><td>Classify an inbound email</td><td class="mono">job</td><td>Model call, retried, never blocks the webhook response.</td></tr>
+      <tr><td>Book a meeting</td><td class="mono">job</td><td>Requires fresh availability; a race with another booking is expected.</td></tr>
+      <tr><td>Generate a 2,000-word article</td><td class="mono">job</td><td>Minutes, not milliseconds. Streams progress to the UI.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>3.3 Execution model</h2>
+  <pre class="diagram"> USER COMMAND
+      |
+      v
+ [1] INTENT      parse + validate against objective schema; ask for missing fields
+      |
+      v
+ [2] GROUND      load Brand Brain slice, ICP, constraints, budget remaining
+      |
+      v
+ [3] PLAN        CMO agent returns a PLAN object (Appendix B): tasks, deps, cost estimate
+      |
+      v
+ [4] PERSIST     tasks + task_dependencies rows, status = created
+      |          (plan is now a database object, not a conversation)
+      v
+ [5] SCHEDULE    scheduler promotes tasks whose dependencies are satisfied
+      |
+      v
+ [6] EXECUTE     worker: assemble context -> model -> validate output -> write
+      |          gated tool? -> [7]
+      v
+ [7] GATE        schema check -> permission check -> budget check -> approval
+      |
+      v
+ [8] EFFECT      tool gateway executes, result persisted, event emitted
+      |
+      v
+ [9] EVALUATE    quality check; on failure escalate or retry with a stronger tier
+      |
+      v
+ [10] REPORT     metrics updated, cost written, lesson candidate recorded</pre>
+
+  <p>Steps 3–10 are each observable rows. At any moment an operator can answer "what is happening, on whose behalf, at what cost" with one SQL query. That property is worth more than any orchestration framework.</p>
+
+  <h2>3.4 The tool gateway</h2>
+  <p>Agents never hold credentials, never build HTTP requests and never call a provider directly. They emit a <em>tool request</em>; the gateway decides whether the world changes.</p>
+
+  <pre class="diagram">  agent output:  { "tool": "TLS-14 send_email", "args": { ... }, "why": "step 7 of WKF-B" }
+        |
+        v
+  +------------------+    fail    +--------------------------------------+
+  | 1 SCHEMA         |----------->| reject -> task error, agent may retry|
+  |   validate args  |            +--------------------------------------+
+  +--------+---------+
+           v
+  +------------------+    fail    +--------------------------------------+
+  | 2 PERMISSION     |----------->| reject -> escalate to human, log     |
+  |   agent allowed? |            | never silently substitute a tool     |
+  |   org allowed?   |            +--------------------------------------+
+  +--------+---------+
+           v
+  +------------------+    fail    +--------------------------------------+
+  | 3 POLICY         |----------->| reject -> block + notify owner       |
+  |   suppression,   |            +--------------------------------------+
+  |   consent, caps  |                     (I-5 enforced here, not upstream)
+  +--------+---------+
+           v
+  +------------------+    fail    +--------------------------------------+
+  | 4 BUDGET         |----------->| block -> budget alert, task blocked  |
+  +--------+---------+
+           v
+  +------------------+  required  +--------------------------------------+
+  | 5 APPROVAL       |----------->| freeze payload hash -> WAIT (2.5.5)  |
+  |   autonomy level |            +--------------------------------------+
+  +--------+---------+
+           v
+  +------------------+    fail    +--------------------------------------+
+  | 6 IDEMPOTENCY    |----------->| return prior result, do not re-execute
+  |   claim key      |            +--------------------------------------+
+  +--------+---------+
+           v
+  +------------------+    fail    +--------------------------------------+
+  | 7 EXECUTE        |----------->| classify error: retryable? backoff : dead-letter
+  |   provider call  |            +--------------------------------------+
+  +--------+---------+
+           v
+  +------------------+            
+  | 8 PERSIST RESULT |  provider id, latency, raw response, cost delta
+  | 9 EMIT EVENT     |  e.g. message.sent -> analytics, CRM timeline, audit
+  +------------------+</pre>
+
+  <p>Every step writes an <span class="mono">audit_logs</span> entry with the decision and its reason. A rejected action is as important to record as a successful one — it is how you discover that an agent has been trying to do something it should not.</p>
+
+  <h3>Tool registry (P0 subset)</h3>
+  <table class="tight">
+    <thead><tr><th style="width:16mm">ID</th><th style="width:34mm">Tool</th><th style="width:20mm">Class</th><th style="width:16mm">Min level</th><th>Contract</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">TLS-01</td><td><span class="mono">search_web</span></td><td>read</td><td class="mono">L1</td><td>Query in, ranked results with URLs out. Results cached 24h per query.</td></tr>
+      <tr><td class="mono">TLS-02</td><td><span class="mono">read_brand_brain</span></td><td>read</td><td class="mono">L1</td><td>Retrieval over brand chunks; returns passages + citations, never raw dumps.</td></tr>
+      <tr><td class="mono">TLS-03</td><td><span class="mono">lookup_company</span></td><td>read</td><td class="mono">L1</td><td>Permitted data provider; returns record + source + confidence.</td></tr>
+      <tr><td class="mono">TLS-04</td><td><span class="mono">score_lead</span></td><td>compute</td><td class="mono">L1</td><td>Deterministic scoring function; the model proposes weights, code computes.</td></tr>
+      <tr><td class="mono">TLS-05</td><td><span class="mono">create_lead</span></td><td>write</td><td class="mono">L2</td><td>Idempotent on <span class="mono">(org, domain, contact_hash)</span>.</td></tr>
+      <tr><td class="mono">TLS-06</td><td><span class="mono">draft_content</span></td><td>write</td><td class="mono">L2</td><td>Produces a <span class="mono">content_items</span> row in <span class="mono">draft</span>.</td></tr>
+      <tr><td class="mono">TLS-07</td><td><span class="mono">update_crm</span></td><td>write</td><td class="mono">L2</td><td>Field-level allowlist; every change writes a timeline entry.</td></tr>
+      <tr><td class="mono">TLS-08</td><td><span class="mono">check_availability</span></td><td>read</td><td class="mono">L1</td><td>Calendar free/busy for a window, timezone-normalised.</td></tr>
+      <tr><td class="mono">TLS-09</td><td><span class="mono">book_meeting</span></td><td>external</td><td class="mono">L3</td><td>Requires re-check of availability; creates event with idempotency key.</td></tr>
+      <tr><td class="mono">TLS-10</td><td><span class="mono">read_inbox</span></td><td>read</td><td class="mono">L1</td><td>Incremental sync, cursor persisted per integration.</td></tr>
+      <tr><td class="mono">TLS-11</td><td><span class="mono">classify_reply</span></td><td>compute</td><td class="mono">L1</td><td>Fixed label set; confidence returned and stored.</td></tr>
+      <tr><td class="mono">TLS-12</td><td><span class="mono">draft_reply</span></td><td>write</td><td class="mono">L2</td><td>Grounded strictly in Brand Brain; refuses when unpriced.</td></tr>
+      <tr><td class="mono">TLS-13</td><td><span class="mono">create_approval</span></td><td>write</td><td class="mono">L1</td><td>Freezes payload hash; TTL required.</td></tr>
+      <tr><td class="mono">TLS-14</td><td><span class="mono">send_email</span></td><td>external</td><td class="mono">L3</td><td>Single send. Cap, suppression, consent, approval id all mandatory.</td></tr>
+      <tr><td class="mono">TLS-15</td><td><span class="mono">send_bulk_campaign</span></td><td>external</td><td class="mono">L3+</td><td>Requires owner approval for the whole segment; per-message idempotency.</td></tr>
+      <tr><td class="mono">TLS-16</td><td><span class="mono">create_checkout_link</span></td><td>external</td><td class="mono">L2</td><td>Never confirms payment. Returns a URL only.</td></tr>
+      <tr><td class="mono">TLS-17</td><td><span class="mono">read_metrics</span></td><td>read</td><td class="mono">L1</td><td>Aggregates only; never raw message bodies.</td></tr>
+      <tr><td class="mono">TLS-18</td><td><span class="mono">write_learning</span></td><td>write</td><td class="mono">L2</td><td>Requires evidence reference and effect size estimate.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>3.5 Worked trace — one email under WKF-B</h2>
+  <table class="tight">
+    <thead><tr><th style="width:8mm">#</th><th style="width:30mm">Actor</th><th>Action and record written</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Worker</td><td>Claims <span class="mono">tasks</span> row for <span class="mono">draft_outreach</span>; sets <span class="mono">running</span>, attempt 1.</td></tr>
+      <tr><td>2</td><td>AI gateway</td><td>Builds context: ICP passage, brand voice passage, lead record, last 0 messages. Tier 1 model. Writes <span class="mono">model_usage</span>.</td></tr>
+      <tr><td>3</td><td>Agent</td><td>Returns structured draft: subject, body, personalisation evidence, claims used.</td></tr>
+      <tr><td>4</td><td>Validator</td><td>JSON schema + claim check against Brand Brain; unsupported claim → reject, retry once with a stronger tier.</td></tr>
+      <tr><td>5</td><td>Task</td><td>Writes <span class="mono">outreach_drafts</span>, task <span class="mono">succeeded</span>.</td></tr>
+      <tr><td>6</td><td>Worker</td><td>Next task <span class="mono">request_send_approval</span> → <span class="mono">create_approval</span> with payload hash; task <span class="mono">awaiting_approval</span>.</td></tr>
+      <tr><td>7</td><td>Human</td><td>Edits two words, approves. Edit changes the payload hash — the approval records the edited payload.</td></tr>
+      <tr><td>8</td><td>Worker</td><td><span class="mono">send_email</span>: schema → permission → policy (suppression, consent, cap 40/day) → budget → approval id → idempotency claim.</td></tr>
+      <tr><td>9</td><td>Gateway</td><td>Provider accepts; writes <span class="mono">message.sent</span> with provider id; task <span class="mono">succeeded</span>; emits event.</td></tr>
+      <tr><td>10</td><td>Insights</td><td>Updates campaign counters, cost per send, and the lead's timeline.</td></tr>
+    </tbody>
+  </table>
+
+  <p class="small">Note what is absent: no step asks a model whether the email was sent. Delivery is a provider fact, stored once, and reported from the ledger.</p>
+
+  <h2>3.6 Reliability</h2>
+  <table>
+    <thead><tr><th style="width:38mm">Failure mode</th><th>Behaviour</th><th style="width:34mm">Detection</th></tr></thead>
+    <tbody>
+      <tr><td>Model timeout or 5xx</td><td>Retry with exponential backoff and jitter, max 3 attempts, then dead-letter. The task records every attempt.</td><td>Attempt count on <span class="mono">tasks</span></td></tr>
+      <tr><td>Invalid structured output</td><td>One repair attempt with the validation error appended. Second failure escalates a tier; third fails the task.</td><td><span class="mono">validation_failures</span> counter</td></tr>
+      <tr><td>Duplicate worker pickup</td><td>Atomic claim via <span class="mono">SELECT … FOR UPDATE SKIP LOCKED</span> plus a job lease with heartbeat.</td><td>Lease expiry alarm</td></tr>
+      <tr><td>Duplicate external effect</td><td>Idempotency claim before execution; on retry, return the stored result rather than re-sending.</td><td>Duplicate provider ids: must be zero</td></tr>
+      <tr><td>Webhook delivered twice</td><td>Provider event id stored with a unique constraint; second delivery is a no-op.</td><td>Event table</td></tr>
+      <tr><td>Worker dies mid-task</td><td>Lease expires, task returns to <span class="mono">ready</span>, attempt counter guards against loops.</td><td>Lease sweep interval</td></tr>
+      <tr><td>Budget exhausted mid-workflow</td><td>Task moves to <span class="mono">blocked</span>; no partial external effect is left behind because effects are the last step of a task, never mid-task.</td><td>Budget delta</td></tr>
+      <tr><td>Emergency stop</td><td>Organization-level flag; gateway refuses all non-read tools; running tasks cancel at the next checkpoint.</td><td>Stop flag + audit entry</td></tr>
+    </tbody>
+  </table>
+
+  <h2>3.7 Observability</h2>
+  <ul>
+    <li><strong>Logs:</strong> structured JSON with <span class="mono">org, user, task, agent, tool, trace_id</span>. Human-readable only in development.</li>
+    <li><strong>Traces:</strong> one trace per command, one span per task, one child span per model and tool call. This is what makes "why did the agent do that" answerable.</li>
+    <li><strong>Errors:</strong> exception capture with the task id attached, so a stack trace lands next to the prompt that produced it.</li>
+    <li><strong>Business alarms:</strong> not just CPU. Alert on duplicate provider ids, cross-tenant query attempts, approval bypass attempts, bounce rate &gt; 2%, and cost per task above its type's p95.</li>
+    <li><strong>Weekly truth check:</strong> count of messages actually delivered vs count of tasks marked <span class="mono">succeeded</span> for send work. A drift between these two is the earliest symptom of a lying system.</li>
+  </ul>
+</div>

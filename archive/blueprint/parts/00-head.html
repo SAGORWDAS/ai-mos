@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>AI-MOS — Product &amp; Engineering Blueprint v1.0</title>
+<meta name="author" content="AI-MOS Programme">
+<style>
+@page { size: A4; margin: 21mm 17mm 19mm 17mm; }
+
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Cambria, "Palatino Linotype", Georgia, serif;
+  font-size: 9.9pt;
+  line-height: 1.56;
+  color: #1a1a1a;
+  text-rendering: geometricPrecision;
+}
+
+/* ---------- type scale ---------- */
+p { margin: 0 0 2.5mm; text-align: justify; hyphens: auto; }
+strong { font-weight: 700; }
+em { font-style: italic; }
+a { color: inherit; text-decoration: none; }
+sup { font-size: 65%; }
+
+.eyebrow {
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-size: 7pt; font-weight: 600; letter-spacing: .2em;
+  text-transform: uppercase; color: #7a7a7a; margin: 0 0 2mm;
+}
+.eyebrow.dark { color: #b8b8b8; }
+
+h1, h2, h3, h4 { font-weight: normal; page-break-after: avoid; break-after: avoid; }
+h1 { font-family: Georgia, "Times New Roman", serif; }
+
+.part { break-before: page; page-break-before: always; }
+.part-head { border-top: 2.2pt solid #000; padding-top: 3mm; margin-bottom: 6mm; }
+h1.part-title {
+  font-size: 22pt; line-height: 1.12; margin: 0 0 2mm;
+  letter-spacing: -0.012em;
+}
+h1.part-title .pnum { color: #b0b0b0; font-style: italic; }
+
+h2 {
+  font-size: 12.6pt; line-height: 1.24; margin: 7.5mm 0 2.2mm;
+  letter-spacing: -0.004em;
+}
+h3 {
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-size: 8.1pt; font-weight: 700; letter-spacing: .13em;
+  text-transform: uppercase; margin: 5.4mm 0 1.6mm; color: #000;
+}
+h4 { font-size: 10.4pt; margin: 4mm 0 1.2mm; font-style: italic; }
+
+.lede { font-size: 11.4pt; line-height: 1.5; color: #2e2e2e; margin-bottom: 5mm; }
+.small { font-size: 8.6pt; line-height: 1.5; color: #4a4a4a; }
+.mono { font-family: Consolas, "Cascadia Mono", monospace; font-size: 8.4pt; }
+.kicker { font-style: italic; color: #4a4a4a; }
+
+/* ---------- rules ---------- */
+.rule { border: 0; border-top: .5pt solid #c8c8c8; margin: 5mm 0; }
+.rule-strong { border: 0; border-top: 1.6pt solid #000; margin: 6mm 0; }
+
+/* ---------- lists ---------- */
+ul, ol { margin: 0 0 2.8mm; padding-left: 5.2mm; }
+li { margin-bottom: 1.1mm; }
+ul.tight li, ol.tight li { margin-bottom: .5mm; }
+ul.plain { list-style: none; padding-left: 0; }
+ul.plain li { padding-left: 5mm; text-indent: -5mm; }
+ul.plain li::before { content: "—"; color: #9a9a9a; margin-right: 2mm; }
+
+/* ---------- tables ---------- */
+table {
+  width: 100%; border-collapse: collapse; margin: 3mm 0 4.5mm;
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-size: 7.9pt; line-height: 1.4;
+}
+thead { display: table-header-group; }
+th {
+  text-align: left; vertical-align: bottom;
+  font-size: 6.8pt; font-weight: 700; letter-spacing: .11em; text-transform: uppercase;
+  padding: 1.4mm 2mm; border-top: 1.4pt solid #000; border-bottom: .6pt solid #000;
+}
+td { padding: 1.7mm 2mm; border-bottom: .4pt solid #d4d4d4; vertical-align: top; }
+tr { break-inside: avoid; page-break-inside: avoid; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+td.code, .cell-code { font-family: Consolas, monospace; font-size: 7.4pt; white-space: nowrap; }
+table.tight td { padding: 1.1mm 2mm; }
+caption { caption-side: top; text-align: left; font-family: "Segoe UI", sans-serif;
+  font-size: 7.2pt; letter-spacing: .08em; text-transform: uppercase; color: #6a6a6a;
+  padding-bottom: 1.2mm; }
+
+/* ---------- code / spec ---------- */
+pre {
+  font-family: Consolas, "Cascadia Mono", monospace;
+  font-size: 7.5pt; line-height: 1.42; margin: 3mm 0 4mm;
+  padding: 3mm 3.4mm; background: #f5f5f5; border: .5pt solid #d8d8d8;
+  white-space: pre; overflow: hidden; break-inside: avoid; page-break-inside: avoid;
+}
+pre.diagram { background: #fff; border: .5pt solid #d8d8d8; font-size: 7.1pt; }
+pre.plain { background: #fff; border: 0; padding: 0 0 0 4mm; border-left: 1.6pt solid #000; }
+code { font-family: Consolas, monospace; font-size: 8.2pt; }
+p code, li code, td code { background: #f2f2f2; padding: 0 .6mm; }
+
+/* ---------- callouts ---------- */
+.callout {
+  border-left: 2.2pt solid #000; padding: .6mm 0 .6mm 4mm;
+  margin: 4.5mm 0; break-inside: avoid; page-break-inside: avoid;
+}
+.callout .label {
+  font-family: "Segoe UI", sans-serif; font-size: 6.8pt; font-weight: 700;
+  letter-spacing: .16em; text-transform: uppercase; display: block; margin-bottom: 1.2mm;
+}
+.callout p:last-child { margin-bottom: 0; }
+.callout.muted { border-left-color: #9a9a9a; }
+
+.trap { border: .8pt solid #000; padding: 3.2mm 4mm; margin: 4.5mm 0; break-inside: avoid; }
+.trap .label { font-family:"Segoe UI",sans-serif; font-size:6.8pt; font-weight:700;
+  letter-spacing:.16em; text-transform:uppercase; display:block; margin-bottom:1.4mm; }
+.trap p:last-child { margin-bottom: 0; }
+
+/* ---------- stat strip ---------- */
+.stats { display: table; width: 100%; margin: 4mm 0 5mm; border-top: 1.6pt solid #000; border-bottom: 1.6pt solid #000; }
+.stats .stat { display: table-cell; width: 25%; padding: 3mm 3mm 3mm 0; vertical-align: top; }
+.stats .fig { font-family: Georgia, serif; font-size: 19pt; line-height: 1; display: block; margin-bottom: 1.6mm; }
+.stats .cap { font-family: "Segoe UI", sans-serif; font-size: 6.6pt; letter-spacing: .13em;
+  text-transform: uppercase; color: #5a5a5a; }
+
+/* ---------- build sheets ---------- */
+.sheet { border-top: 1.2pt solid #000; padding-top: 2.6mm; margin: 6mm 0 0; break-inside: avoid; page-break-inside: avoid; }
+.sheet-head { display: table; width: 100%; margin-bottom: 2mm; }
+.sheet-head .id { display: table-cell; width: 22mm; font-family: Consolas, monospace; font-size: 7.6pt; color: #6a6a6a; padding-top: 1.2mm; vertical-align: top; }
+.sheet-head .ttl { display: table-cell; }
+.sheet-head h4 { margin: 0; font-style: normal; font-size: 11pt; }
+.sheet-head .sub { font-family: "Segoe UI", sans-serif; font-size: 7.2pt; color: #6a6a6a;
+  letter-spacing: .06em; text-transform: uppercase; margin-top: .8mm; }
+.sheet table { margin: 2mm 0 2.5mm; }
+
+/* ---------- cover ---------- */
+.cover {
+  position: relative; background: #000; color: #fff;
+  margin: -21mm -17mm 0 -17mm; padding: 24mm 20mm 18mm; width: 210mm; height: 297mm;
+  break-after: page; page-break-after: always;
+}
+.cover .top { display: table; width: 100%; }
+.cover .top .l { display: table-cell; font-family: "Segoe UI", sans-serif; font-size: 7pt;
+  letter-spacing: .22em; text-transform: uppercase; color: #9a9a9a; }
+.cover .top .r { display: table-cell; text-align: right; font-family: "Segoe UI", sans-serif;
+  font-size: 7pt; letter-spacing: .22em; text-transform: uppercase; color: #9a9a9a; }
+.cover h1.big {
+  font-size: 62pt; line-height: .92; margin: 46mm 0 0; letter-spacing: -0.03em; font-weight: normal;
+}
+.cover h1.big .thin { color: #7a7a7a; }
+.cover .subtitle {
+  font-size: 15pt; line-height: 1.34; margin: 7mm 0 0; color: #e6e6e6; max-width: 132mm;
+}
+.cover .hr { border-top: .6pt solid #555; margin: 9mm 0 6mm; }
+.cover .abstract { font-size: 9pt; line-height: 1.62; color: #b8b8b8; max-width: 128mm; text-align: left; }
+.cover .bottom { position: absolute; left: 20mm; right: 20mm; bottom: 18mm; }
+.cover .meta { display: table; width: 100%; border-top: .6pt solid #555; padding-top: 4mm; }
+.cover .meta .c { display: table-cell; width: 25%; vertical-align: top; padding-right: 4mm; }
+.cover .meta .k { font-family: "Segoe UI", sans-serif; font-size: 6.2pt; letter-spacing: .18em;
+  text-transform: uppercase; color: #7a7a7a; display: block; margin-bottom: 1.4mm; }
+.cover .meta .v { font-size: 8.4pt; color: #f0f0f0; display: block; line-height: 1.4; }
+
+/* ---------- contents ---------- */
+.toc { margin-top: 3mm; }
+.toc .tl { display: table; width: 100%; border-bottom: .4pt solid #dcdcdc; padding: 1.8mm 0; }
+.toc .tl:first-of-type { border-top: 1.4pt solid #000; }
+.toc .tn { display: table-cell; width: 16mm; font-family: Consolas, monospace; font-size: 7.6pt; color: #8a8a8a; padding-top: .9mm; }
+.toc .tt { display: table-cell; font-size: 9.6pt; }
+.toc .tt .secs { display: block; font-family: "Segoe UI", sans-serif; font-size: 7pt; color: #6a6a6a; margin-top: .6mm; letter-spacing: .02em; }
+.toc .tp { display: table-cell; width: 20mm; text-align: right; font-family: "Segoe UI", sans-serif;
+  font-size: 6.8pt; letter-spacing: .1em; text-transform: uppercase; color: #5a5a5a; padding-top: 1mm; }
+
+/* ---------- misc ---------- */
+.twocol { column-count: 2; column-gap: 8mm; }
+.wide { width: 100%; }
+.pb { break-before: page; page-break-before: always; }
+.nobreak { break-inside: avoid; page-break-inside: avoid; }
+.tiny { font-size: 7.6pt; line-height: 1.45; color: #5a5a5a; }
+.center { text-align: center; }
+.mt0 { margin-top: 0; }
+.mb0 { margin-bottom: 0; }
+.tag { font-family: "Segoe UI", sans-serif; font-size: 6.6pt; letter-spacing: .1em; text-transform: uppercase;
+  border: .5pt solid #9a9a9a; padding: .3mm 1.2mm; color: #4a4a4a; }
+.sig { display: table; width: 100%; margin-top: 8mm; }
+.sig .s { display: table-cell; width: 33%; padding-right: 6mm; vertical-align: bottom; }
+.sig .s .line { border-top: .5pt solid #000; padding-top: 1.4mm; font-family: "Segoe UI", sans-serif;
+  font-size: 6.6pt; letter-spacing: .12em; text-transform: uppercase; color: #5a5a5a; }
+</style>
+</head>
+<body>

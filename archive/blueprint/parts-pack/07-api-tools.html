@@ -1,0 +1,149 @@
+<div class="part">
+  <div class="part-head">
+    <p class="eyebrow">Section 6</p>
+    <h1 class="part-title">Endpoints</h1>
+  </div>
+
+  <p class="lede">Every route the product needs. Add none; rename none without a version bump.</p>
+
+  <p class="small">Auth: session cookie (UI) or bearer (machine). Every response is tenant-scoped. Errors use the envelope: <span class="mono">{"error":{"code","message","details","trace_id"}}</span>. Pagination is cursor-based. Any creating POST accepts <span class="mono">Idempotency-Key</span>.</p>
+
+  <table class="tight">
+    <thead><tr><th style="width:16mm">Method</th><th style="width:62mm">Path</th><th style="width:12mm">Phase</th><th>Contract in one line</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">POST</td><td class="mono">/v1/commands</td><td class="mono">PH-2</td><td>Parse objective → 202 + id, or missing fields</td></tr>
+      <tr><td class="mono">POST</td><td class="mono">/v1/commands/{id}/confirm</td><td class="mono">PH-2</td><td>Create plan + tasks in one transaction</td></tr>
+      <tr><td class="mono">GET</td><td class="mono">/v1/plans/{id}</td><td class="mono">PH-2</td><td>Plan with tasks, deps, cost, approvals</td></tr>
+      <tr><td class="mono">PATCH</td><td class="mono">/v1/tasks/{id}</td><td class="mono">PH-2</td><td>Cancel or pause only</td></tr>
+      <tr><td class="mono">GET</td><td class="mono">/v1/agents</td><td class="mono">PH-1</td><td>Roles, ceiling, granted tools, cost</td></tr>
+      <tr><td class="mono">PATCH</td><td class="mono">/v1/agents/{id}</td><td class="mono">PH-1</td><td>Enable, ceiling, limits — no L4 for money</td></tr>
+      <tr><td class="mono">GET</td><td class="mono">/v1/brands/{id}</td><td class="mono">PH-1</td><td>Brand profile incl. claims</td></tr>
+      <tr><td class="mono">POST</td><td class="mono">/v1/brands/{id}/documents</td><td class="mono">PH-1</td><td>Upload → 202, indexing is a job</td></tr>
+      <tr><td class="mono">GET</td><td class="mono">/v1/brands/{id}/search</td><td class="mono">PH-1</td><td>Passages with citations, never documents</td></tr>
+      <tr><td class="mono">GET</td><td class="mono">/v1/approvals</td><td class="mono">PH-2</td><td>Queue with payload + cost</td></tr>
+      <tr><td class="mono">POST</td><td class="mono">/v1/approvals/{id}/approve</td><td class="mono">PH-2</td><td>Single use; hash must match</td></tr>
+      <tr><td class="mono">POST</td><td class="mono">/v1/approvals/{id}/reject</td><td class="mono">PH-2</td><td>Reason required; task fails permanently</td></tr>
+      <tr><td class="mono">POST</td><td class="mono">/v1/leads/discover</td><td class="mono">PH-3</td><td>202 + run id; leads land in <span class="mono">discovered</span></td></tr>
+      <tr><td class="mono">GET</td><td class="mono">/v1/leads</td><td class="mono">PH-3</td><td>Filter by status, campaign, score</td></tr>
+      <tr><td class="mono">POST</td><td class="mono">/v1/leads/{id}/qualify</td><td class="mono">PH-3</td><td>Score + reasons + model version</td></tr>
+      <tr><td class="mono">GET</td><td class="mono">/v1/crm/pipeline</td><td class="mono">PH-3</td><td>Stages with counts and value</td></tr>
+      <tr><td class="mono">POST</td><td class="mono">/v1/outreach/drafts</td><td class="mono">PH-3</td><td>Generate drafts for a segment</td></tr>
+      <tr><td class="mono">POST</td><td class="mono">/v1/outreach/dispatch</td><td class="mono">PH-3</td><td>Requires approval id; caps enforced</td></tr>
+      <tr><td class="mono">GET</td><td class="mono">/v1/conversations</td><td class="mono">PH-3</td><td>Threads with classification</td></tr>
+      <tr><td class="mono">POST</td><td class="mono">/v1/conversations/{id}/reply</td><td class="mono">PH-3</td><td>Approval unless L4 class enabled</td></tr>
+      <tr><td class="mono">POST</td><td class="mono">/v1/meetings/propose</td><td class="mono">PH-4</td><td>3 slots, prospect timezone</td></tr>
+      <tr><td class="mono">POST</td><td class="mono">/v1/meetings/{id}/confirm</td><td class="mono">PH-4</td><td>Re-check availability, then book</td></tr>
+      <tr><td class="mono">POST</td><td class="mono">/v1/campaigns/{id}/activate</td><td class="mono">PH-3</td><td>Prior approval required</td></tr>
+      <tr><td class="mono">POST</td><td class="mono">/v1/campaigns/{id}/pause</td><td class="mono">PH-3</td><td>Effective before the next send</td></tr>
+      <tr><td class="mono">GET</td><td class="mono">/v1/metrics/overview</td><td class="mono">PH-2</td><td>Snapshot reads only</td></tr>
+      <tr><td class="mono">GET</td><td class="mono">/v1/metrics/costs</td><td class="mono">PH-1</td><td>By agent, task type, campaign</td></tr>
+      <tr><td class="mono">POST</td><td class="mono">/v1/orgs/{id}/emergency-stop</td><td class="mono">PH-1</td><td>Owner only; immediate; audited</td></tr>
+      <tr><td class="mono">POST</td><td class="mono">/v1/webhooks/payments</td><td class="mono">PH-4</td><td>Verify signature; replay-safe</td></tr>
+      <tr><td class="mono">POST</td><td class="mono">/v1/webhooks/gmail</td><td class="mono">PH-3</td><td>Enqueue sync; never parse here</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Error codes you will actually raise</h3>
+  <p class="small"><span class="mono">invalid_payload</span> 400 · <span class="mono">unauthenticated</span> 401 · <span class="mono">forbidden_role</span> 403 · <span class="mono">autonomy_exceeded</span> 403 · <span class="mono">suppressed_recipient</span> 403 · <span class="mono">not_found</span> 404 (also used cross-tenant — never 403) · <span class="mono">state_conflict</span> 409 · <span class="mono">duplicate</span> 409 · <span class="mono">budget_exhausted</span> 402 · <span class="mono">emergency_stop</span> 423 · <span class="mono">rate_limited</span> 429 · <span class="mono">provider_error</span> 502.</p>
+</div>
+
+<div class="part">
+  <div class="part-head">
+    <p class="eyebrow">Section 7</p>
+    <h1 class="part-title">Tools and agents</h1>
+  </div>
+
+  <p class="lede">Eighteen tools are the entire surface area of the outside world. Twenty agents are configuration over one engine.</p>
+
+  <h3>Tool registry</h3>
+  <table class="tight">
+    <thead><tr><th style="width:15mm">ID</th><th style="width:40mm">Tool</th><th style="width:14mm">Class</th><th style="width:12mm">Min</th><th>Required checks before execution</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">TLS-01</td><td class="mono">search_web</td><td>read</td><td class="mono">L1</td><td>cache 24h</td></tr>
+      <tr><td class="mono">TLS-02</td><td class="mono">read_brand_brain</td><td>read</td><td class="mono">L1</td><td>score threshold, top-k cap</td></tr>
+      <tr><td class="mono">TLS-03</td><td class="mono">lookup_company</td><td>read</td><td class="mono">L1</td><td>source + confidence recorded</td></tr>
+      <tr><td class="mono">TLS-04</td><td class="mono">score_lead</td><td>compute</td><td class="mono">L1</td><td>deterministic function only</td></tr>
+      <tr><td class="mono">TLS-05</td><td class="mono">create_lead</td><td>write</td><td class="mono">L2</td><td>dedupe on (org, domain, contact_hash)</td></tr>
+      <tr><td class="mono">TLS-06</td><td class="mono">draft_content</td><td>write</td><td class="mono">L2</td><td>claim guard, banned phrases</td></tr>
+      <tr><td class="mono">TLS-07</td><td class="mono">update_crm</td><td>write</td><td class="mono">L2</td><td>field allowlist, activity row</td></tr>
+      <tr><td class="mono">TLS-08</td><td class="mono">check_availability</td><td>read</td><td class="mono">L1</td><td>cache &lt; 60s</td></tr>
+      <tr><td class="mono">TLS-09</td><td class="mono">book_meeting</td><td>external</td><td class="mono">L3</td><td>approval, availability recheck, idempotent event</td></tr>
+      <tr><td class="mono">TLS-10</td><td class="mono">read_inbox</td><td>read</td><td class="mono">L1</td><td>cursor per integration</td></tr>
+      <tr><td class="mono">TLS-11</td><td class="mono">classify_reply</td><td>compute</td><td class="mono">L1</td><td>closed label set, confidence stored</td></tr>
+      <tr><td class="mono">TLS-12</td><td class="mono">draft_reply</td><td>write</td><td class="mono">L2</td><td>grounded in brand only</td></tr>
+      <tr><td class="mono">TLS-13</td><td class="mono">create_approval</td><td>write</td><td class="mono">L1</td><td>TTL, payload hash</td></tr>
+      <tr><td class="mono">TLS-14</td><td class="mono">send_email</td><td>external</td><td class="mono">L3</td><td>approval, suppression, consent, cap, idempotency</td></tr>
+      <tr><td class="mono">TLS-15</td><td class="mono">send_bulk_campaign</td><td>external</td><td class="mono">L3</td><td>owner approval, per-message key, global cap</td></tr>
+      <tr><td class="mono">TLS-16</td><td class="mono">create_checkout_link</td><td>external</td><td class="mono">L2</td><td>returns URL only, no payment inference</td></tr>
+      <tr><td class="mono">TLS-17</td><td class="mono">read_metrics</td><td>read</td><td class="mono">L1</td><td>aggregates only</td></tr>
+      <tr><td class="mono">TLS-18</td><td class="mono">write_learning</td><td>write</td><td class="mono">L2</td><td>evidence ref + effect size</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Agent roster</h3>
+  <table class="tight">
+    <thead><tr><th style="width:15mm">ID</th><th style="width:44mm">Role</th><th style="width:12mm">Tier</th><th style="width:14mm">Ceiling</th><th>Tools</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">AGT-01</td><td>AI CMO</td><td class="mono">T2</td><td class="mono">L2</td><td class="mono">02, 17</td></tr>
+      <tr><td class="mono">AGT-02</td><td>Research</td><td class="mono">T2</td><td class="mono">L1</td><td class="mono">01, 02, 03</td></tr>
+      <tr><td class="mono">AGT-03</td><td>Strategy</td><td class="mono">T2</td><td class="mono">L2</td><td class="mono">02, 17</td></tr>
+      <tr><td class="mono">AGT-04</td><td>Lead Generation</td><td class="mono">T1</td><td class="mono">L2</td><td class="mono">03, 05</td></tr>
+      <tr><td class="mono">AGT-05</td><td>Lead Qualification</td><td class="mono">T1</td><td class="mono">L1</td><td class="mono">04</td></tr>
+      <tr><td class="mono">AGT-06</td><td>Content</td><td class="mono">T1</td><td class="mono">L2</td><td class="mono">02, 06</td></tr>
+      <tr><td class="mono">AGT-07</td><td>Outreach</td><td class="mono">T1</td><td class="mono">L3</td><td class="mono">02, 05, 07, 13</td></tr>
+      <tr><td class="mono">AGT-08</td><td>Sales</td><td class="mono">T1</td><td class="mono">L4*</td><td class="mono">02, 11, 12, 13</td></tr>
+      <tr><td class="mono">AGT-09</td><td>Follow-up</td><td class="mono">T1</td><td class="mono">L3</td><td class="mono">07, 13</td></tr>
+      <tr><td class="mono">AGT-10</td><td>Analytics</td><td class="mono">T1</td><td class="mono">L1</td><td class="mono">17</td></tr>
+      <tr><td class="mono">AGT-11</td><td>Meeting</td><td class="mono">T1</td><td class="mono">L3</td><td class="mono">08, 09, 13</td></tr>
+      <tr><td class="mono">AGT-12</td><td>Campaign</td><td class="mono">T2</td><td class="mono">L3</td><td class="mono">13, 15</td></tr>
+      <tr><td class="mono">AGT-13</td><td>SEO</td><td class="mono">T1</td><td class="mono">L2</td><td class="mono">01, 06</td></tr>
+      <tr><td class="mono">AGT-14</td><td>Social</td><td class="mono">T1</td><td class="mono">L3</td><td class="mono">06, 13</td></tr>
+      <tr><td class="mono">AGT-15</td><td>Creative</td><td class="mono">T2</td><td class="mono">L2</td><td class="mono">06</td></tr>
+      <tr><td class="mono">AGT-16</td><td>Advertising</td><td class="mono">T2</td><td class="mono">L3</td><td class="mono">13, 17</td></tr>
+      <tr><td class="mono">AGT-17</td><td>Onboarding</td><td class="mono">T1</td><td class="mono">L3</td><td class="mono">06, 13</td></tr>
+      <tr><td class="mono">AGT-18</td><td>Support</td><td class="mono">T1</td><td class="mono">L4*</td><td class="mono">02, 12, 13</td></tr>
+      <tr><td class="mono">AGT-19</td><td>Retention</td><td class="mono">T2</td><td class="mono">L3</td><td class="mono">13, 17</td></tr>
+      <tr><td class="mono">AGT-20</td><td>Learning</td><td class="mono">T2</td><td class="mono">L2</td><td class="mono">17, 18</td></tr>
+    </tbody>
+  </table>
+  <p class="tiny">* L4 requires explicit per-action-class enablement by an owner, daily caps, audit and the weekly digest. Never for money, pricing, refunds, contracts or disputes.</p>
+
+  <h2>7.3 Intent labels — the closed set</h2>
+  <p>The output of <span class="mono">TLS-11 classify_reply</span>. Exactly one primary label per inbound message. No free text, no multi-label, no ad-hoc additions — changing this list means re-running the reply golden set.</p>
+
+  <table class="tight">
+    <thead><tr><th style="width:30mm">Label</th><th style="width:62mm">Means</th><th style="width:32mm">Route</th><th>Escalates</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">interested</td><td>Wants more detail; a real question about the product</td><td>draft reply</td><td>no</td></tr>
+      <tr><td class="mono">meeting_request</td><td>Proposes a call, or accepts an offered one</td><td>offer meeting</td><td>no</td></tr>
+      <tr><td class="mono">pricing_question</td><td>Asks about cost, plans or packaging</td><td>human</td><td>yes</td></tr>
+      <tr><td class="mono">objection</td><td>A specific objection: budget, competitor, trust, timing</td><td>draft or human</td><td>yes</td></tr>
+      <tr><td class="mono">not_now</td><td>Correct person, wrong time — revisit later</td><td>schedule follow-up</td><td>no</td></tr>
+      <tr><td class="mono">not_interested</td><td>Declines without a reason</td><td>close, no reply</td><td>no</td></tr>
+      <tr><td class="mono">wrong_person</td><td>Not their remit; no alternative named</td><td>human</td><td>yes</td></tr>
+      <tr><td class="mono">referral</td><td>Names a colleague or a route in</td><td>human</td><td>yes</td></tr>
+      <tr><td class="mono">unsubscribe</td><td>Opt-out, any phrasing</td><td>suppress first</td><td>no</td></tr>
+      <tr><td class="mono">complaint</td><td>Anger, spam report, legal threat</td><td>suppress + human</td><td>yes</td></tr>
+      <tr><td class="mono">auto_reply</td><td>Out of office, ticket ack, vacation</td><td>ignore</td><td>no</td></tr>
+      <tr><td class="mono">bounce_notice</td><td>Delivery status notification</td><td>send path</td><td>no</td></tr>
+      <tr><td class="mono">vendor_pitch</td><td>Someone selling to us</td><td>ignore</td><td>no</td></tr>
+      <tr><td class="mono">unrelated</td><td>Wrong context, spam, accidental send</td><td>human</td><td>yes</td></tr>
+      <tr><td class="mono">needs_human</td><td>Ambiguous, multi-intent, or confidence below 0.70</td><td>human</td><td>yes</td></tr>
+    </tbody>
+  </table>
+
+  <p class="small"><strong>Order of operations.</strong> Suppression (unsubscribe, complaint) is written before anything else runs. <span class="mono">auto_reply</span> and <span class="mono">bounce_notice</span> never advance a sequence and never produce a reply. Confidence under 0.70 becomes <span class="mono">needs_human</span> regardless of the label the model preferred — the threshold lives in code, not in the prompt.</p>
+</div>
+
+<div class="part">
+  <div class="part-head">
+    <p class="eyebrow">Section 8</p>
+    <h1 class="part-title">Task cards</h1>
+  </div>
+
+  <p class="lede">58 cards. Each is self-contained: one card, the two slices it names, one commit. Cards marked <span class="tag">blocking</span> gate everything after them — a phase does not proceed while one is open.</p>
+
+  <p class="small">Machine twin: <span class="mono">spec/tasks/T-n.m.yaml</span> — same content, ~350 tokens, intended to be the only thing an agent loads. Generated from the same source as these cards, so they cannot drift.</p>
+
+  {{CARDS}}
+</div>

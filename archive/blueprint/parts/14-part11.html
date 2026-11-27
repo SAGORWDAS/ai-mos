@@ -1,0 +1,192 @@
+<!-- ============ PART 11 ============ -->
+<div class="part">
+  <div class="part-head">
+    <p class="eyebrow">Part 11</p>
+    <h1 class="part-title">Phased delivery plan</h1>
+  </div>
+
+  <p class="lede">Seven phases. Each has an entry gate, a task ledger, and an exit gate that is a business outcome rather than a feature list. The order is the plan; the calendar is not.</p>
+
+  <h2>11.1 Why gates instead of weeks</h2>
+  <p>The source brief proposed a twelve-week schedule. Schedules assume a known duration for work whose main risks — provider approval, model quality, deliverability, payment eligibility — are outside the builder's control. Gates replace dates with dependencies that are true regardless of how fast the work goes.</p>
+
+  <pre class="diagram"> PH-0  Decisions        no product code exists yet
+   |
+ PH-1  Foundation       one agent task runs, costed, audited
+   |
+ PH-2  Marketing        a command becomes an approved, costed plan
+   |
+ PH-3  Acquisition      ten real emails are sent and answered        &lt;-- the proof
+   |
+ PH-4  Revenue          a demo is booked, paid for, and onboarded
+   |
+ PH-5  Learning         cost per customer is computed from real data
+   |
+ PH-6  Scale            a second tenant is isolated and a restore is proven</pre>
+
+  <p>Two rules govern the sequence. <strong>Nothing in a later phase is started to unblock an earlier one</strong> — if PH-3 is hard, the answer is a better PH-3, not a head start on PH-5. And <strong>a phase is not exited because the code exists</strong>; it is exited when the demonstration in its exit gate has been performed once, successfully, with evidence.</p>
+
+  <h2>11.2 PH-0 — Decisions and spikes</h2>
+  <p><strong>Objective.</strong> Remove the four risks that can invalidate the whole build before a line of product code is written.</p>
+  <p><strong>Entry gate.</strong> None. This is day one.</p>
+
+  <table class="tight">
+    <thead><tr><th style="width:14mm">Task</th><th style="width:52mm">Deliverable</th><th style="width:14mm">Depends</th><th>Done when</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">T-0.1</td><td>Payment provider viability</td><td>—</td><td>An account exists, or a documented alternative with webhooks and subscriptions does. ADR-01 closed.</td></tr>
+      <tr><td class="mono">T-0.2</td><td>OpenRouter account, key, credit</td><td>—</td><td>A completion from each tier is obtained and its price recorded in the registry.</td></tr>
+      <tr><td class="mono">T-0.3</td><td>Model benchmark</td><td>T-0.2</td><td>50 real outreach examples scored on 3 candidate models; a default per role is chosen with numbers attached.</td></tr>
+      <tr><td class="mono">T-0.4</td><td>Sending domain and DNS</td><td>—</td><td>SPF, DKIM and DMARC pass verification; MX and return-path documented.</td></tr>
+      <tr><td class="mono">T-0.5</td><td>Deliverability spike</td><td>T-0.4</td><td>Five test messages land in the inbox (not spam) at seed accounts on the major providers.</td></tr>
+      <tr><td class="mono">T-0.6</td><td>Legal basis and suppression policy</td><td>—</td><td>A written, one-page policy per target jurisdiction; the fields it requires are agreed.</td></tr>
+      <tr><td class="mono">T-0.7</td><td>Brand Brain content</td><td>—</td><td>ICP, positioning, pricing, approved and prohibited claims exist as text, supplied by the business — not generated.</td></tr>
+      <tr><td class="mono">T-0.8</td><td>Evaluation dataset seed</td><td>T-0.7</td><td>100 real outreach emails and 200 labelled replies exist as JSONL.</td></tr>
+      <tr><td class="mono">T-0.9</td><td>Cost model</td><td>T-0.2, T-0.4</td><td>Per-workflow cost worksheet filled with real prices, including data and sending.</td></tr>
+      <tr><td class="mono">T-0.10</td><td>Decision log</td><td>—</td><td>ADR-01 … ADR-08 closed or explicitly deferred with an owner.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="trap">
+    <span class="label">Exit gate PH-0</span>
+    <p>A merchant account exists (or a lawful alternative is chosen), a domain sends authenticated mail that reaches an inbox, one model call per tier succeeds and is priced, and the business has written its own positioning and claims. If any of these is missing, PH-1 does not start.</p>
+  </div>
+
+  <h2>11.3 PH-1 — Foundation</h2>
+  <p><strong>Objective.</strong> A running, multi-tenant skeleton in which one agent task executes end to end, is billed, and is auditable.</p>
+  <p><strong>Entry gate.</strong> PH-0 exit gate passed.</p>
+
+  <table class="tight">
+    <thead><tr><th style="width:14mm">Task</th><th style="width:56mm">Deliverable</th><th style="width:14mm">Depends</th><th>Done when</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">T-1.1</td><td>Repository, CI, compose stack</td><td>—</td><td>One command brings up API, worker, Postgres, Redis; CI runs lint, types, tests.</td></tr>
+      <tr><td class="mono">T-1.2</td><td>Auth, organisations, memberships</td><td>T-1.1</td><td>Sign-up creates an org and an owner; invitations work; roles enforced.</td></tr>
+      <tr><td class="mono">T-1.3</td><td>Migrations 01–06 with RLS</td><td>T-1.2</td><td>Every tenant table has a forced policy; the isolation test suite passes for all of them (AC-02).</td></tr>
+      <tr><td class="mono">T-1.4</td><td>AI gateway, registry, ledger</td><td>T-1.1</td><td>Every call writes exactly one <span class="mono">model_usage</span> row, including a forced timeout (AC-08).</td></tr>
+      <tr><td class="mono">T-1.5</td><td>Task runtime and scheduler</td><td>T-1.3</td><td>A DAG executes in dependency order; a duplicate worker cannot claim the same task (AC-04).</td></tr>
+      <tr><td class="mono">T-1.6</td><td>Tool gateway and first read tools</td><td>T-1.5</td><td>An unregistered tool call is rejected and audited; a read tool returns attributed data.</td></tr>
+      <tr><td class="mono">T-1.7</td><td>Brand Brain</td><td>T-1.3</td><td>Upload → chunks → retrieval returns passages with document and ordinal citations.</td></tr>
+      <tr><td class="mono">T-1.8</td><td>Approvals model and API</td><td>T-1.5</td><td>A changed payload voids an approval; an approval cannot be consumed twice (AC-05).</td></tr>
+      <tr><td class="mono">T-1.9</td><td>Audit log, logging, traces</td><td>T-1.2</td><td>Every gateway decision has a log line with org, task, agent, trace id.</td></tr>
+      <tr><td class="mono">T-1.10</td><td>Budgets and enforcement</td><td>T-1.4</td><td>Exceeding a task budget blocks the task before dispatch, not after (AC-07).</td></tr>
+      <tr><td class="mono">T-1.11</td><td>Settings, roles, emergency stop</td><td>T-1.2</td><td>Stop engaged → every non-read tool refuses with <span class="mono">emergency_stop</span>.</td></tr>
+      <tr><td class="mono">T-1.12</td><td>Usage and cost screens</td><td>T-1.4</td><td>Cost visible by agent, task type and day, with a drill-down to individual rows.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="trap">
+    <span class="label">Exit gate PH-1</span>
+    <p>A user signs in, opens a brand, and runs a single research task. The task executes, produces a validated structured output, costs a recorded amount, writes an audit entry, and appears in the cost screen. A second organisation cannot see any of it. Nothing else needs to work.</p>
+  </div>
+
+  <h2>11.4 PH-2 — Marketing intelligence</h2>
+  <p><strong>Objective.</strong> Prove the core loop from command to approved plan, with a human in the middle.</p>
+
+  <table class="tight">
+    <thead><tr><th style="width:14mm">Task</th><th style="width:56mm">Deliverable</th><th style="width:14mm">Depends</th><th>Done when</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">T-2.1</td><td>Command Center parse and confirm</td><td>T-1.7</td><td>Ambiguous input returns the exact missing fields; a confirmation creates a plan transactionally.</td></tr>
+      <tr><td class="mono">T-2.2</td><td>Planner (AI CMO)</td><td>T-2.1</td><td>Plans conform to the plan schema in Appendix B; every task has an agent, cost estimate and success metric.</td></tr>
+      <tr><td class="mono">T-2.3</td><td>Task graph execution</td><td>T-1.5</td><td>A plan of 20 tasks executes with dependencies; a cycle is refused at write time.</td></tr>
+      <tr><td class="mono">T-2.4</td><td>Research Agent</td><td>T-2.2</td><td>Output cites sources with retrieval dates; no claim without a citation passes validation.</td></tr>
+      <tr><td class="mono">T-2.5</td><td>Strategy Agent</td><td>T-2.4</td><td>Produces a channel plan with budget ranges grounded in the brand's actual pricing.</td></tr>
+      <tr><td class="mono">T-2.6</td><td>Content Agent</td><td>T-1.7</td><td>Drafts pass the prohibited-claims check; every factual statement carries a chunk id.</td></tr>
+      <tr><td class="mono">T-2.7</td><td>Approval Center UI</td><td>T-1.8</td><td>Approve, edit, reject and batch-approve all work; batch above cap is refused.</td></tr>
+      <tr><td class="mono">T-2.8</td><td>Overview and analytics v1</td><td>T-1.12</td><td>Task, approval and cost figures on one screen, each traceable to a query.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="trap">
+    <span class="label">Exit gate PH-2</span>
+    <p>"Plan a campaign for our SaaS" produces a structured plan with tasks, owners, dependencies, an estimated cost, the approvals it will require and the metrics it will move — reviewed and approved by a human, and executed for everything except external sends.</p>
+  </div>
+
+  <h2>11.5 PH-3 — Acquisition</h2>
+  <p><strong>Objective.</strong> The proof of the product: real messages to real people, under governance, with replies handled.</p>
+
+  <table class="tight">
+    <thead><tr><th style="width:14mm">Task</th><th style="width:56mm">Deliverable</th><th style="width:14mm">Depends</th><th>Done when</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">T-3.1</td><td>Prospect data adapter</td><td>T-0.9</td><td>A discovery run returns records with source and confidence; provider cost recorded per record.</td></tr>
+      <tr><td class="mono">T-3.2</td><td>Dedupe and enrichment</td><td>T-3.1</td><td>Zero duplicates within a tenant on domain and contact hash (AC-06).</td></tr>
+      <tr><td class="mono">T-3.3</td><td>Qualification scoring</td><td>T-3.2</td><td>Score is deterministic given the model version; labels match the golden set at ≥ 85%.</td></tr>
+      <tr><td class="mono">T-3.4</td><td>CRM entities and pipeline</td><td>T-3.3</td><td>Stage changes write an activity with actor type; agent edits restricted to allowlisted fields.</td></tr>
+      <tr><td class="mono">T-3.5</td><td>Mailbox connection (read)</td><td>T-1.2</td><td>OAuth completes; incremental sync stores messages with provider thread ids.</td></tr>
+      <tr><td class="mono">T-3.6</td><td>Send path with suppression and caps</td><td>T-1.8, T-0.4</td><td>A suppressed address is refused at the tool, even inside an approved batch (AC-03).</td></tr>
+      <tr><td class="mono">T-3.7</td><td>Outreach drafting with claim check</td><td>T-2.6</td><td>An ungrounded claim fails validation and retries once at the fallback tier.</td></tr>
+      <tr><td class="mono">T-3.8</td><td>Dispatch with approval</td><td>T-3.6, T-2.7</td><td>Editing a draft voids its approval; caps are enforced across concurrent workers.</td></tr>
+      <tr><td class="mono">T-3.9</td><td>Reply sync and classification</td><td>T-3.5</td><td>Replies classified into a closed label set with confidence; opt-out writes a suppression before anything else.</td></tr>
+      <tr><td class="mono">T-3.10</td><td>Reply drafting (L4 optional)</td><td>T-3.9</td><td>Below-threshold confidence never auto-sends; every auto-send appears in the weekly digest.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="trap">
+    <span class="label">Exit gate PH-3</span>
+    <p>Ten real, individually reviewed emails reach real prospects on a real domain. Two replies are received; both are classified correctly; one is answered by the system after approval; one opt-out is processed and that address is thereafter refused by the gateway. Bounce and complaint counters are visible. This is the phase that decides whether the product exists.</p>
+  </div>
+
+  <h2>11.6 PH-4 — Conversation and revenue</h2>
+  <p><strong>Objective.</strong> Close the loop from interest to money, without ever inferring payment.</p>
+
+  <table class="tight">
+    <thead><tr><th style="width:14mm">Task</th><th style="width:56mm">Deliverable</th><th style="width:14mm">Depends</th><th>Done when</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">T-4.1</td><td>Calendar adapter and availability</td><td>T-1.2</td><td>Free/busy for a window, timezone-normalised, cached for under a minute.</td></tr>
+      <tr><td class="mono">T-4.2</td><td>Meeting propose → confirm → book</td><td>T-4.1</td><td>Availability re-checked within 60s of booking; no double booking under a race test (AC-09).</td></tr>
+      <tr><td class="mono">T-4.3</td><td>Payment adapter and webhook</td><td>T-0.1</td><td>Signature verified; replay is a no-op; unknown events ignored and logged (AC-10).</td></tr>
+      <tr><td class="mono">T-4.4</td><td>Customers, subscriptions, plan gating</td><td>T-4.3</td><td>Plan limits enforced from verified state; an agent has no write path to these tables.</td></tr>
+      <tr><td class="mono">T-4.5</td><td>Checkout link tool</td><td>T-4.4</td><td>Returns a URL and nothing else; it never marks anything paid.</td></tr>
+      <tr><td class="mono">T-4.6</td><td>Onboarding triggers</td><td>T-4.3</td><td>Onboarding starts only from a verified payment event, never from a conversation.</td></tr>
+      <tr><td class="mono">T-4.7</td><td>Automation Center v1</td><td>T-1.5</td><td>Trigger-condition-action definitions; loops impossible; every run traceable.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="trap">
+    <span class="label">Exit gate PH-4</span>
+    <p>A prospect replies, agrees to a call, is offered three times, confirms one, and the event appears in both calendars. A checkout link is sent, payment completes, the webhook is verified, a customer and subscription are created, and onboarding messages begin. A refund request routed through the system escalates to a human and moves no money.</p>
+  </div>
+
+  <h2>11.7 PH-5 — Measurement and learning</h2>
+  <p><strong>Objective.</strong> Make the economics legible, and make the system slightly better each week.</p>
+  <table class="tight">
+    <thead><tr><th style="width:14mm">Task</th><th style="width:56mm">Deliverable</th><th style="width:14mm">Depends</th><th>Done when</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">T-5.1</td><td>Attribution</td><td>T-3.4, T-4.4</td><td>Every won customer traces to a lead, a campaign and the messages that produced it.</td></tr>
+      <tr><td class="mono">T-5.2</td><td>Cost per outcome</td><td>T-5.1</td><td>CPL and CAC computed from data, sending, review time and inference — not inference alone.</td></tr>
+      <tr><td class="mono">T-5.3</td><td>Evaluation in CI</td><td>T-0.8</td><td>A prompt change that regresses the golden set fails the build.</td></tr>
+      <tr><td class="mono">T-5.4</td><td>Learning records</td><td>T-5.2</td><td>A lesson requires evidence and an effect size; a subsequent plan retrieves and cites it.</td></tr>
+      <tr><td class="mono">T-5.5</td><td>Support and retention</td><td>T-4.4</td><td>Churn risk proposed, never acted on unapproved; refunds and disputes always escalate.</td></tr>
+      <tr><td class="mono">T-5.6</td><td>SEO, social, creative</td><td>T-2.6</td><td>Each is a new agent manifest plus a tool, not a new subsystem.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="trap">
+    <span class="label">Exit gate PH-5</span>
+    <p>The dashboard answers one question with real money in it: "what did it cost us to acquire the customers we won in the last 30 days, split by cost line?" A learned lesson from a completed campaign visibly changes a subsequent plan.</p>
+  </div>
+
+  <h2>11.8 PH-6 — Scale and hardening</h2>
+  <table class="tight">
+    <thead><tr><th style="width:14mm">Task</th><th style="width:56mm">Deliverable</th><th style="width:14mm">Depends</th><th>Done when</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">T-6.1</td><td>Second tenant audit</td><td>PH-3</td><td>An isolation review of every query, cache key and job finds zero cross-tenant paths.</td></tr>
+      <tr><td class="mono">T-6.2</td><td>Load and queue tuning</td><td>PH-3</td><td>A 10× burst of tasks processes without duplicate sends or lost jobs.</td></tr>
+      <tr><td class="mono">T-6.3</td><td>Backup and restore drill</td><td>PH-1</td><td>A full restore into a clean environment is timed and documented (AC-13).</td></tr>
+      <tr><td class="mono">T-6.4</td><td>Security review</td><td>PH-4</td><td>OAuth scope review, secret rotation test, dependency audit, abuse-case checklist.</td></tr>
+      <tr><td class="mono">T-6.5</td><td>P1/P2 agent rollout</td><td>PH-5</td><td>Each new role ships with a manifest, a golden set and an eval threshold — no exceptions.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="trap">
+    <span class="label">Exit gate PH-6</span>
+    <p>Two independent organisations operate simultaneously with no leakage; a simulated total loss of the database is restored from backup within the documented window; and a new agent role can be added by one engineer in under a day without touching the runtime.</p>
+  </div>
+
+  <h2>11.9 Sequencing rules</h2>
+  <ul>
+    <li><strong>Never build a screen before its data exists.</strong> Eleven of the twenty-three modules are reads; they cost a day each once the tables are proven and weeks if built first.</li>
+    <li><strong>Never build an agent before its tool.</strong> An agent without a working, permissioned tool produces plausible text that changes nothing — the most expensive kind of progress.</li>
+    <li><strong>Never ship an integration before its failure path.</strong> Token expiry, quota exhaustion and provider outages are the normal case, not the exception.</li>
+    <li><strong>Never enable L4 for a new action class without a week of L3 evidence.</strong> Autonomy is earned with the digest, not granted by configuration.</li>
+    <li><strong>Never let a phase exit without its demonstration having been performed once.</strong> A green test suite is evidence of correctness, not of usefulness.</li>
+  </ul>
+</div>

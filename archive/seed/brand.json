@@ -1,0 +1,38 @@
+{
+  "name": "",
+  "website": "",
+  "positioning": "",
+  "icp": {
+    "segments": [],
+    "size": "",
+    "industries": [],
+    "signals": [],
+    "geographies": []
+  },
+  "voice": {
+    "tone": "",
+    "formality": "",
+    "sentence_length": "",
+    "banned_phrases": [],
+    "examples": []
+  },
+  "pricing": {
+    "currency": "USD",
+    "plans": [
+      { "name": "", "price_monthly_minor": 0, "limits": "" }
+    ],
+    "discounts_allowed": false,
+    "discount_ceiling_pct": 0
+  },
+  "approved_claims": [],
+  "prohibited_claims": [],
+  "faq": [
+    { "question": "", "answer": "" }
+  ],
+  "objections": [
+    { "objection": "", "response": "" }
+  ],
+  "testimonials": [],
+  "refund_policy": "",
+  "support_hours": ""
+}

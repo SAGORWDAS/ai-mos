@@ -1,0 +1,342 @@
+<!-- ============ PART 7 ============ -->
+<div class="part">
+  <div class="part-head">
+    <p class="eyebrow">Part 7</p>
+    <h1 class="part-title">Data layer</h1>
+  </div>
+
+  <p class="lede">Twenty-eight tables, one database, row-level security on every one of them. This part is the schema contract: if a column is not here, it does not exist.</p>
+
+  <h2>7.1 Principles</h2>
+  <ul>
+    <li><strong>UUID primary keys</strong> (<span class="mono">gen_random_uuid()</span>) so records can be created client-side and merged across environments without collision.</li>
+    <li><strong><span class="mono">organization_id</span> on every tenant table</strong>, first column of every composite index, and part of every unique constraint.</li>
+    <li><strong>Timestamps in UTC</strong>, <span class="mono">timestamptz</span>, with <span class="mono">created_at</span> and <span class="mono">updated_at</span> on every mutable row.</li>
+    <li><strong>Soft delete only where recovery matters</strong> (contacts, brands, content). Hard delete with cascade where the row is meaningless alone (chunks, messages).</li>
+    <li><strong>Enums as lookup tables or check constraints</strong> for values that drive behaviour — a status value that is not in the machine's state table is a runtime bug.</li>
+    <li><strong>Money as integer minor units</strong> plus currency. Never floating point.</li>
+    <li><strong>JSONB for payloads, not for structure.</strong> Anything queried or joined is a column.</li>
+  </ul>
+
+  <h2>7.2 Table definitions — P0 core</h2>
+
+  <h3>Tenancy and access</h3>
+  <pre>create table organizations (
+  id            uuid primary key default gen_random_uuid(),
+  name          text not null,
+  slug          text not null unique,
+  plan          text not null default 'trial',
+  timezone      text not null default 'UTC',
+  autonomy_default  text not null default 'L2'
+                    check (autonomy_default in ('L1','L2','L3','L4')),
+  emergency_stop    boolean not null default false,
+  status        text not null default 'active'
+                    check (status in ('active','suspended','closed')),
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now()
+);
+
+create table users (
+  id            uuid primary key default gen_random_uuid(),
+  email         citext not null unique,
+  name          text,
+  auth_subject  text unique,          -- external IdP subject
+  last_seen_at  timestamptz,
+  created_at    timestamptz not null default now()
+);
+
+create table memberships (
+  id              uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references organizations(id) on delete cascade,
+  user_id         uuid not null references users(id) on delete cascade,
+  role            text not null check (role in ('owner','admin','member','viewer')),
+  created_at      timestamptz not null default now(),
+  unique (organization_id, user_id)
+);
+
+alter table memberships enable row level security;
+create policy tenant_isolation on memberships
+  using (organization_id = current_setting('app.current_org')::uuid);</pre>
+
+  <h3>Brand and knowledge</h3>
+  <pre>create table brands (
+  id                uuid primary key default gen_random_uuid(),
+  organization_id   uuid not null references organizations(id) on delete cascade,
+  name              text not null,
+  website           text,
+  positioning       text,
+  icp               jsonb not null default '{}',   -- segments, size, industry, signals
+  voice             jsonb not null default '{}',   -- tone, banned phrases, examples
+  pricing           jsonb not null default '{}',   -- plans[], currency, limits
+  approved_claims   text[] not null default '{}',
+  prohibited_claims text[] not null default '{}',
+  created_at        timestamptz not null default now(),
+  updated_at        timestamptz not null default now(),
+  unique (organization_id, name)
+);
+
+create table brand_documents (
+  id            uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references organizations(id) on delete cascade,
+  brand_id      uuid not null references brands(id) on delete cascade,
+  kind          text not null check (kind in ('doc','url','faq','transcript','policy')),
+  title         text not null,
+  source_uri    text,
+  checksum      text not null,
+  status        text not null default 'pending'
+                  check (status in ('pending','indexed','failed')),
+  created_at    timestamptz not null default now(),
+  unique (brand_id, checksum)
+);
+
+create table brand_chunks (
+  id              uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references organizations(id) on delete cascade,
+  document_id     uuid not null references brand_documents(id) on delete cascade,
+  ordinal         int not null,
+  content         text not null,
+  embedding       vector(1536),
+  token_count     int not null,
+  unique (document_id, ordinal)
+);
+create index on brand_chunks using ivfflat (embedding vector_cosine_ops);</pre>
+
+  <h3>Agents, tasks, approvals</h3>
+  <pre>create table agents (
+  id                uuid primary key default gen_random_uuid(),
+  organization_id   uuid not null references organizations(id) on delete cascade,
+  role_id           text not null,                  -- AGT-07
+  name              text not null,
+  manifest_version  int not null default 1,
+  model_tier        text not null default 'T1',
+  autonomy_ceiling  text not null default 'L2',
+  enabled           boolean not null default true,
+  config            jsonb not null default '{}',    -- guards, limits, persona overrides
+  created_at        timestamptz not null default now(),
+  unique (organization_id, role_id)
+);
+
+create table tasks (
+  id                uuid primary key default gen_random_uuid(),
+  organization_id   uuid not null references organizations(id) on delete cascade,
+  plan_id           uuid references plans(id) on delete cascade,
+  agent_id          uuid references agents(id),
+  campaign_id       uuid references campaigns(id),
+  type              text not null,                  -- draft_outreach, classify_reply, ...
+  status            text not null default 'created'
+                      check (status in ('created','ready','running','awaiting_approval',
+                                        'succeeded','failed','blocked','cancelled','expired')),
+  attempt           int not null default 0,
+  idempotency_key   text not null,
+  input             jsonb not null,
+  output            jsonb,
+  error_code        text,
+  error_detail      text,
+  cost_usd          numeric(12,6) not null default 0,
+  started_at        timestamptz,
+  finished_at       timestamptz,
+  created_at        timestamptz not null default now(),
+  unique (organization_id, idempotency_key)
+);
+create index on tasks (organization_id, status, created_at);
+create index on tasks (organization_id, campaign_id);
+
+create table task_dependencies (
+  task_id        uuid not null references tasks(id) on delete cascade,
+  depends_on_id  uuid not null references tasks(id) on delete cascade,
+  primary key (task_id, depends_on_id),
+  check (task_id <> depends_on_id)
+);
+
+create table approvals (
+  id                uuid primary key default gen_random_uuid(),
+  organization_id   uuid not null references organizations(id) on delete cascade,
+  task_id           uuid not null references tasks(id) on delete cascade,
+  action_class      text not null,                  -- send_email, bulk_send, book_meeting...
+  payload           jsonb not null,
+  payload_hash      text not null,                  -- hash(payload); changing payload voids approval
+  requested_by      text not null,                  -- agent role id
+  status            text not null default 'pending'
+                      check (status in ('pending','approved','rejected','expired','revoked','executed')),
+  decided_by        uuid references users(id),
+  decided_at        timestamptz,
+  expires_at        timestamptz not null,
+  created_at        timestamptz not null default now(),
+  unique (task_id, action_class, payload_hash)
+);</pre>
+
+  <h3>Leads, contacts, messages</h3>
+  <pre>create table companies (
+  id              uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references organizations(id) on delete cascade,
+  domain          text not null,
+  name            text,
+  industry        text,
+  employee_range  text,
+  country         text,
+  enrichment      jsonb not null default '{}',
+  source          text not null,
+  created_at      timestamptz not null default now(),
+  unique (organization_id, domain)
+);
+
+create table leads (
+  id                uuid primary key default gen_random_uuid(),
+  organization_id   uuid not null references organizations(id) on delete cascade,
+  company_id        uuid references companies(id),
+  contact_id        uuid references contacts(id),
+  campaign_id       uuid references campaigns(id),
+  status            text not null default 'discovered'
+                      check (status in ('discovered','enriched','scored','qualified',
+                                        'disqualified','contacted','replied','meeting_set',
+                                        'converted','dormant','suppressed')),
+  score             numeric(5,2),
+  score_model       text,                            -- which scoring version produced it
+  source            text not null,
+  source_confidence numeric(3,2),
+  created_at        timestamptz not null default now(),
+  updated_at        timestamptz not null default now()
+);
+create index on leads (organization_id, status, score desc);
+
+create table suppressions (
+  id              uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references organizations(id) on delete cascade,
+  channel         text not null default 'email',
+  address         citext not null,
+  reason          text not null check (reason in ('opt_out','complaint','bounce','manual','legal')),
+  created_at      timestamptz not null default now(),
+  unique (organization_id, channel, address)
+);
+
+create table messages (
+  id                uuid primary key default gen_random_uuid(),
+  organization_id   uuid not null references organizations(id) on delete cascade,
+  conversation_id   uuid not null references conversations(id) on delete cascade,
+  direction         text not null check (direction in ('outbound','inbound')),
+  channel           text not null default 'email',
+  provider_id       text,
+  subject           text,
+  body              text not null,
+  status            text not null default 'drafted'
+                      check (status in ('drafted','pending_approval','queued','sending',
+                                        'sent','delivered','bounced','complained','failed')),
+  classification    jsonb,          -- intent, sentiment, confidence, model version
+  approval_id       uuid references approvals(id),
+  sent_at           timestamptz,
+  created_at        timestamptz not null default now()
+);
+create unique index on messages (organization_id, provider_id)
+  where provider_id is not null;</pre>
+
+  <h3>Money</h3>
+  <pre>create table subscriptions (
+  id                uuid primary key default gen_random_uuid(),
+  organization_id   uuid not null references organizations(id) on delete cascade,
+  customer_id       uuid not null references customers(id),
+  provider          text not null,
+  provider_sub_id   text not null unique,
+  plan_code         text not null,
+  status            text not null check (status in ('trialing','active','past_due','cancelled','expired')),
+  current_period_end timestamptz,
+  created_at        timestamptz not null default now(),
+  updated_at        timestamptz not null default now()
+);
+
+-- written ONLY by the webhook handler; the application role has no UPDATE grant
+create table payments (
+  id                uuid primary key default gen_random_uuid(),
+  organization_id   uuid not null references organizations(id) on delete cascade,
+  customer_id       uuid references customers(id),
+  provider          text not null,
+  provider_event_id text not null unique,     -- idempotency for webhook replays
+  amount_minor      bigint not null,
+  currency          char(3) not null,
+  status            text not null check (status in ('succeeded','failed','refunded','pending')),
+  occurred_at       timestamptz not null,
+  raw               jsonb not null,
+  created_at        timestamptz not null default now()
+);</pre>
+
+  <h3>Operations</h3>
+  <pre>create table model_usage (
+  id              uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references organizations(id) on delete cascade,
+  task_id         uuid references tasks(id) on delete set null,
+  agent_id        uuid references agents(id) on delete set null,
+  campaign_id     uuid references campaigns(id) on delete set null,
+  request_id      text not null unique,
+  model_id        text not null,
+  tier            text not null,
+  input_tokens    int not null default 0,
+  output_tokens   int not null default 0,
+  cached_tokens   int not null default 0,
+  latency_ms      int,
+  status          text not null,
+  cost_usd        numeric(12,6) not null,
+  created_at      timestamptz not null default now()
+);
+create index on model_usage (organization_id, created_at);
+create index on model_usage (organization_id, campaign_id);
+
+create table audit_logs (
+  id              bigserial primary key,
+  organization_id uuid not null references organizations(id),
+  actor_type      text not null check (actor_type in ('human','agent','system')),
+  actor_id        text not null,
+  action          text not null,
+  subject_type    text not null,
+  subject_id      uuid,
+  decision        text,                 -- allowed | rejected | escalated
+  reason          text,
+  metadata        jsonb not null default '{}',
+  created_at      timestamptz not null default now()
+);
+-- append-only: no UPDATE or DELETE grant for the application role</pre>
+
+  <h2>7.3 Migration order</h2>
+  <p>Order is not arbitrary — each step's tables are referenced by the next. Migrations are additive within a phase; a destructive change requires a task that authorises it explicitly.</p>
+  <pre>01 extensions            pgcrypto, citext, vector, pg_trgm
+02 organizations, users, memberships, invitations      (PH-1)
+03 brands, brand_documents, brand_chunks               (PH-1)
+04 integrations, oauth_tokens                          (PH-1)
+05 agents, agent_tools, model_registry, model_usage, budgets   (PH-1)
+06 plans, tasks, task_dependencies, approvals          (PH-1)
+07 companies, contacts, prospects, leads, suppressions (PH-3)
+08 campaigns, campaign_assets, sequences, sequences_steps      (PH-3)
+09 conversations, messages, outreach_drafts            (PH-3)
+10 meetings, availability_rules                        (PH-4)
+11 customers, subscriptions, payments, invoices        (PH-4)
+12 workflows, workflow_runs, triggers                  (PH-4)
+13 analytics_events, metric_snapshots, learning_records (PH-2/PH-5)
+14 audit_logs, notifications                           (PH-1)
+15 views, rollup functions, retention jobs             (PH-5)</pre>
+
+  <h2>7.4 Retention and personal data</h2>
+  <table class="tight">
+    <thead><tr><th style="width:36mm">Data</th><th style="width:24mm">Retention</th><th>Rule</th></tr></thead>
+    <tbody>
+      <tr><td>Messages and conversations</td><td>24 months</td><td>Purgeable on request; content redacted for closed conversations after 12 months, metadata retained.</td></tr>
+      <tr><td>Lead and contact records</td><td>While active + 24 months</td><td>Deletion request cascades to messages and suppressions remain — an opt-out must survive a purge, or the business will email someone who asked not to be.</td></tr>
+      <tr><td>Suppression list</td><td>Indefinite</td><td>Deliberately exempt from deletion. Store the address hash where law requires minimisation.</td></tr>
+      <tr><td>Model usage</td><td>24 months</td><td>Aggregated after 6 months; no prompt content stored here.</td></tr>
+      <tr><td>Audit logs</td><td>24 months minimum</td><td>Append-only; exportable per tenant.</td></tr>
+      <tr><td>Brand documents</td><td>Until deleted</td><td>Deletion removes chunks in the same transaction.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>7.5 Indexing rules</h2>
+  <p>Indexes are created for the queries the product actually issues, listed here so they are not invented per-screen:</p>
+  <table class="tight">
+    <thead><tr><th style="width:52mm">Query pattern</th><th>Index</th></tr></thead>
+    <tbody>
+      <tr><td>Task queue pickup</td><td><span class="mono">(organization_id, status, created_at)</span> + partial index on <span class="mono">ready</span></td></tr>
+      <tr><td>Lead list by score</td><td><span class="mono">(organization_id, status, score desc)</span></td></tr>
+      <tr><td>Campaign economics</td><td><span class="mono">(organization_id, campaign_id)</span> on tasks, model_usage, messages, leads</td></tr>
+      <tr><td>Dedupe on ingest</td><td>unique <span class="mono">(organization_id, domain)</span>, <span class="mono">(organization_id, contact_hash)</span></td></tr>
+      <tr><td>Provider webhook replay</td><td>unique <span class="mono">provider_event_id</span></td></tr>
+      <tr><td>Semantic retrieval</td><td>ivfflat on <span class="mono">brand_chunks.embedding</span>, filtered by <span class="mono">organization_id</span></td></tr>
+      <tr><td>Audit lookup</td><td><span class="mono">(organization_id, created_at desc)</span>, <span class="mono">(subject_type, subject_id)</span></td></tr>
+    </tbody>
+  </table>
+</div>

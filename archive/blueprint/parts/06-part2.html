@@ -1,0 +1,209 @@
+<!-- ============ PART 2 ============ -->
+<div class="part">
+  <div class="part-head">
+    <p class="eyebrow">Part 2</p>
+    <h1 class="part-title">Domain model</h1>
+  </div>
+
+  <p class="lede">Twenty-three modules is a navigation design. Seven services is an engineering design. Conflating the two is how a one-person build turns into twenty-three partially finished applications.</p>
+
+  <h2>2.1 Why seven services, not twenty-three modules</h2>
+  <p>Each module in the navigation belongs to exactly one service. A service is a deployable unit with its own tables and its own API surface. Most modules are <em>screens over shared tables</em>, not separate backends — the CRM, the pipeline view and the lead table are three presentations of the same rows.</p>
+
+  <pre class="diagram">                    +-----------------------------------------------------+
+                    |  SVC-platform    orgs, users, auth, billing,        |
+                    |                  integrations, audit, usage         |
+                    +----------------------+------------------------------+
+                                           |  (everything depends on this)
+   +---------------------+   +-------------+---------+   +----------------------+
+   | SVC-growth-strategy |   |  SVC-acquisition      |   |  SVC-content         |
+   | command center,     |   |  prospects, leads,    |   |  content, creative,  |
+   | planning, strategy, |   |  CRM, outreach, inbox,|   |  SEO, social,        |
+   | research, approvals |   |  meetings, sequences  |   |  campaigns assets    |
+   +----------+----------+   +-----------+-----------+   +----------+-----------+
+              |                          |                          |
+              +--------------+-----------+--------------------------+
+                             |
+              +--------------v-----------+      +--------------------+
+              |  SVC-automation          |      |  SVC-insights      |
+              |  workflows, schedules,   |      |  analytics, cost,  |
+              |  triggers, job runner    |      |  learning, evals   |
+              +--------------------------+      +--------------------+
+                             |
+              +--------------v-------------------------------------------+
+              |  SVC-revenue : customers, subscriptions, payments,       |
+              |  onboarding, support, retention                          |
+              +----------------------------------------------------------+</pre>
+
+  <h3>The three rules that keep this honest</h3>
+  <ol>
+    <li><strong>One writer per table.</strong> A service owns its tables; other services read through its API or through a published view. No cross-service writes.</li>
+    <li><strong>Events, not calls, for side effects.</strong> "Lead qualified" is an event. The outreach service reacts to it. The lead service does not know outreach exists.</li>
+    <li><strong>Shared platform, not shared database access.</strong> Tenancy, authz, audit and cost are platform primitives injected everywhere, and they are the only truly shared code.</li>
+  </ol>
+
+  <h2>2.2 Module map</h2>
+  <table class="tight">
+    <thead><tr><th style="width:15mm">ID</th><th style="width:38mm">Module</th><th style="width:36mm">Service</th><th style="width:14mm">Phase</th><th>Primary entities owned</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">MOD-01</td><td>Overview</td><td class="mono">insights</td><td class="mono">PH-2</td><td>reads aggregates only</td></tr>
+      <tr><td class="mono">MOD-02</td><td>Command Center</td><td class="mono">growth-strategy</td><td class="mono">PH-2</td><td>commands, objectives</td></tr>
+      <tr><td class="mono">MOD-03</td><td>AI Manager</td><td class="mono">growth-strategy</td><td class="mono">PH-2</td><td>plans, task graphs</td></tr>
+      <tr><td class="mono">MOD-04</td><td>AI Agents</td><td class="mono">growth-strategy</td><td class="mono">PH-1</td><td>agents, agent_tools</td></tr>
+      <tr><td class="mono">MOD-05</td><td>Marketing Strategy</td><td class="mono">growth-strategy</td><td class="mono">PH-2</td><td>strategies, research_reports</td></tr>
+      <tr><td class="mono">MOD-06</td><td>Lead Generation</td><td class="mono">acquisition</td><td class="mono">PH-3</td><td>prospects, leads</td></tr>
+      <tr><td class="mono">MOD-07</td><td>CRM</td><td class="mono">acquisition</td><td class="mono">PH-3</td><td>companies, contacts, pipeline_stages</td></tr>
+      <tr><td class="mono">MOD-08</td><td>Outreach Studio</td><td class="mono">acquisition</td><td class="mono">PH-3</td><td>sequences, outreach_drafts</td></tr>
+      <tr><td class="mono">MOD-09</td><td>AI Sales Inbox</td><td class="mono">acquisition</td><td class="mono">PH-3</td><td>conversations, messages</td></tr>
+      <tr><td class="mono">MOD-10</td><td>Meeting Scheduler</td><td class="mono">acquisition</td><td class="mono">PH-4</td><td>meetings, availability_rules</td></tr>
+      <tr><td class="mono">MOD-11</td><td>Content Studio</td><td class="mono">content</td><td class="mono">PH-2</td><td>content_items</td></tr>
+      <tr><td class="mono">MOD-12</td><td>Creative Studio</td><td class="mono">content</td><td class="mono">PH-5</td><td>creatives, asset_files</td></tr>
+      <tr><td class="mono">MOD-13</td><td>Campaign Manager</td><td class="mono">content</td><td class="mono">PH-3</td><td>campaigns, campaign_assets</td></tr>
+      <tr><td class="mono">MOD-14</td><td>Customer Onboarding</td><td class="mono">revenue</td><td class="mono">PH-4</td><td>onboarding_flows, activation_steps</td></tr>
+      <tr><td class="mono">MOD-15</td><td>Customer Support</td><td class="mono">revenue</td><td class="mono">PH-5</td><td>support_threads</td></tr>
+      <tr><td class="mono">MOD-16</td><td>Retention Center</td><td class="mono">revenue</td><td class="mono">PH-5</td><td>health_scores, churn_risks</td></tr>
+      <tr><td class="mono">MOD-17</td><td>Analytics</td><td class="mono">insights</td><td class="mono">PH-2</td><td>analytics_events, metric_snapshots</td></tr>
+      <tr><td class="mono">MOD-18</td><td>Brand Brain</td><td class="mono">growth-strategy</td><td class="mono">PH-1</td><td>brands, brand_documents, brand_chunks</td></tr>
+      <tr><td class="mono">MOD-19</td><td>Automation Center</td><td class="mono">automation</td><td class="mono">PH-4</td><td>workflows, workflow_runs, triggers</td></tr>
+      <tr><td class="mono">MOD-20</td><td>Approval Center</td><td class="mono">growth-strategy</td><td class="mono">PH-2</td><td>approvals, approval_rules</td></tr>
+      <tr><td class="mono">MOD-21</td><td>Integrations</td><td class="mono">platform</td><td class="mono">PH-1</td><td>integrations, oauth_tokens</td></tr>
+      <tr><td class="mono">MOD-22</td><td>Usage &amp; Cost</td><td class="mono">insights</td><td class="mono">PH-1</td><td>model_usage, budgets</td></tr>
+      <tr><td class="mono">MOD-23</td><td>Settings</td><td class="mono">platform</td><td class="mono">PH-1</td><td>organizations, memberships, invitations</td></tr>
+    </tbody>
+  </table>
+
+  <h2>2.3 Core entities and their owner</h2>
+  <p>Twenty-eight tables carry the whole product. They are listed here with the service that owns them; Part 7 gives their columns.</p>
+
+  <table class="tight">
+    <thead><tr><th style="width:44mm">Entity</th><th style="width:32mm">Owner service</th><th>What it represents</th><th style="width:26mm">Lifecycle owner</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">organizations</td><td class="mono">platform</td><td>Tenant boundary. Every other row references it.</td><td>manual</td></tr>
+      <tr><td class="mono">users / memberships</td><td class="mono">platform</td><td>People and their role in a tenant (owner, admin, member, viewer).</td><td>manual</td></tr>
+      <tr><td class="mono">brands / brand_documents / brand_chunks</td><td class="mono">growth-strategy</td><td>Brand identity, source documents and their vector chunks.</td><td>Brand Agent</td></tr>
+      <tr><td class="mono">agents / agent_tools</td><td class="mono">growth-strategy</td><td>Configured roles and the tools each is permitted to request.</td><td>admin</td></tr>
+      <tr><td class="mono">tasks / task_dependencies</td><td class="mono">growth-strategy</td><td>Units of delegated work, their state and their graph.</td><td>runtime</td></tr>
+      <tr><td class="mono">approvals</td><td class="mono">growth-strategy</td><td>A frozen request for human authorisation of one action.</td><td>human</td></tr>
+      <tr><td class="mono">campaigns / campaign_assets</td><td class="mono">content</td><td>The container for a segment, a message, a channel and a budget.</td><td>Campaign Agent</td></tr>
+      <tr><td class="mono">companies / contacts / prospects</td><td class="mono">acquisition</td><td>Accounts, people and candidate accounts not yet qualified.</td><td>Lead Gen Agent</td></tr>
+      <tr><td class="mono">leads</td><td class="mono">acquisition</td><td>A prospect that entered qualification, with score and source.</td><td>Qualification Agent</td></tr>
+      <tr><td class="mono">sequences / outreach_drafts</td><td class="mono">acquisition</td><td>Follow-up cadence and the drafts awaiting approval.</td><td>Outreach Agent</td></tr>
+      <tr><td class="mono">conversations / messages</td><td class="mono">acquisition</td><td>Two-way threads across email and future channels.</td><td>Sales Agent</td></tr>
+      <tr><td class="mono">meetings</td><td class="mono">acquisition</td><td>Proposed and confirmed bookings with external attendees.</td><td>Meeting Agent</td></tr>
+      <tr><td class="mono">customers / subscriptions / payments</td><td class="mono">revenue</td><td>Money. Written only from provider events.</td><td>webhook only</td></tr>
+      <tr><td class="mono">workflows / workflow_runs</td><td class="mono">automation</td><td>Trigger-condition-action definitions and their execution history.</td><td>scheduler</td></tr>
+      <tr><td class="mono">analytics_events / metric_snapshots</td><td class="mono">insights</td><td>Immutable activity facts and periodic rollups.</td><td>pipeline</td></tr>
+      <tr><td class="mono">model_usage / budgets</td><td class="mono">insights</td><td>Token, latency and cost ledger; spending envelopes.</td><td>gateway</td></tr>
+      <tr><td class="mono">learning_records</td><td class="mono">insights</td><td>Evaluated lessons with evidence, reusable by future plans.</td><td>Learning Agent</td></tr>
+      <tr><td class="mono">audit_logs</td><td class="mono">platform</td><td>Append-only record of every privileged action.</td><td>append-only</td></tr>
+      <tr><td class="mono">integrations</td><td class="mono">platform</td><td>Connected external accounts, scopes and token health.</td><td>admin</td></tr>
+    </tbody>
+  </table>
+
+  <h2>2.4 Domain invariants</h2>
+  <p>Six rules hold across the whole system. They are enforced in the database where possible and in the gateway where not. Each maps to a test in Part 14.</p>
+
+  <table>
+    <thead><tr><th style="width:10mm">#</th><th style="width:56mm">Invariant</th><th>Enforcement</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">I-1</td><td>No row in any tenant table exists without a valid <span class="mono">organization_id</span>.</td><td>NOT NULL + FK + RLS policy. Composite unique keys include the tenant id.</td></tr>
+      <tr><td class="mono">I-2</td><td>No external action occurs without an <span class="mono">approvals</span> row in state <span class="mono">approved</span>, unless the action class is pre-authorised at the agent's autonomy level.</td><td>Gateway check before every tool execution; the approval row is consumed once (unique constraint).</td></tr>
+      <tr><td class="mono">I-3</td><td>The same logical action never executes twice.</td><td>Idempotency key <span class="mono">(org, action_class, subject_id, attempt_window)</span> with a unique index.</td></tr>
+      <tr><td class="mono">I-4</td><td>Money state is written only from a verified provider webhook, never from an agent or an email.</td><td><span class="mono">payments</span> and <span class="mono">subscriptions</span> have no write path outside the webhook handler; enforced by a DB role without UPDATE grant for the app role.</td></tr>
+      <tr><td class="mono">I-5</td><td>A suppressed address is never contacted, on any channel, by any agent, in any campaign.</td><td><span class="mono">suppressions</span> checked inside the send tool, not by the calling agent.</td></tr>
+      <tr><td class="mono">I-6</td><td>Every model call produces exactly one <span class="mono">model_usage</span> row, including failures.</td><td>Written in the gateway's finally path; a missing row for a request id is an alert.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>2.5 State machines</h2>
+  <p>These are the specification. A state not listed does not exist, and a transition not listed is a bug. Each transition has exactly one owner — the component allowed to write it.</p>
+
+  <h3>2.5.1 Task (<span class="mono">ENT-tasks</span>)</h3>
+  <table class="tight">
+    <thead><tr><th style="width:30mm">From</th><th style="width:44mm">Event</th><th style="width:26mm">To</th><th>Side effect</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">created</td><td>dependencies satisfied</td><td class="mono">ready</td><td>enqueue</td></tr>
+      <tr><td class="mono">created</td><td>dependency failed / cancelled</td><td class="mono">cancelled</td><td>propagate to dependants</td></tr>
+      <tr><td class="mono">ready</td><td>worker claims (atomic)</td><td class="mono">running</td><td>set <span class="mono">started_at</span>, attempt += 1</td></tr>
+      <tr><td class="mono">running</td><td>agent requests a gated tool</td><td class="mono">awaiting_approval</td><td>create approval, release worker slot</td></tr>
+      <tr><td class="mono">awaiting_approval</td><td>approved</td><td class="mono">running</td><td>resume with approval id</td></tr>
+      <tr><td class="mono">awaiting_approval</td><td>rejected</td><td class="mono">failed</td><td>reason = <span class="mono">rejected</span>, no retry</td></tr>
+      <tr><td class="mono">awaiting_approval</td><td>expired (TTL)</td><td class="mono">expired</td><td>notify owner</td></tr>
+      <tr><td class="mono">running</td><td>output validates</td><td class="mono">succeeded</td><td>write cost, emit event</td></tr>
+      <tr><td class="mono">running</td><td>error, attempts &lt; limit</td><td class="mono">ready</td><td>backoff schedule</td></tr>
+      <tr><td class="mono">running</td><td>error, attempts = limit</td><td class="mono">failed</td><td>dead-letter, notify</td></tr>
+      <tr><td class="mono">running</td><td>budget exhausted</td><td class="mono">blocked</td><td>fail closed, raise budget alert</td></tr>
+      <tr><td class="mono">any</td><td>emergency stop</td><td class="mono">cancelled</td><td>no further transitions</td></tr>
+    </tbody>
+  </table>
+
+  <h3>2.5.2 Lead (<span class="mono">ENT-leads</span>)</h3>
+  <table class="tight">
+    <thead><tr><th style="width:30mm">From</th><th style="width:44mm">Event</th><th style="width:26mm">To</th><th>Side effect</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">discovered</td><td>dedupe passes, enrichment written</td><td class="mono">enriched</td><td>attach company + contact</td></tr>
+      <tr><td class="mono">enriched</td><td>ICP score computed</td><td class="mono">scored</td><td>store score + model version</td></tr>
+      <tr><td class="mono">scored</td><td>score ≥ threshold</td><td class="mono">qualified</td><td>emit <span class="mono">lead.qualified</span></td></tr>
+      <tr><td class="mono">scored</td><td>score &lt; threshold</td><td class="mono">disqualified</td><td>retain for reporting, exclude from outreach</td></tr>
+      <tr><td class="mono">qualified</td><td>first message delivered</td><td class="mono">contacted</td><td>link conversation</td></tr>
+      <tr><td class="mono">contacted</td><td>human reply received</td><td class="mono">replied</td><td>pause sequence</td></tr>
+      <tr><td class="mono">replied</td><td>meeting booked</td><td class="mono">meeting_set</td><td>update pipeline</td></tr>
+      <tr><td class="mono">meeting_set</td><td>payment verified</td><td class="mono">converted</td><td>create customer</td></tr>
+      <tr><td class="mono">contacted / replied</td><td>opt-out or complaint</td><td class="mono">suppressed</td><td>write suppression, stop all sequences</td></tr>
+      <tr><td class="mono">any</td><td>sequence exhausted, no reply</td><td class="mono">dormant</td><td>eligible for re-approach after 90 days</td></tr>
+    </tbody>
+  </table>
+
+  <h3>2.5.3 Outreach message (<span class="mono">ENT-messages</span>, outbound)</h3>
+  <table class="tight">
+    <thead><tr><th style="width:30mm">From</th><th style="width:44mm">Event</th><th style="width:26mm">To</th><th>Side effect</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">drafted</td><td>QA checks pass</td><td class="mono">pending_approval</td><td>attach to approval</td></tr>
+      <tr><td class="mono">pending_approval</td><td>approved</td><td class="mono">queued</td><td>enforce daily send cap</td></tr>
+      <tr><td class="mono">queued</td><td>pre-send checks pass</td><td class="mono">sending</td><td>idempotency claim</td></tr>
+      <tr><td class="mono">sending</td><td>provider accepts</td><td class="mono">sent</td><td>store provider message id</td></tr>
+      <tr><td class="mono">sending</td><td>provider rejects</td><td class="mono">failed</td><td>classify (hard/soft), never blind-retry a hard bounce</td></tr>
+      <tr><td class="mono">sent</td><td>delivery event</td><td class="mono">delivered</td><td>—</td></tr>
+      <tr><td class="mono">any</td><td>bounce / complaint</td><td class="mono">bounced / complained</td><td>update sender reputation counters, suppress on complaint</td></tr>
+    </tbody>
+  </table>
+
+  <h3>2.5.4 Campaign (<span class="mono">ENT-campaigns</span>)</h3>
+  <p class="small"><span class="mono">draft → planned → pending_approval → approved → active → (paused ⇄ active) → completed</span>, with <span class="mono">cancelled</span> and <span class="mono">rejected</span> reachable from any pre-active state. Only <span class="mono">active</span> may emit sends, and only <span class="mono">approved</span> may transition to <span class="mono">active</span>.</p>
+
+  <h3>2.5.5 Approval (<span class="mono">ENT-approvals</span>)</h3>
+  <p class="small"><span class="mono">pending → approved | rejected | expired</span>; from <span class="mono">approved</span>, one-way to <span class="mono">executed</span> or <span class="mono">revoked</span> (before execution only). An approval binds to a payload hash: if the payload changes, the approval is void and a new one is required. This is what prevents "approved 200 emails" from becoming "approved 2,000 emails".</p>
+
+  <h3>2.5.6 Conversation and meeting</h3>
+  <p class="small"><strong>Conversation:</strong> <span class="mono">new → triaged → drafting → (auto_replied | awaiting_human) → awaiting_prospect → (meeting_offered | closed_won | closed_lost | opted_out)</span>. Any inbound message reopens a closed conversation to <span class="mono">triaged</span>. <strong>Meeting:</strong> <span class="mono">proposed → confirmed → booked → (completed | no_show)</span>, plus <span class="mono">cancelled</span> from any state; availability MUST be re-checked between <span class="mono">confirmed</span> and <span class="mono">booked</span>.</p>
+
+  <h2>2.6 Tenancy</h2>
+  <p>Multi-tenancy is not a later feature. Agencies — the second primary segment — run one workspace per client from day one, and a cross-tenant leak is the failure that ends the company.</p>
+
+  <pre class="diagram">  request
+    |
+    v
+  [ auth middleware ]  -> resolves user_id, then membership -> organization_id
+    |
+    v
+  [ SET LOCAL app.current_org = '&lt;uuid&gt;' ]   (per transaction, never per connection)
+    |
+    v
+  [ PostgreSQL RLS policy ]
+        USING (organization_id = current_setting('app.current_org')::uuid)
+    |
+    v
+  rows of exactly one tenant</pre>
+
+  <ul>
+    <li><strong>MUST:</strong> RLS enabled on every tenant table, with <span class="mono">FORCE ROW LEVEL SECURITY</span> so the table owner is not exempt.</li>
+    <li><strong>MUST:</strong> the tenant id comes from the session, never from the request body or query string. A client-supplied <span class="mono">organization_id</span> is treated as a hint to validate, never as authority.</li>
+    <li><strong>MUST:</strong> background workers set the same session variable before touching tenant data; a worker with no tenant context fails loudly rather than scanning everything.</li>
+    <li><strong>SHOULD:</strong> the service role used by migrations is separate from the application role, and the application role has no <span class="mono">BYPASSRLS</span>.</li>
+  </ul>
+
+  <div class="callout">
+    <span class="label">Why this is in Part 2 and not Part 10</span>
+    <p>Tenancy is a data-model property, not a security feature bolted on afterwards. Retrofitting RLS to twenty-eight tables after PH-3 means auditing every query written in the meantime. It costs two days in PH-1 and two weeks later.</p>
+  </div>
+</div>

@@ -1,0 +1,212 @@
+<!-- ============ PART 6 ============ -->
+<div class="part">
+  <div class="part-head">
+    <p class="eyebrow">Part 6</p>
+    <h1 class="part-title">Module build sheets</h1>
+  </div>
+
+  <p class="lede">One sheet per module, written so a developer can start without asking a question. The ten P0 modules are specified in full; the remainder are specified to the level needed to size them, and will be expanded at their phase entry.</p>
+
+  <p class="small">Every sheet follows the same shape: what it is for, what a user does in it, which routes serve it, which entities it owns, which agents depend on it, and the condition under which it is finished. Nothing here redefines a table or an endpoint — those live in Part 7 and Part 8.</p>
+
+  <!-- MOD-02 -->
+  <div class="sheet">
+    <div class="sheet-head"><div class="id">MOD-02</div><div class="ttl"><h4>Command Center</h4><div class="sub">SVC-growth-strategy · PH-2 · P0</div></div></div>
+    <p><strong>Purpose.</strong> The only entry point for an objective. Converts one natural-language instruction into a validated objective, a plan, and a task graph. It is not a chat window: it accepts a goal, shows what it understood, and hands over to the planner.</p>
+    <table class="tight">
+      <tbody>
+        <tr><td style="width:30mm"><strong>User stories</strong></td><td>As an owner, I state a growth goal and see exactly what the system understood before anything runs. As an owner, I can edit the parsed objective instead of re-typing the command.</td></tr>
+        <tr><td><strong>Routes</strong></td><td class="mono">/command · /command/[id]/plan</td></tr>
+        <tr><td><strong>Endpoints</strong></td><td class="mono">POST /v1/commands · GET /v1/commands/{id} · POST /v1/commands/{id}/confirm</td></tr>
+        <tr><td><strong>Owns</strong></td><td class="mono">commands, objectives</td></tr>
+        <tr><td><strong>Depends on</strong></td><td>AGT-01 (parsing and planning), MOD-18 (Brand Brain) for grounding, budget check before dispatch.</td></tr>
+        <tr><td><strong>Acceptance</strong></td><td>An ambiguous objective produces a clarification request listing the exact missing fields, never a guess. Confirming an objective creates a plan and task rows in one transaction.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- MOD-03 -->
+  <div class="sheet">
+    <div class="sheet-head"><div class="id">MOD-03</div><div class="ttl"><h4>AI Manager — orchestration</h4><div class="sub">SVC-growth-strategy · PH-2 · P0</div></div></div>
+    <p><strong>Purpose.</strong> Turns a confirmed objective into a dependency graph of tasks, assigns each to a role, estimates cost, and reports progress. The plan is a database object, editable by a human before execution.</p>
+    <table class="tight">
+      <tbody>
+        <tr><td style="width:30mm"><strong>User stories</strong></td><td>As an owner, I see the plan as a list of tasks with owners, dependencies, estimated cost and required approvals before anything executes. As an operator, I can pause or cancel any task and see why it failed.</td></tr>
+        <tr><td><strong>Routes</strong></td><td class="mono">/manager · /manager/[planId] · /manager/tasks/[id]</td></tr>
+        <tr><td><strong>Endpoints</strong></td><td class="mono">POST /v1/plans · GET /v1/plans/{id} · PATCH /v1/tasks/{id} · POST /v1/tasks/{id}/cancel</td></tr>
+        <tr><td><strong>Owns</strong></td><td class="mono">plans, tasks, task_dependencies</td></tr>
+        <tr><td><strong>Depends on</strong></td><td>AGT-01; scheduler; every role's manifest for cost estimation.</td></tr>
+        <tr><td><strong>Acceptance</strong></td><td>A plan cannot contain a cycle (rejected at write time). No task starts before all dependencies succeed. Cancelling a parent cancels descendants with a recorded reason.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- MOD-04 -->
+  <div class="sheet">
+    <div class="sheet-head"><div class="id">MOD-04</div><div class="ttl"><h4>AI Agents — registry and permissions</h4><div class="sub">SVC-growth-strategy · PH-1 · P0</div></div></div>
+    <p><strong>Purpose.</strong> The console for the twenty roles: toggle availability per organisation, set autonomy ceilings, inspect tools granted, view execution history and per-agent cost.</p>
+    <table class="tight">
+      <tbody>
+        <tr><td style="width:30mm"><strong>User stories</strong></td><td>As an admin, I can see what every agent is allowed to do in one screen. As an owner, I can lower an agent's autonomy without editing a file or deploying.</td></tr>
+        <tr><td><strong>Routes</strong></td><td class="mono">/agents · /agents/[id] · /agents/[id]/runs</td></tr>
+        <tr><td><strong>Endpoints</strong></td><td class="mono">GET /v1/agents · PATCH /v1/agents/{id} · GET /v1/agents/{id}/runs</td></tr>
+        <tr><td><strong>Owns</strong></td><td class="mono">agents, agent_tools</td></tr>
+        <tr><td><strong>Depends on</strong></td><td>Platform authz; tool registry; model registry.</td></tr>
+        <tr><td><strong>Acceptance</strong></td><td>Lowering an autonomy ceiling takes effect on the next task, with no caching of the old value. Raising a ceiling to L4 for a money-related action class is rejected by the API.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- MOD-18 -->
+  <div class="sheet">
+    <div class="sheet-head"><div class="id">MOD-18</div><div class="ttl"><h4>Brand Brain</h4><div class="sub">SVC-growth-strategy · PH-1 · P0</div></div></div>
+    <p><strong>Purpose.</strong> The source of truth every agent must consult. Structured fields plus document uploads, chunked and embedded, with approved and prohibited claims treated as hard constraints rather than guidance.</p>
+    <table class="tight">
+      <tbody>
+        <tr><td style="width:30mm"><strong>User stories</strong></td><td>As an owner, I complete a business profile once and every agent uses it. As an owner, I mark a claim as prohibited and see it blocked in generated copy.</td></tr>
+        <tr><td><strong>Routes</strong></td><td class="mono">/brand · /brand/documents · /brand/claims</td></tr>
+        <tr><td><strong>Endpoints</strong></td><td class="mono">GET|PUT /v1/brands/{id} · POST /v1/brands/{id}/documents · GET /v1/brands/{id}/search</td></tr>
+        <tr><td><strong>Owns</strong></td><td class="mono">brands, brand_documents, brand_chunks</td></tr>
+        <tr><td><strong>Depends on</strong></td><td>pgvector; embedding job; storage.</td></tr>
+        <tr><td><strong>Acceptance</strong></td><td>An agent cannot produce a claim without a <span class="mono">brand_chunk_id</span> citation. Deleting a document removes its chunks in the same transaction. Search returns passages, never whole documents.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- MOD-20 -->
+  <div class="sheet">
+    <div class="sheet-head"><div class="id">MOD-20</div><div class="ttl"><h4>Approval Center</h4><div class="sub">SVC-growth-strategy · PH-2 · P0</div></div></div>
+    <p><strong>Purpose.</strong> The single queue where a human authorises external effects. One request, one payload hash, one decision, one expiry.</p>
+    <table class="tight">
+      <tbody>
+        <tr><td style="width:30mm"><strong>User stories</strong></td><td>As an owner, I see exactly what will be sent, to whom, and at what cost, and I approve or edit it. As a reviewer, I can approve a batch of similar items with one action, but never a batch that exceeds the configured cap.</td></tr>
+        <tr><td><strong>Routes</strong></td><td class="mono">/approvals · /approvals/[id]</td></tr>
+        <tr><td><strong>Endpoints</strong></td><td class="mono">GET /v1/approvals · POST /v1/approvals/{id}/approve · POST /v1/approvals/{id}/reject</td></tr>
+        <tr><td><strong>Owns</strong></td><td class="mono">approvals, approval_rules</td></tr>
+        <tr><td><strong>Depends on</strong></td><td>Every gated tool; notification channel.</td></tr>
+        <tr><td><strong>Acceptance</strong></td><td>Approving a payload that has changed since review is impossible. An approval is single-use. An expired approval cannot be resurrected. Rejection is recorded with a reason and blocks the task permanently.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- MOD-06 -->
+  <div class="sheet">
+    <div class="sheet-head"><div class="id">MOD-06</div><div class="ttl"><h4>Lead Generation</h4><div class="sub">SVC-acquisition · PH-3 · P0</div></div></div>
+    <p><strong>Purpose.</strong> Discover candidate companies and people from permitted sources, deduplicate against the tenant's existing data, enrich, and hand qualified records to the CRM.</p>
+    <table class="tight">
+      <tbody>
+        <tr><td style="width:30mm"><strong>User stories</strong></td><td>As an owner, I describe my ICP and receive a reviewable list with sources and confidence, not a claimed-verified list. As an owner, I can reject a segment and see why records failed.</td></tr>
+        <tr><td><strong>Routes</strong></td><td class="mono">/leads · /leads/discover · /leads/[id]</td></tr>
+        <tr><td><strong>Endpoints</strong></td><td class="mono">POST /v1/leads/discover · GET /v1/leads · GET /v1/leads/{id} · POST /v1/leads/{id}/qualify</td></tr>
+        <tr><td><strong>Owns</strong></td><td class="mono">prospects, leads, lead_sources</td></tr>
+        <tr><td><strong>Depends on</strong></td><td>AGT-04, AGT-05; permitted data provider (INT-05); dedupe service.</td></tr>
+        <tr><td><strong>Acceptance</strong></td><td>Zero duplicates within a tenant on <span class="mono">(domain, contact_hash)</span>. Every contact carries source and confidence; no record is presented as verified without a verification event. A discovery run that returns fewer records than requested reports why.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- MOD-07 -->
+  <div class="sheet">
+    <div class="sheet-head"><div class="id">MOD-07</div><div class="ttl"><h4>CRM</h4><div class="sub">SVC-acquisition · PH-3 · P0</div></div></div>
+    <p><strong>Purpose.</strong> Companies, contacts, pipeline stages and a per-record timeline. Deliberately small: it holds what the growth engine needs, and exports what an external CRM wants.</p>
+    <table class="tight">
+      <tbody>
+        <tr><td style="width:30mm"><strong>User stories</strong></td><td>As a sales user, I see every interaction with a contact in one timeline. As an owner, I move a lead between stages and the change is attributed to me, not to an agent.</td></tr>
+        <tr><td><strong>Routes</strong></td><td class="mono">/crm · /crm/companies/[id] · /crm/contacts/[id] · /crm/pipeline</td></tr>
+        <tr><td><strong>Endpoints</strong></td><td class="mono">GET|POST /v1/companies · GET|PATCH /v1/contacts/{id} · GET /v1/pipeline · POST /v1/leads/{id}/stage</td></tr>
+        <tr><td><strong>Owns</strong></td><td class="mono">companies, contacts, pipeline_stages, activities</td></tr>
+        <tr><td><strong>Depends on</strong></td><td>Lead service; message service; audit.</td></tr>
+        <tr><td><strong>Acceptance</strong></td><td>Every stage change writes an activity row with actor type (human or agent) and id. Field-level permissions prevent an agent from editing owner-assigned fields.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- MOD-08 -->
+  <div class="sheet">
+    <div class="sheet-head"><div class="id">MOD-08</div><div class="ttl"><h4>Outreach Studio</h4><div class="sub">SVC-acquisition · PH-3 · P0</div></div></div>
+    <p><strong>Purpose.</strong> Drafts, review and dispatch of personalised first touches and follow-up sequences, with per-sender caps and a suppression gate that the drafting agent cannot bypass.</p>
+    <table class="tight">
+      <tbody>
+        <tr><td style="width:30mm"><strong>User stories</strong></td><td>As an owner, I review a batch of drafts, edit any of them, and approve the batch. As an owner, I set a daily cap and the system respects it even under load.</td></tr>
+        <tr><td><strong>Routes</strong></td><td class="mono">/outreach · /outreach/[campaignId] · /outreach/sequences/[id]</td></tr>
+        <tr><td><strong>Endpoints</strong></td><td class="mono">POST /v1/outreach/drafts · GET /v1/outreach/drafts · POST /v1/outreach/dispatch · GET /v1/outreach/sequences/{id}</td></tr>
+        <tr><td><strong>Owns</strong></td><td class="mono">outreach_drafts, sequences, sequence_steps</td></tr>
+        <tr><td><strong>Depends on</strong></td><td>AGT-06, AGT-07, AGT-09; TLS-14; suppression list; approvals.</td></tr>
+        <tr><td><strong>Acceptance</strong></td><td>Editing a draft invalidates its approval. A suppressed address cannot be dispatched even if present in an approved batch — the send tool refuses per message and records why. Caps are enforced atomically across workers.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- MOD-09 -->
+  <div class="sheet">
+    <div class="sheet-head"><div class="id">MOD-09</div><div class="ttl"><h4>AI Sales Inbox</h4><div class="sub">SVC-acquisition · PH-3 · P0</div></div></div>
+    <p><strong>Purpose.</strong> Retrieves replies, classifies intent, drafts responses grounded in Brand Brain, and routes anything uncertain to a human. This is where the product either earns trust or loses it.</p>
+    <table class="tight">
+      <tbody>
+        <tr><td style="width:30mm"><strong>User stories</strong></td><td>As an owner, I see every reply with a suggested response and a one-click approve. As an owner, I can see exactly which brand facts the draft used.</td></tr>
+        <tr><td><strong>Routes</strong></td><td class="mono">/inbox · /inbox/[conversationId]</td></tr>
+        <tr><td><strong>Endpoints</strong></td><td class="mono">GET /v1/conversations · GET /v1/conversations/{id} · POST /v1/conversations/{id}/reply · POST /v1/conversations/{id}/classify</td></tr>
+        <tr><td><strong>Owns</strong></td><td class="mono">conversations, messages</td></tr>
+        <tr><td><strong>Depends on</strong></td><td>AGT-08; INT-02 (Gmail) or INT-07 (Graph); classification golden set.</td></tr>
+        <tr><td><strong>Acceptance</strong></td><td>A reply classified below the confidence threshold is never auto-sent at any autonomy level. An opt-out keyword immediately writes a suppression and stops the sequence, before any other processing. Threading matches the provider's thread id, not the subject line.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- MOD-13 -->
+  <div class="sheet">
+    <div class="sheet-head"><div class="id">MOD-13</div><div class="ttl"><h4>Campaign Manager</h4><div class="sub">SVC-content · PH-3 · P0</div></div></div>
+    <p><strong>Purpose.</strong> Binds a segment, a message, a channel and a budget into one unit of work whose results are measurable. A campaign is the join key that makes cost per lead computable.</p>
+    <table class="tight">
+      <tbody>
+        <tr><td style="width:30mm"><strong>User stories</strong></td><td>As an owner, I see one campaign's full economics — spend, leads, replies, meetings, revenue. As an owner, I pause a campaign and no further messages leave.</td></tr>
+        <tr><td><strong>Routes</strong></td><td class="mono">/campaigns · /campaigns/[id] · /campaigns/new</td></tr>
+        <tr><td><strong>Endpoints</strong></td><td class="mono">POST /v1/campaigns · GET /v1/campaigns/{id} · POST /v1/campaigns/{id}/activate · POST /v1/campaigns/{id}/pause</td></tr>
+        <tr><td><strong>Owns</strong></td><td class="mono">campaigns, campaign_assets, campaign_metrics</td></tr>
+        <tr><td><strong>Depends on</strong></td><td>AGT-12; approval; insights.</td></tr>
+        <tr><td><strong>Acceptance</strong></td><td>Activation requires a prior approval. Pausing takes effect before the next send, not after the queue drains. Every send carries <span class="mono">campaign_id</span>, so no cost is unattributable.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- MOD-17 -->
+  <div class="sheet">
+    <div class="sheet-head"><div class="id">MOD-17</div><div class="ttl"><h4>Analytics and Overview</h4><div class="sub">SVC-insights · PH-2 · P0</div></div></div>
+    <p><strong>Purpose.</strong> Immutable activity events rolled up into metric snapshots, plus the overview screens. Numbers come from SQL; the model only narrates them.</p>
+    <table class="tight">
+      <tbody>
+        <tr><td style="width:30mm"><strong>User stories</strong></td><td>As an owner, I can trace any number on the dashboard back to the rows that produced it. As an owner, I see cost per qualified lead and per won customer, not only token spend.</td></tr>
+        <tr><td><strong>Routes</strong></td><td class="mono">/dashboard · /analytics · /analytics/campaigns/[id]</td></tr>
+        <tr><td><strong>Endpoints</strong></td><td class="mono">GET /v1/metrics/overview · GET /v1/metrics/campaigns/{id} · GET /v1/metrics/costs</td></tr>
+        <tr><td><strong>Owns</strong></td><td class="mono">analytics_events, metric_snapshots</td></tr>
+        <tr><td><strong>Depends on</strong></td><td>every emitting service; the rollup job.</td></tr>
+        <tr><td><strong>Acceptance</strong></td><td>An agent cannot write a metric. Every dashboard figure has a documented query. Snapshots are recomputable from events and a rebuild produces identical totals.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>6.2 Remaining modules</h2>
+  <p>Specified to sizing level. Each expands to a full sheet at the entry gate of its phase, using the same six rows as above.</p>
+  <table class="tight">
+    <thead><tr><th style="width:15mm">ID</th><th style="width:32mm">Module</th><th style="width:14mm">Phase</th><th>Scope in one line</th><th style="width:44mm">Primary acceptance</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">MOD-01</td><td>Overview</td><td class="mono">PH-2</td><td>Composed dashboard over MOD-17 snapshots.</td><td>Every tile links to its query.</td></tr>
+      <tr><td class="mono">MOD-05</td><td>Marketing Strategy</td><td class="mono">PH-2</td><td>Research reports and strategic plans, versioned.</td><td>Plan cites its sources; superseded plans are archived.</td></tr>
+      <tr><td class="mono">MOD-10</td><td>Meeting Scheduler</td><td class="mono">PH-4</td><td>Availability rules, proposal, confirmation, booking.</td><td>Availability re-checked within 60s of booking; no double booking.</td></tr>
+      <tr><td class="mono">MOD-11</td><td>Content Studio</td><td class="mono">PH-2</td><td>Long-form and short-form drafts with brand voice checks.</td><td>Prohibited-claims count is zero at publish.</td></tr>
+      <tr><td class="mono">MOD-12</td><td>Creative Studio</td><td class="mono">PH-5</td><td>Ad concepts and generated assets with rights metadata.</td><td>No asset used without licence and source recorded.</td></tr>
+      <tr><td class="mono">MOD-14</td><td>Customer Onboarding</td><td class="mono">PH-4</td><td>Activation sequences triggered by verified payment.</td><td>Onboarding starts only from a payment event.</td></tr>
+      <tr><td class="mono">MOD-15</td><td>Customer Support</td><td class="mono">PH-5</td><td>Triage, suggested replies, escalation to human.</td><td>Refund and dispute requests always escalate.</td></tr>
+      <tr><td class="mono">MOD-16</td><td>Retention Center</td><td class="mono">PH-5</td><td>Health score, churn risk, intervention list.</td><td>Interventions are proposed, never executed unapproved.</td></tr>
+      <tr><td class="mono">MOD-19</td><td>Automation Center</td><td class="mono">PH-4</td><td>Trigger-condition-action definitions and run history.</td><td>Loops impossible; every run traceable; failures visible.</td></tr>
+      <tr><td class="mono">MOD-21</td><td>Integrations</td><td class="mono">PH-1</td><td>OAuth connections, scope display, health, revocation.</td><td>Token refresh failures surface as a visible connection state.</td></tr>
+      <tr><td class="mono">MOD-22</td><td>Usage &amp; Cost</td><td class="mono">PH-1</td><td>Ledger views, budgets, per-workflow cost.</td><td>Every call attributable to org, agent, task and campaign.</td></tr>
+      <tr><td class="mono">MOD-23</td><td>Settings</td><td class="mono">PH-1</td><td>Organisation, members, roles, plan, danger zone.</td><td>Role change revokes sessions within one request.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <span class="label">A note on module count</span>
+    <p>Eleven of the twenty-three modules are reads over tables another module owns. Building them as separate services would triple the surface area for no benefit. The navigation stays at 23 because that is how users think; the implementation collapses to seven because that is how systems stay operable.</p>
+  </div>
+</div>

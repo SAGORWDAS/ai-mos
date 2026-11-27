@@ -1,0 +1,111 @@
+# AI-MOS — tools
+# Extracted from spec/ai-mos.spec.yaml (normative source). Do not edit in isolation.
+# TLS-01..TLS-18. The only egress to the outside world.
+
+spec_version: '1.0'
+tools:
+  - id: TLS-01
+    name: search_web
+    class: read
+    min_level: L1
+  - id: TLS-02
+    name: read_brand_brain
+    class: read
+    min_level: L1
+  - id: TLS-03
+    name: lookup_company
+    class: read
+    min_level: L1
+  - id: TLS-04
+    name: score_lead
+    class: compute
+    min_level: L1
+  - id: TLS-05
+    name: create_lead
+    class: write
+    min_level: L2
+    idempotent_on:
+      - organization_id
+      - domain
+      - contact_hash
+  - id: TLS-06
+    name: draft_content
+    class: write
+    min_level: L2
+  - id: TLS-07
+    name: update_crm
+    class: write
+    min_level: L2
+    field_allowlist: true
+  - id: TLS-08
+    name: check_availability
+    class: read
+    min_level: L1
+  - id: TLS-09
+    name: book_meeting
+    class: external
+    min_level: L3
+    requires:
+      - approval
+      - availability_recheck
+  - id: TLS-10
+    name: read_inbox
+    class: read
+    min_level: L1
+  - id: TLS-11
+    name: classify_reply
+    class: compute
+    min_level: L1
+  - id: TLS-12
+    name: draft_reply
+    class: write
+    min_level: L2
+  - id: TLS-13
+    name: create_approval
+    class: write
+    min_level: L1
+  - id: TLS-14
+    name: send_email
+    class: external
+    min_level: L3
+    requires:
+      - approval
+      - suppression_check
+      - consent_check
+      - daily_cap
+      - idempotency
+  - id: TLS-15
+    name: send_bulk_campaign
+    class: external
+    min_level: L3
+    requires:
+      - owner_approval
+      - per_message_idempotency
+      - global_cap
+  - id: TLS-16
+    name: create_checkout_link
+    class: external
+    min_level: L2
+    requires:
+      - no_payment_inference
+  - id: TLS-17
+    name: read_metrics
+    class: read
+    min_level: L1
+  - id: TLS-18
+    name: write_learning
+    class: write
+    min_level: L2
+    requires:
+      - evidence_ref
+      - effect_size
+gate_sequence:
+  - schema
+  - permission
+  - policy
+  - budget
+  - approval
+  - idempotency
+  - execute
+  - persist
+  - emit

@@ -1,0 +1,26 @@
+# T-2.6 — Content Agent with claim checks
+# Generated from spec/ai-mos.spec.yaml + blueprint/tasks.js. Do not edit alone.
+
+id: T-2.6
+phase: PH-2
+kind: agent
+blocking: true
+title: Content Agent with claim checks
+context_budget_tokens: 5000
+load_only:
+  - master §4.2 guards
+  - master §10.2
+files_create:
+  - backend/app/agents/manifests/AGT-06.yaml
+  - backend/app/services/agent_engine/guards/claims.py
+  - backend/tests/test_claim_guard.py
+steps:
+  - prohibited-claims list from brand
+  - every factual statement carries a brand_chunk_id
+  - word limit and banned phrases enforced in code
+done_when:
+  - 'test_AC-14 green: 100% of seeded uncited claims rejected'
+do_not:
+  - a guard is code, never an instruction in the prompt
+  - do not start another task in this session
+  - do not invent a table, endpoint, tool or model id

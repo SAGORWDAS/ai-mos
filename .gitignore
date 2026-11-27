@@ -1,0 +1,16 @@
+# documents build
+node_modules/
+.tmp/
+.tmp-pack/
+
+# application
+.env
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+.next/
+frontend/out/
+data/

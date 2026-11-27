@@ -1,0 +1,26 @@
+# T-3.5 — Mailbox connection (read)
+# Generated from spec/ai-mos.spec.yaml + blueprint/tasks.js. Do not edit alone.
+
+id: T-3.5
+phase: PH-3
+kind: integration
+blocking: true
+title: Mailbox connection (read)
+context_budget_tokens: 6000
+load_only:
+  - master §9.2 INT-02
+  - master §8.4
+files_create:
+  - backend/app/integrations/gmail/oauth.py
+  - backend/app/integrations/gmail/sync.py
+  - backend/tests/test_mailbox_sync.py
+steps:
+  - OAuth offline access
+  - incremental sync with stored cursor
+  - thread id from the provider, never the subject
+done_when:
+  - reply arrives in conversations within one sync cycle
+do_not:
+  - never parse message bodies inside a webhook handler
+  - do not start another task in this session
+  - do not invent a table, endpoint, tool or model id

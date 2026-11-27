@@ -1,0 +1,28 @@
+# T-3.6 — Send path: suppression, consent, caps
+# Generated from spec/ai-mos.spec.yaml + blueprint/tasks.js. Do not edit alone.
+
+id: T-3.6
+phase: PH-3
+kind: gateway
+blocking: true
+title: 'Send path: suppression, consent, caps'
+context_budget_tokens: 6000
+load_only:
+  - master §3.4
+  - master §10.3
+  - spec/invariants.yaml I-5
+files_create:
+  - backend/app/services/agent_engine/tools/send_email.py
+  - backend/app/services/email/policy.py
+  - backend/migrations/0007_leads.sql
+  - backend/tests/test_suppression.py
+steps:
+  - check suppression → consent → daily cap → approval id → idempotency claim
+  - hard bounce writes a suppression
+  - complaint threshold pauses the campaign
+done_when:
+  - 'test_AC-03 green: suppressed address refused inside an approved batch'
+do_not:
+  - never skip a check because the caller already ran it
+  - do not start another task in this session
+  - do not invent a table, endpoint, tool or model id

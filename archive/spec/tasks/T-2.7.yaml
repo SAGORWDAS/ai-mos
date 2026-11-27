@@ -1,0 +1,25 @@
+# T-2.7 — Approval Center
+# Generated from spec/ai-mos.spec.yaml + blueprint/tasks.js. Do not edit alone.
+
+id: T-2.7
+phase: PH-2
+kind: ui
+blocking: true
+title: Approval Center
+context_budget_tokens: 5000
+load_only:
+  - master §6 MOD-20
+  - master §10.2
+files_create:
+  - frontend/app/(app)/approvals/page.tsx
+  - frontend/app/(app)/approvals/[id]/page.tsx
+steps:
+  - queue with payload preview and cost
+  - edit voids approval
+  - batch approve under a cap
+done_when:
+  - editing a draft requires re-approval; batch above cap is refused
+do_not:
+  - no approve-all button without a cap
+  - do not start another task in this session
+  - do not invent a table, endpoint, tool or model id

@@ -1,0 +1,28 @@
+# T-4.3 — Payment adapter and webhook
+# Generated from spec/ai-mos.spec.yaml + blueprint/tasks.js. Do not edit alone.
+
+id: T-4.3
+phase: PH-4
+kind: integration
+blocking: true
+title: Payment adapter and webhook
+context_budget_tokens: 5000
+load_only:
+  - master §8.4
+  - master §9.2 INT-04
+  - spec/invariants.yaml I-4
+files_create:
+  - backend/app/integrations/payments/provider.py
+  - backend/app/api/v1/webhooks/payments.py
+  - backend/tests/test_webhooks.py
+steps:
+  - verify signature on the raw body
+  - unique provider_event_id; replay is a no-op
+  - unknown event types logged and ignored
+  - respond 2xx before processing
+done_when:
+  - test_AC-10 green
+do_not:
+  - money state is never written outside this handler
+  - do not start another task in this session
+  - do not invent a table, endpoint, tool or model id

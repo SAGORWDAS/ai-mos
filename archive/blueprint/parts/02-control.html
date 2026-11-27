@@ -1,0 +1,99 @@
+<!-- ============ DOCUMENT CONTROL ============ -->
+<div class="part">
+  <div class="part-head">
+    <p class="eyebrow">Front matter · 01</p>
+    <h1 class="part-title">Document control</h1>
+  </div>
+
+  <table class="tight">
+    <tbody>
+      <tr><td style="width:36mm"><strong>Document ID</strong></td><td>AI-MOS-BP-001</td></tr>
+      <tr><td><strong>Title</strong></td><td>AI-MOS — Product &amp; Engineering Blueprint</td></tr>
+      <tr><td><strong>Version</strong></td><td>1.1 (build-ready baseline)</td></tr>
+      <tr><td><strong>Status</strong></td><td>Approved for planning. Binding until superseded by a phase-exit revision.</td></tr>
+      <tr><td><strong>Date</strong></td><td>November 2026</td></tr>
+      <tr><td><strong>Companion</strong></td><td><span class="mono">AI-MOS-Build-Pack.pdf</span> — 28-page coding companion. The only document open while building; this one is for decisions and for buyers.</td></tr>
+      <tr><td><strong>Owner</strong></td><td>AI-MOS Programme — Product</td></tr>
+      <tr><td><strong>Audience</strong></td><td>Product, marketing and engineering teams; automated coding agents (Front matter 02).</td></tr>
+      <tr><td><strong>Supersedes</strong></td><td>The initial 17-section product brief. Retained as background; this document governs wherever the two differ (Part 13.3).</td></tr>
+      <tr><td><strong>Review cycle</strong></td><td>Revised and re-versioned at every phase exit gate, PH-1 through PH-6.</td></tr>
+      <tr><td><strong>Machine-readable twin</strong></td><td><span class="mono">spec/ai-mos.spec.yaml</span> — normative, Appendix A. If prose and spec disagree, the spec wins.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Change log</h3>
+  <table class="tight">
+    <thead><tr><th style="width:14mm">Version</th><th style="width:22mm">Date</th><th>Change</th><th style="width:24mm">Authority</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">0.1</td><td>Nov 2026</td><td>Initial brief: vision, module list, agent list, technology stack, 12-week roadmap.</td><td>Programme</td></tr>
+      <tr><td class="mono">0.9</td><td>Nov 2026</td><td>Developer review. Corrections to service topology, phase gates, cost model and integration strategy.</td><td>Engineering</td></tr>
+      <tr><td class="mono">1.0</td><td>Nov 2026</td><td>Normative language, stable identifiers, state machines, build sheets, phase task ledger, machine-readable spec.</td><td>Programme</td></tr>
+      <tr><td class="mono">1.1</td><td>Nov 2026</td><td>Adds Appendix F (reality check and corporate path), the build pack companion, and 58 per-task context capsules at <span class="mono">spec/tasks/</span>.</td><td>Programme</td></tr>
+      <tr><td class="mono">—</td><td>—</td><td>Next revision issued at the PH-1 exit gate.</td><td>—</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Approval</h3>
+  <p class="small">This blueprint is adopted when the named functions confirm the scope, the phase order and the acceptance criteria in Part 14. Signatures are recorded in the programme decision log.</p>
+  <div class="sig">
+    <div class="s"><div class="line">Product</div></div>
+    <div class="s"><div class="line">Engineering</div></div>
+    <div class="s"><div class="line">Marketing</div></div>
+  </div>
+
+  <hr class="rule">
+
+  <div class="nobreak">
+  <h3>How to read this document</h3>
+  <p>Each part answers one question, and each part is meant to be read at a different moment in the build. Part 1 is read once. Part 6 stays open on the desk. Part 11 is the working plan. Appendix A is ingested by tooling, not read by people.</p>
+
+  <table class="tight">
+    <thead><tr><th style="width:16mm">Part</th><th style="width:46mm">Read it when</th><th>Question it answers</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">1–2</td><td>Onboarding anyone</td><td>What is this product, and what are its objects?</td></tr>
+      <tr><td class="mono">3–5</td><td>Before writing infrastructure code</td><td>How does the system hold together?</td></tr>
+      <tr><td class="mono">6–10</td><td>Continuously, per module</td><td>What exactly does each module do and own?</td></tr>
+      <tr><td class="mono">11</td><td>Every working day</td><td>What do I build next, and what proves it done?</td></tr>
+      <tr><td class="mono">12–13</td><td>Before spending money</td><td>What does it cost, and what could go wrong?</td></tr>
+      <tr><td class="mono">14</td><td>At every phase exit</td><td>Is it actually finished?</td></tr>
+      <tr><td class="mono">A–F</td><td>Once, and before committing budget</td><td>Machine contracts, schemas, glossary, references — and an honest assessment of what this cannot do.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>Normative language</h3>
+  <table class="tight">
+    <thead><tr><th style="width:24mm">Keyword</th><th>Meaning in this document</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">MUST</td><td>Non-negotiable. Violating it is a defect, not a design choice. Most MUST rules concern security, tenancy, money or data integrity.</td></tr>
+      <tr><td class="mono">MUST NOT</td><td>A prohibited behaviour. Every MUST NOT has a matching test in Part 14.</td></tr>
+      <tr><td class="mono">SHOULD</td><td>The default. Deviating requires a one-line recorded justification in the decision log (Part 13.2).</td></tr>
+      <tr><td class="mono">MAY</td><td>Genuinely optional, usually a later-phase enhancement.</td></tr>
+      <tr><td class="mono">Illustrative</td><td>Numbers, prices, model identifiers and capacity figures marked illustrative are not contracts. Re-measure before relying on them.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Identifier scheme</h3>
+  <p>Nothing in this build is described twice with two names. These prefixes appear in the specification, in code, in commit messages, in test names and in the phase ledger.</p>
+  <table class="tight">
+    <thead><tr><th style="width:22mm">Prefix</th><th style="width:46mm">Refers to</th><th>Example</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">MOD-nn</td><td>Product module (Part 2.2)</td><td><span class="mono">MOD-07 CRM</span></td></tr>
+      <tr><td class="mono">SVC-x</td><td>Backend service</td><td><span class="mono">SVC-acquisition</span></td></tr>
+      <tr><td class="mono">AGT-nn</td><td>Agent role definition</td><td><span class="mono">AGT-03 Strategy Agent</span></td></tr>
+      <tr><td class="mono">TLS-nn</td><td>Tool exposed to agents</td><td><span class="mono">TLS-14 send_email</span></td></tr>
+      <tr><td class="mono">INT-nn</td><td>External integration</td><td><span class="mono">INT-02 Gmail API</span></td></tr>
+      <tr><td class="mono">WKF-x</td><td>End-to-end operating workflow</td><td><span class="mono">WKF-B Lead generation</span></td></tr>
+      <tr><td class="mono">ENT-x</td><td>Entity or table</td><td><span class="mono">ENT-leads</span></td></tr>
+      <tr><td class="mono">PH-n</td><td>Delivery phase</td><td><span class="mono">PH-3</span></td></tr>
+      <tr><td class="mono">T-n.m</td><td>Build task, phase <em>n</em>, item <em>m</em></td><td><span class="mono">T-3.4</span></td></tr>
+      <tr><td class="mono">AC-nn</td><td>Acceptance criterion</td><td><span class="mono">AC-11</span></td></tr>
+      <tr><td class="mono">ADR-nn</td><td>Architecture decision record</td><td><span class="mono">ADR-04</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <span class="label">The document in one sentence</span>
+    <p>One multi-tenant backend owns every object and every permission; one agent runtime executes configured roles against a fixed tool gateway; and a seven-phase sequence delivers one provable business outcome per phase — beginning with ten real emails, not with a dashboard.</p>
+  </div>
+</div>

@@ -1,0 +1,149 @@
+<!-- ============ PART 5 ============ -->
+<div class="part">
+  <div class="part-head">
+    <p class="eyebrow">Part 5</p>
+    <h1 class="part-title">AI gateway and cost control</h1>
+  </div>
+
+  <p class="lede">Model choice is a runtime decision made by policy and paid for out of a visible budget — not a string hardcoded in a prompt, and not a monthly invoice nobody can explain.</p>
+
+  <h2>5.1 Why a gateway, not an SDK</h2>
+  <p>Every model call in the system goes through one module. That module is small, boring and load-bearing.</p>
+
+  <table class="tight">
+    <thead><tr><th style="width:40mm">Responsibility</th><th>Behaviour</th></tr></thead>
+    <tbody>
+      <tr><td>Provider abstraction</td><td>One normative call shape. Swapping a model or provider is a registry edit, never a code change.</td></tr>
+      <tr><td>Routing</td><td>Selects a tier from task class, impact, uncertainty and required output quality (§5.3).</td></tr>
+      <tr><td>Budget enforcement</td><td>Checks org, workflow and task envelopes <em>before</em> dispatch, and fails closed.</td></tr>
+      <tr><td>Ledger</td><td>Writes exactly one <span class="mono">model_usage</span> row per attempt, including failures and timeouts.</td></tr>
+      <tr><td>Determinism</td><td>Pins model version, temperature and seed where the provider supports it, so a re-run is reproducible.</td></tr>
+      <tr><td>Guards</td><td>Token ceilings per call, refusal to send PII to a provider not approved for it.</td></tr>
+      <tr><td>Fallback</td><td>On provider failure, one retry at the fallback tier or an alternate provider; never silent degradation to a worse model without recording it.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>5.2 Model tiers</h2>
+  <p>Three tiers, defined by <em>job</em>, not by brand. The identifiers below are taken from the source brief and are <strong>unverified</strong>: they are registry placeholders to be confirmed against the live model catalogue at PH-0, not constants to be pasted into code.</p>
+
+  <table>
+    <thead><tr><th style="width:16mm">Tier</th><th style="width:36mm">Placeholder ID</th><th style="width:30mm">Listed price / M tok</th><th>Job</th><th style="width:20mm">Status</th></tr></thead>
+    <tbody>
+      <tr><td><strong>T1</strong></td><td class="mono">z-ai/glm-5.3-flash</td><td>in 0.0399 · out 0.0784</td><td>Classification, extraction, routine drafts, summaries, simple tool calling. The default for volume.</td><td><span class="tag">unverified</span></td></tr>
+      <tr><td><strong>T2</strong></td><td class="mono">meta/muse-ember</td><td>in 0.10 · out 0.50</td><td>Planning, multi-step orchestration, strategy, reliable structured output, harder analysis.</td><td><span class="tag">unverified</span></td></tr>
+      <tr><td><strong>T3</strong></td><td class="mono">premium (benchmark first)</td><td>—</td><td>High-value objections, sensitive conversations, final QA on high-impact campaigns.</td><td><span class="tag">unverified</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="trap">
+    <span class="label">Registry rule</span>
+    <p>No model identifier appears in application code, prompts or test fixtures. It appears only in <span class="mono">model_registry</span> rows with a <span class="mono">verified_at</span> timestamp, a price snapshot and an eval score. A model with no <span class="mono">verified_at</span> cannot be promoted to production — the gateway refuses it.</p>
+  </div>
+
+  <p class="small"><strong>Illustrative inference cost, not a business cost.</strong> A task consuming 100k input and 30k output tokens at the T1 rates above costs <span class="mono">0.1 × 0.0399 + 0.03 × 0.0784 ≈ $0.0063</span>. Recompute at build time against live pricing. Provider platform fees (the brief cites 5.5% on credit purchase) and free-tier request limits are billing mechanics, not per-token costs, and must be verified before they appear in any customer-facing claim.</p>
+
+  <h2>5.3 Routing</h2>
+  <p>Routing is resolved from four properties of the <em>task</em>. The agent's name is never an input.</p>
+
+  <table>
+    <thead><tr><th style="width:32mm">Task class</th><th style="width:14mm">Default</th><th style="width:44mm">Escalate to T2/T3 when</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>Lead extraction</td><td class="mono">T1</td><td>Fields ambiguous, or record from a low-quality source</td><td>Batch where possible; deterministic parsing first.</td></tr>
+      <tr><td>Lead scoring</td><td class="mono">T1</td><td>Account value above threshold</td><td>Scoring maths is code; the model only extracts features.</td></tr>
+      <tr><td>Email classification</td><td class="mono">T1</td><td>Confidence &lt; 0.7, or multi-intent reply</td><td>Labels are a closed set.</td></tr>
+      <tr><td>Routine drafting</td><td class="mono">T1</td><td>Objection, pricing, legal or contractual language</td><td>Escalation is triggered by classification, not by gut feel.</td></tr>
+      <tr><td>CMO planning</td><td class="mono">T2</td><td>Objective spans multiple channels with a budget</td><td>Plans are the most expensive output per token and the cheapest to get wrong.</td></tr>
+      <tr><td>Campaign strategy</td><td class="mono">T2</td><td>Large budget or unfamiliar market</td><td>—</td></tr>
+      <tr><td>Sales replies</td><td class="mono">T1</td><td>Sentiment negative, or intent uncertain</td><td>L4 automation permitted only at T1 confidence ≥ 0.85.</td></tr>
+      <tr><td>Enterprise proposal</td><td class="mono">T3</td><td>Always</td><td>High commercial risk; human approval mandatory.</td></tr>
+      <tr><td>Analytics summary</td><td class="mono">T1</td><td>Data incomplete or contradictory</td><td>Numbers come from SQL; the model narrates only.</td></tr>
+      <tr><td>Quality assurance</td><td class="mono">T1</td><td>Failure, or a high-risk output</td><td>A QA failure is itself an eval signal.</td></tr>
+    </tbody>
+  </table>
+
+  <pre>def resolve_tier(task) -> Tier:
+    if task.class in ALWAYS_T3:                 return T3
+    score = 0
+    score += 2 if task.impact == HIGH else 0
+    score += 2 if task.uncertainty == HIGH else 0
+    score += 1 if task.output_quality == CRITICAL else 0
+    score += 1 if task.prior_attempts >= 1 else 0
+    if task.value_usd_estimate > ESCALATION_VALUE_USD: score += 1
+    tier = T2 if score >= 2 else T1
+    if score >= 4: tier = T3
+    return min(tier, task.agent.autonomy_model_ceiling)</pre>
+
+  <p class="small">The function is deliberately boring and unit-testable. It is also the only place where "which model" is decided — which means cost behaviour can be changed in one commit and evaluated against the ledger.</p>
+
+  <h2>5.4 Budgets</h2>
+  <p>Four envelopes, each enforced before dispatch, each owned by an organisation administrator.</p>
+
+  <table class="tight">
+    <thead><tr><th style="width:26mm">Envelope</th><th style="width:34mm">Scope</th><th style="width:30mm">Typical limit</th><th>On breach</th></tr></thead>
+    <tbody>
+      <tr><td>Per task</td><td>One task instance</td><td>$0.01 – $0.25</td><td>Block task, mark <span class="mono">blocked</span>, notify; do not silently downgrade quality.</td></tr>
+      <tr><td>Per workflow run</td><td>WKF-A … WKF-E</td><td>$0.50 – $20</td><td>Pause workflow, require a human decision to continue.</td></tr>
+      <tr><td>Per agent / day</td><td>Agent × organisation</td><td>$1 – $25</td><td>Agent stops accepting new tasks for the day.</td></tr>
+      <tr><td>Per organisation / month</td><td>Tenant</td><td>Plan-dependent</td><td>Read-only mode; owner notified at 80% and 100%.</td></tr>
+    </tbody>
+  </table>
+
+  <p>Three behaviours are non-negotiable. Budget checks happen <em>before</em> the call, using the estimated cost, not after using the actual. A breached budget never causes a partial external effect, because effects are the last step of a task. And every breach is an audit entry with the workflow, task and agent that caused it — so the conversation with the customer is about a specific campaign, not about a total.</p>
+
+  <p><strong>Founder-stage defaults</strong> (normative, <span class="mono">spec/ai-mos.spec.yaml#budgets</span>): <span class="mono">$0.02</span> per task, <span class="mono">$0.50</span> per workflow run, <span class="mono">$0.10</span> per agent per day, <span class="mono">$2.00</span> per organisation per month. Normal use lands near $0.16 per month in inference; the ceiling exists to stop a runaway loop, not to authorise spending. See Part 12.5 for the arithmetic.</p>
+
+  <h2>5.5 Caching and reuse</h2>
+  <table class="tight">
+    <thead><tr><th style="width:34mm">Layer</th><th style="width:26mm">Key</th><th>What it saves</th></tr></thead>
+    <tbody>
+      <tr><td>Deterministic-first</td><td>—</td><td>Filtering, dedupe, scoring maths, scheduling and state transitions are code. They never consume a token.</td></tr>
+      <tr><td>Prompt prefix cache</td><td>system prompt hash</td><td>Stable instructions reused across thousands of calls where the provider supports prefix caching.</td></tr>
+      <tr><td>Result cache</td><td>task type + input hash</td><td>Identical classification or extraction, e.g. re-running a failed workflow, costs nothing the second time.</td></tr>
+      <tr><td>Knowledge store</td><td>brand + query embedding</td><td>The largest saving: business facts live in Postgres and are retrieved, not re-sent.</td></tr>
+      <tr><td>Research store</td><td>company domain + TTL</td><td>A prospect is researched once; the artefact is reused across campaigns for 90 days.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>5.6 The cost ledger</h2>
+  <pre>model_usage
+  id, organization_id, task_id, agent_id, campaign_id (nullable)
+  request_id            -- provider correlation id, unique
+  model_id, model_registry_version, tier
+  input_tokens, output_tokens, cached_tokens
+  latency_ms, status (ok | error | timeout | rejected)
+  cost_usd              -- computed at write time from the price snapshot
+  created_at
+
+budgets
+  id, organization_id, scope (org | agent | workflow | task_type)
+  scope_ref, period (day | month), limit_usd, spent_usd, action_on_breach</pre>
+
+  <p>Two derived views make cost legible without a data team: <span class="mono">cost_per_task_type</span> (p50/p95) and <span class="mono">cost_per_outcome</span> (inference + sending + data + review, divided by qualified leads or won customers). The second is the one that goes on the pricing page.</p>
+
+  <h2>5.7 Model promotion</h2>
+  <ol class="tight">
+    <li>A candidate model is registered with a price snapshot and no <span class="mono">verified_at</span>.</li>
+    <li>The role's golden set runs against it (Part 4.6). Quality, latency and cost are recorded.</li>
+    <li>It may be promoted only if it passes the role's threshold <em>and</em> costs less per passing task than the incumbent — or costs more and is a deliberate quality trade.</li>
+    <li>Promotion is a registry edit with an approver and a date. Production never changes model automatically because a cheaper one appeared.</li>
+  </ol>
+
+  <div class="callout">
+    <span class="label">Why "cheapest that passes" is the correct rule</span>
+    <p>Model quality is not monotonic in price, and a task does not need a better answer than the business can act on. Matching the cheapest model that clears the role's measured threshold turns model selection from a religious argument into a spreadsheet.</p>
+  </div>
+
+  <h2>5.8 Where the money actually goes</h2>
+  <p>It is worth stating plainly, because the brief's headline cost figure invites the wrong conclusion: inference is unlikely to be the dominant cost of acquiring a customer.</p>
+  <table class="tight">
+    <thead><tr><th style="width:40mm">Cost line</th><th style="width:26mm">Illustrative scale</th><th>Why it can dominate</th></tr></thead>
+    <tbody>
+      <tr><td>Prospect data</td><td>per record</td><td>Volume × record price, before a single email is written.</td></tr>
+      <tr><td>Email infrastructure</td><td>per mailbox, per month</td><td>Deliverability requires warmed domains, multiple mailboxes and often a dedicated sending platform.</td></tr>
+      <tr><td>Human approval</td><td>minutes × hourly rate</td><td>Determines your true CPL more often than token spend does.</td></tr>
+      <tr><td>Paid advertising</td><td>discretionary</td><td>Can exceed everything else combined if enabled carelessly.</td></tr>
+      <tr><td>Model inference</td><td>sub-cent per task</td><td>Real, controllable, and usually the smallest line at low volume.</td></tr>
+    </tbody>
+  </table>
+  <p class="small">The consequence for the build: cost instrumentation must cover <em>all five</em> lines, not just tokens. A dashboard that reports only inference spend will report a flattering cost per lead that is wrong by a factor of ten.</p>
+</div>

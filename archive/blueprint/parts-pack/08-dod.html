@@ -1,0 +1,101 @@
+<div class="part">
+  <div class="part-head">
+    <p class="eyebrow">Section 9</p>
+    <h1 class="part-title">Definition of done</h1>
+  </div>
+
+  <p class="lede">Ten items. A task that satisfies eight is in progress, not finished. Print this page.</p>
+
+  <table class="tight">
+    <thead><tr><th style="width:8mm">#</th><th style="width:70mm">Check</th><th>Why it exists</th></tr></thead>
+    <tbody>
+      <tr><td class="num">1</td><td>Implementation matches the card's file list and the referenced spec row.</td><td>No unrequested inventing.</td></tr>
+      <tr><td class="num">2</td><td>Boundary validation exists; internal calls are trusted.</td><td>Validation noise hides defects.</td></tr>
+      <tr><td class="num">3</td><td>Happy path covered by a test named after the AC or task id.</td><td>Traceability from spec to code.</td></tr>
+      <tr><td class="num">4</td><td>Named failure path covered; the failure is classified, not swallowed.</td><td>Silent failure is the default failure.</td></tr>
+      <tr><td class="num">5</td><td>Tenant scoping verified on every new query or job.</td><td>R1 is absolute.</td></tr>
+      <tr><td class="num">6</td><td>Every new external effect goes through the gateway with an idempotency key.</td><td>R2 and R12.</td></tr>
+      <tr><td class="num">7</td><td>Cost of the new work is attributable: org, task, agent, campaign where applicable.</td><td>Without it, CAC is fiction.</td></tr>
+      <tr><td class="num">8</td><td>Audit entry written for privileged or refused actions.</td><td>Refusals are evidence too.</td></tr>
+      <tr><td class="num">9</td><td>Logs carry org, task, agent and trace id.</td><td>Debuggable in production.</td></tr>
+      <tr><td class="num">10</td><td>Demonstrated once by a human and recorded.</td><td>A test proves correctness, not usefulness.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>The fourteen acceptance tests</h3>
+  <p class="small">These names must exist in the suite. Each one is a claim the system can survive a specific failure. Manually, before each phase exit: revoke the mailbox grant, exhaust the data quota mid-run, kill a worker mid-send, force model timeouts, corrupt an approval payload, set a budget to zero, deliver a webhook twice — each must fail closed, visibly, with no duplicate external effect.</p>
+
+  <table class="tight">
+    <thead><tr><th style="width:14mm">ID</th><th style="width:56mm">Test</th><th>Pass condition</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">AC-01</td><td>tenant scoping on create</td><td>Record created without a session tenant is rejected at the database.</td></tr>
+      <tr><td class="mono">AC-02</td><td>tenant isolation, every table</td><td>Org A sees zero rows of Org B, including aggregates and cached reads.</td></tr>
+      <tr><td class="mono">AC-03</td><td>suppression blocks send</td><td>Suppressed address refused per message inside an approved batch, with reason.</td></tr>
+      <tr><td class="mono">AC-04</td><td>duplicate execution prevented</td><td>Two workers race; exactly one executes, the other produces no effect.</td></tr>
+      <tr><td class="mono">AC-05</td><td>approval integrity</td><td>Changed payload voids; reuse refused; expiry enforced.</td></tr>
+      <tr><td class="mono">AC-06</td><td>lead deduplication</td><td>Re-run creates no rows and no silent data charge.</td></tr>
+      <tr><td class="mono">AC-07</td><td>budget enforcement</td><td>Block before dispatch; no partial external effect after a breach.</td></tr>
+      <tr><td class="mono">AC-08</td><td>ledger completeness</td><td>One usage row per call, including timeout and refusal.</td></tr>
+      <tr><td class="mono">AC-09</td><td>meeting race</td><td>Concurrent confirmations: one books, the other gets alternatives.</td></tr>
+      <tr><td class="mono">AC-10</td><td>webhook authenticity</td><td>Unsigned, replayed and unknown events change no state.</td></tr>
+      <tr><td class="mono">AC-11</td><td>agent permission ceiling</td><td>Action above ceiling refused and escalated, never re-routed to another tool.</td></tr>
+      <tr><td class="mono">AC-12</td><td>emergency stop</td><td>Effects halt within one task boundary; reads still work.</td></tr>
+      <tr><td class="mono">AC-13</td><td>restore drill</td><td>Clean restore reproduces row counts and audit chain.</td></tr>
+      <tr><td class="mono">AC-14</td><td>claim grounding</td><td>100% of seeded uncited claims rejected by validation.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="part">
+  <div class="part-head">
+    <p class="eyebrow">Section 10</p>
+    <h1 class="part-title">Prompt templates</h1>
+  </div>
+
+  <p class="lede">Three blocks to copy verbatim. They exist to keep a session small and to make an agent's stopping behaviour predictable.</p>
+
+  <h3>A. Start a task</h3>
+  <pre>Implement {TASK_ID}.
+
+Load only:
+  - spec/tasks/{TASK_ID}.yaml
+  - the two spec slices it names
+  - the existing files it names
+
+Rules:
+  - one task, one commit; do not start another task
+  - do not add files that are not listed; report a gap instead
+  - every external effect through the tool gateway, idempotency key required
+  - tenant scoping on every query, RLS is not optional
+  - write the test named on the card before the implementation
+
+Stop when done_when is true. Report: files changed, test output, any gap.</pre>
+
+  <h3>B. Report a specification gap</h3>
+  <pre>SPEC-GAP
+task: {TASK_ID}
+missing: {the table, column, endpoint, tool or schema that does not exist}
+blocked: {what cannot be written without it}
+proposed: {the smallest addition that would unblock it}
+confidence: {how sure you are that this is genuinely absent, and not in another section}</pre>
+
+  <h3>C. Close a task</h3>
+  <pre>T-{n}.{m}: {imperative title}
+
+- what changed: {one line}
+- tests: {test ids, pass/fail}
+- dod: {1-10, note any that do not apply and why}
+- spec-gap: {none | see above}
+- next: {T-n.m+1 title} (not started)
+
+Co-authored-by: CommandCodeBot noreply@commandcode.ai</pre>
+
+  <div class="callout">
+    <span class="label">If you are the human, not the agent</span>
+    <p>Read the card, not the document. If you cannot implement a card without opening the blueprint, the card is under-specified — fix the card, because the next person will hit the same wall. That is the only maintenance this pack needs.</p>
+  </div>
+
+  <hr class="rule">
+
+  <p class="small"><strong>End of pack.</strong> AI-MOS BP-001-BP · companion to the blueprint · the blueprint explains why, the pack explains what, <span class="mono">spec/tasks/</span> explains exactly where.</p>
+</div>

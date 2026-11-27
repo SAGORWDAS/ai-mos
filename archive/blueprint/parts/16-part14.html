@@ -1,0 +1,94 @@
+<!-- ============ PART 14 ============ -->
+<div class="part">
+  <div class="part-head">
+    <p class="eyebrow">Part 14</p>
+    <h1 class="part-title">Acceptance criteria</h1>
+  </div>
+
+  <p class="lede">A green test suite proves the code does what its author expected. These criteria prove the system does what the business needs — which is a different claim, and the only one that matters.</p>
+
+  <h2>14.1 The end-to-end scenario</h2>
+  <p>Performed once, end to end, with real systems and a real prospect. It is the acceptance test for the whole product and the script for the first commercial demonstration.</p>
+
+  <table class="tight">
+    <thead><tr><th style="width:10mm">Step</th><th style="width:60mm">Action</th><th>Pass condition</th></tr></thead>
+    <tbody>
+      <tr><td class="num">1</td><td>Complete the Brand Brain profile for a real SaaS product.</td><td>Positioning, ICP, pricing, approved and prohibited claims are stored and retrievable.</td></tr>
+      <tr><td class="num">2</td><td>Enter the objective as one sentence in the Command Center.</td><td>Parsed objective is displayed and correctable; missing fields are requested, not guessed.</td></tr>
+      <tr><td class="num">3</td><td>Review the generated plan before execution.</td><td>Tasks, agents, dependencies, cost estimate and required approvals are visible.</td></tr>
+      <tr><td class="num">4</td><td>Approve the plan.</td><td>Tasks are created and scheduled; nothing external has happened yet.</td></tr>
+      <tr><td class="num">5</td><td>Run lead discovery for a defined segment.</td><td>Leads appear with source and confidence; duplicates are zero; cost per record is recorded.</td></tr>
+      <tr><td class="num">6</td><td>Inspect qualification output.</td><td>Every qualified lead has a score, a model version and a stated reason.</td></tr>
+      <tr><td class="num">7</td><td>Review drafted outreach for ten leads.</td><td>Each draft cites the brand evidence it used; no unsupported claim; word limit respected.</td></tr>
+      <tr><td class="num">8</td><td>Approve the batch, editing one draft.</td><td>The edited draft requires re-approval; the other nine dispatch.</td></tr>
+      <tr><td class="num">9</td><td>Verify delivery.</td><td>Provider ids stored for each message; delivery counters match the provider's dashboard exactly.</td></tr>
+      <tr><td class="num">10</td><td>Receive a reply; let the system classify and draft.</td><td>Classification confidence and label shown; the draft contains no pricing claim not present in Brand Brain.</td></tr>
+      <tr><td class="num">11</td><td>Answer the reply.</td><td>Sent only after approval (or under an enabled L4 class) and recorded in the thread.</td></tr>
+      <tr><td class="num">12</td><td>Process an opt-out.</td><td>Suppression written immediately; any queued message to that address refused by the gateway with a recorded reason.</td></tr>
+      <tr><td class="num">13</td><td>Offer three meeting times; prospect confirms one.</td><td>Availability re-checked, event created in both calendars, no double booking.</td></tr>
+      <tr><td class="num">14</td><td>Send a checkout link; prospect pays.</td><td>Payment recorded only from a verified webhook; customer and subscription created; onboarding begins.</td></tr>
+      <tr><td class="num">15</td><td>Open the dashboard.</td><td>Leads, replies, meetings, revenue and fully-loaded cost per customer are displayed, each traceable to source rows.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="trap">
+    <span class="label">The honest reading of this table</span>
+    <p>Fifteen steps, of which only step 15 is a dashboard. If the product were built in the order its navigation suggests, this test would be unperformable until the very end — which is exactly why Part 11 builds it in the opposite order.</p>
+  </div>
+
+  <h2>14.2 Invariant and system tests</h2>
+  <p>Fourteen named tests. Each must exist as an automated test with the given name, and each must fail loudly if the invariant is broken.</p>
+
+  <table>
+    <thead><tr><th style="width:14mm">ID</th><th style="width:60mm">Test</th><th>Pass condition</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">AC-01</td><td>Tenant scoping on create</td><td>A record created without a session tenant is rejected at the database, not the API.</td></tr>
+      <tr><td class="mono">AC-02</td><td>Tenant isolation, every table</td><td>Org A's session returns zero rows for Org B on every tenant table, including aggregates and cached reads.</td></tr>
+      <tr><td class="mono">AC-03</td><td>Suppression blocks send</td><td>A suppressed address inside an otherwise approved batch is refused per message, with an audit reason.</td></tr>
+      <tr><td class="mono">AC-04</td><td>Duplicate execution prevented</td><td>Two workers race for one task; exactly one executes and the other records no effect.</td></tr>
+      <tr><td class="mono">AC-05</td><td>Approval integrity</td><td>Payload change voids approval; reuse of a consumed approval is refused; expiry is enforced.</td></tr>
+      <tr><td class="mono">AC-06</td><td>Lead deduplication</td><td>Re-running discovery on the same source creates no new rows and does not re-charge data costs silently.</td></tr>
+      <tr><td class="mono">AC-07</td><td>Budget enforcement</td><td>Exceeding a task budget blocks before dispatch; no partial external effect exists afterwards.</td></tr>
+      <tr><td class="mono">AC-08</td><td>Ledger completeness</td><td>Every model call, including timeouts and refusals, has exactly one usage row; count mismatch raised as an alert.</td></tr>
+      <tr><td class="mono">AC-09</td><td>Meeting race</td><td>Two prospects confirm the same slot concurrently; one books, the other receives alternatives.</td></tr>
+      <tr><td class="mono">AC-10</td><td>Webhook authenticity</td><td>Unsigned, replayed and unknown events produce no state change; each is logged.</td></tr>
+      <tr><td class="mono">AC-11</td><td>Agent permission ceiling</td><td>An action above the configured ceiling is refused at the gateway and escalated, never retried with a different tool.</td></tr>
+      <tr><td class="mono">AC-12</td><td>Emergency stop</td><td>Stop engaged mid-workflow halts further effects within one task boundary; reads still succeed.</td></tr>
+      <tr><td class="mono">AC-13</td><td>Restore drill</td><td>A full restore into a clean environment reproduces row counts and a verified audit chain.</td></tr>
+      <tr><td class="mono">AC-14</td><td>Claim grounding</td><td>A generated message containing a fact with no brand citation is rejected by validation in 100% of seeded cases.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>14.3 Failure drills</h2>
+  <p>These are performed manually before each phase exit, because most of them cannot be simulated faithfully in unit tests.</p>
+  <table class="tight">
+    <thead><tr><th style="width:52mm">Drill</th><th>Expected behaviour</th></tr></thead>
+    <tbody>
+      <tr><td>Revoke the mailbox OAuth grant</td><td>Integration shows <span class="mono">disconnected</span>; sending fails closed; a re-consent prompt appears; no messages are silently lost.</td></tr>
+      <tr><td>Exhaust the data provider quota mid-run</td><td>Run reports partial results with a reason; no partial charge is recorded as complete.</td></tr>
+      <tr><td>Kill a worker mid-send</td><td>Task returns to <span class="mono">ready</span>; on retry the idempotency claim prevents a second send; provider shows one message.</td></tr>
+      <tr><td>Force a model timeout repeatedly</td><td>Retries back off, then dead-letter; the task reports failure rather than producing a fabricated success.</td></tr>
+      <tr><td>Corrupt an approval payload</td><td>Send refused; audit records the hash mismatch.</td></tr>
+      <tr><td>Set a budget to zero</td><td>All model work blocks immediately; reads and UI remain functional.</td></tr>
+      <tr><td>Deliver a webhook twice</td><td>Second delivery is a no-op; subscription state unchanged.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>14.4 Definition of done</h2>
+  <p>Applied to every task in Part 11, without exception. If a task cannot meet all ten, it is not done — it is in progress.</p>
+  <pre>1  Implementation matches the spec row, entity or endpoint it references.
+2  Boundary validation exists (user input, provider responses); internal calls are trusted.
+3  Happy path covered by a test named after its AC or task id.
+4  Named failure path covered by a test; the failure is classified, not swallowed.
+5  Tenant scoping verified on every new query or job.
+6  Every new external effect routed through the tool gateway with an idempotency key.
+7  Cost of the new work is attributable: org, task, agent, and campaign where applicable.
+8  Audit entry written for privileged or refused actions.
+9  Logs carry org, task, agent and trace id.
+10 Demonstration performed once by a human and recorded (screenshot, log excerpt or video).</pre>
+
+  <div class="callout">
+    <span class="label">The single test that matters</span>
+    <p>When the team disagrees about whether something is finished, ask one question: <em>can you show me the evidence that this happened in the real world?</em> If the answer is a test name, it is correct. If the answer is a screen, it is not.</p>
+  </div>
+</div>

@@ -1,0 +1,144 @@
+<!-- ============ PART 1 ============ -->
+<div class="part">
+  <div class="part-head">
+    <p class="eyebrow">Part 1</p>
+    <h1 class="part-title">Product definition</h1>
+  </div>
+
+  <p class="lede">AI-MOS is not a content generator with a CRM attached. It is a system that owns a growth objective end to end — from finding a stranger to collecting money from them — and reports what that cost.</p>
+
+  <h2>1.1 What the product actually is</h2>
+  <p>A business owner states an outcome. The system produces a plan, decomposes it into tasks, assigns those tasks to configured agent roles, executes only what its permissions allow, stops for approval where the risk requires it, and records the result against a business metric.</p>
+
+  <pre class="plain" style="font-size:8.4pt">"Find 200 US marketing agencies that fit our ICP, research them, write personalised
+ outreach, get my approval, send it, handle the replies, and book demos."</pre>
+
+  <p>That sentence is the entire product. Everything in the 23-module navigation is an instrument for executing some part of it, and everything in this blueprint exists so that sentence can be run <em>repeatedly, cheaply, and without embarrassing the business</em>.</p>
+
+  <p>Three properties separate this from a chat interface wrapped around an email API:</p>
+
+  <table>
+    <thead><tr><th style="width:40mm">Property</th><th>What it means operationally</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Stateful</strong></td><td>A lead, a campaign and a conversation exist as durable records with histories. Closing the browser does not end the work, and re-opening it does not restart it.</td></tr>
+      <tr><td><strong>Governed</strong></td><td>Autonomy is a per-agent, per-action configuration, not a global switch. Every external effect passes a validator, a budget check and — where required — a human.</td></tr>
+      <tr><td><strong>Accountable</strong></td><td>Every task carries its model, tokens, latency and cost; every external action carries a result confirmation and an audit entry. Cost per qualified lead is a query, not an estimate.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>1.2 The five outcomes, and how each is instrumented</h2>
+  <p>The product is judged on five business outcomes. Each one is deliberately paired with the database field that proves it, because an outcome you cannot query is a slogan.</p>
+
+  <table>
+    <thead><tr><th style="width:8mm">#</th><th style="width:44mm">Outcome</th><th>Instrumented as</th><th style="width:34mm">Source</th></tr></thead>
+    <tbody>
+      <tr><td class="num">1</td><td>More qualified leads</td><td>Count of <span class="mono">leads</span> in state <span class="mono">qualified</span> per campaign per week, with the scoring model version attached.</td><td class="mono">ENT-leads</td></tr>
+      <tr><td class="num">2</td><td>More sales conversations and conversions</td><td>Count of <span class="mono">conversations</span> with a prospect reply; count of <span class="mono">meetings</span> booked; count of <span class="mono">customers</span> created from a lead.</td><td class="mono">ENT-conversations, ENT-meetings</td></tr>
+      <tr><td class="num">3</td><td>Lower acquisition cost</td><td><span class="mono">(data + sending + ad spend + review labour + inference) ÷ won customers</span>, computed per campaign.</td><td class="mono">ENT-model_usage, ENT-payments</td></tr>
+      <tr><td class="num">4</td><td>Less manual work</td><td>Ratio of agent-completed tasks to human-touched tasks; median minutes of human review per approved campaign.</td><td class="mono">ENT-tasks, ENT-approvals</td></tr>
+      <tr><td class="num">5</td><td>Better retention</td><td>Active subscriptions at period end; churn events attributed to a reason code; retention-agent interventions that preceded a renewal.</td><td class="mono">ENT-subscriptions</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <span class="label">Design consequence</span>
+    <p>Because outcome 3 must be computable per campaign, cost attribution cannot be bolted on later. Every model call MUST carry a <span class="mono">campaign_id</span> (nullable), a <span class="mono">task_id</span> and an <span class="mono">organization_id</span> from the first migration. This single requirement shapes the schema in Part 7 more than any other.</p>
+  </div>
+
+  <h2>1.3 Who it is for, and in what order</h2>
+  <p>Four segments were proposed. Only two have the combination this product needs: a short sales cycle, an outcome that is measurable within weeks, and a customer who already buys marketing software. Build for those two. The others arrive when the engine is proven, not before.</p>
+
+  <table>
+    <thead><tr><th style="width:34mm">Segment</th><th style="width:18mm">Priority</th><th>Why this position</th></tr></thead>
+    <tbody>
+      <tr><td><strong>SaaS founders / small software companies</strong></td><td class="mono">Primary</td><td>Clear ICP, measurable pipeline, willingness to run an assistant that emails on their behalf. The demonstration case in Part 14 is built on this segment.</td></tr>
+      <tr><td><strong>Digital marketing agencies</strong></td><td class="mono">Primary</td><td>The only segment that pays for seats rather than for outcomes, and can run several client workspaces — which forces multi-tenancy to be real early.</td></tr>
+      <tr><td>SMB services</td><td class="mono">Secondary</td><td>High volume, low budget, lower technical tolerance. Needs a simpler onboarding path that does not exist until PH-5.</td></tr>
+      <tr><td>E-commerce</td><td class="mono">Later</td><td>Values creative and paid channels over 1:1 sales conversations, which is the part of this system that is hardest to build and easiest to prove. Wrong first fight.</td></tr>
+      <tr><td>Consultants and solo service providers</td><td class="mono">Later</td><td>Real need, but the economics are thin and the volume is low; they are a by-product of a working SaaS offering, not a target.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>1.4 The MVP boundary</h2>
+  <p>The first release is defined as much by exclusion as by inclusion. Anything not listed on the left is out, even if it appears in the 23-module navigation — those modules exist as navigation targets in the information architecture, not as PH-1 obligations.</p>
+
+  <div class="twocol">
+    <h3>In the first release</h3>
+    <ol class="tight">
+      <li>Command Center (MOD-02)</li>
+      <li>AI Manager / orchestration (MOD-03)</li>
+      <li>Agent registry (MOD-04)</li>
+      <li>Brand Brain (MOD-18)</li>
+      <li>Approval Center (MOD-20)</li>
+      <li>Research agent (AGT-02)</li>
+      <li>Strategy agent (AGT-03)</li>
+      <li>Content agent (AGT-06)</li>
+      <li>Lead generation + qualification (AGT-04, AGT-05)</li>
+      <li>Outreach agent (AGT-07)</li>
+      <li>Sales agent (AGT-08)</li>
+      <li>Analytics agent (AGT-10)</li>
+      <li>OpenRouter gateway + budgets (Part 5)</li>
+      <li>Gmail send and inbox read (INT-02)</li>
+    </ol>
+
+    <h3>Explicitly out of the first release</h3>
+    <ul class="tight">
+      <li>Paid advertising execution (read-only reporting only)</li>
+      <li>Social publishing</li>
+      <li>SEO tooling</li>
+      <li>Voice, WhatsApp, SMS channels</li>
+      <li>Marketplace or partner programme</li>
+      <li>White-label / reseller billing</li>
+      <li>Any agent at autonomy L4</li>
+      <li>Any autonomous price, refund or contract action</li>
+      <li>Native mobile applications</li>
+      <li>Data enrichment from scraped sources</li>
+    </ul>
+  </div>
+
+  <p>The exclusions are not a statement of unimportance. They are a statement about what a small team can make <em>trustworthy</em>. A system that sends ten correct, approved, individually-written emails is more valuable than one that can <em>claim</em> to run advertising.</p>
+
+  <h2>1.5 Metrics, and the anti-metrics</h2>
+  <p>Every metric below is computed from platform data, never entered by hand. Each is paired with a metric that is deliberately <em>not</em> used as evidence of success — usually because it is easy to inflate and weakly correlated with revenue.</p>
+
+  <table>
+    <thead><tr><th style="width:30mm">Metric</th><th style="width:48mm">Definition</th><th>Why it is the one that matters</th><th style="width:32mm">Not a substitute for it</th></tr></thead>
+    <tbody>
+      <tr><td><strong>CPL</strong></td><td>Fully-loaded cost ÷ qualified leads delivered</td><td>Includes data, sending and inference, so it cannot be flattered by cheaper tokens.</td><td>Cost per email sent</td></tr>
+      <tr><td><strong>CAC</strong></td><td>Fully-loaded acquisition cost ÷ new paying customers</td><td>The only number a founder can compare against gross margin.</td><td>Cost per meeting booked</td></tr>
+      <tr><td><strong>Reply rate</strong></td><td>Human replies ÷ delivered messages, excluding bounces and auto-responders</td><td>A real human response is the first honest signal of market interest.</td><td>Open rate (unreliable by design — see 1.5.1)</td></tr>
+      <tr><td><strong>Conversion</strong></td><td>Customers created ÷ qualified leads</td><td>Separates a lead-quality problem from a sales-message problem.</td><td>Click-through rate</td></tr>
+      <tr><td><strong>MRR / churn</strong></td><td>Verified from payment-provider events only</td><td>Revenue is not an inference. See the payment rule in Part 9.</td><td>Self-reported deal value</td></tr>
+      <tr><td><strong>$/task</strong></td><td>Model cost of one completed agent task, by task type</td><td>Turns "AI is expensive" into a number you can act on.</td><td>Monthly token spend</td></tr>
+      <tr><td><strong>Escalation rate</strong></td><td>Tasks routed to a human ÷ total tasks, by type</td><td>The honest measure of how autonomous the system actually is.</td><td>Task count completed</td></tr>
+    </tbody>
+  </table>
+
+  <div class="trap">
+    <span class="label">1.5.1 The open-rate trap</span>
+    <p>Email privacy proxies prefetch images and generate opens that no human performed. Any dashboard that reports open rate as a headline metric will eventually report success on a campaign that nobody read. Track opens for diagnostics only, label them as unreliable in the UI, and never let them drive an automated decision such as escalating a lead's score.</p>
+  </div>
+
+  <h2>1.6 Non-goals</h2>
+  <p>Stated plainly, because each of these will be proposed again in month three by someone reasonable:</p>
+  <ul>
+    <li><strong>Not a general-purpose agent platform.</strong> Only roles that serve the five outcomes exist. No plugin marketplace, no arbitrary user-authored agents in v1.</li>
+    <li><strong>Not a data broker.</strong> Prospect data comes from permitted providers and first-party sources. No scraping of platforms whose terms prohibit it, and no bypassing access controls (Part 9.1).</li>
+    <li><strong>Not a replacement for a CRM in an enterprise.</strong> It is a growth engine that exports. HubSpot and equivalents are integrations (P1), not competitors to be rebuilt.</li>
+    <li><strong>Not an autonomous money-spender.</strong> No agent may move money, change a price, issue a refund or commit to terms at any phase in this document.</li>
+    <li><strong>Not a chat product.</strong> The Command Center is how an objective is entered; it is not where the work is observed. Work is observed in tasks, approvals and metrics.</li>
+  </ul>
+
+  <h2>1.7 The constraint that governs every decision</h2>
+  <p>This is built by a very small team. That is not a footnote — it is the reason this document collapses 23 modules into 7 services, defers 9 of 20 agent roles, and refuses Kubernetes, a service mesh and anything that needs a dedicated operations engineer.</p>
+
+  <table class="tight">
+    <thead><tr><th style="width:44mm">Constraint</th><th>Design rule that follows from it</th></tr></thead>
+    <tbody>
+      <tr><td>One part-time engineer</td><td>Every component must be operable by a person who reads the logs directly. One database, one queue, one deploy target.</td></tr>
+      <tr><td>No dedicated SRE</td><td>Managed Postgres if affordable; otherwise one well-tuned instance with tested backups and a documented restore.</td></tr>
+      <tr><td>Cash-constrained</td><td>Fixed monthly infrastructure before variable inference. Cost per workflow must be knowable before a workflow is launched at scale.</td></tr>
+      <tr><td>Reputational risk</td><td>One badly sent campaign can cost the founder their domain. Approval, suppression and rate limits are P0, not polish.</td></tr>
+    </tbody>
+  </table>
+</div>

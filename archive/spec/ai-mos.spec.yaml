@@ -1,0 +1,563 @@
+# =============================================================================
+# AI-MOS — canonical implementation specification
+# document: AI-MOS-BP-001 v1.0     status: normative
+# If this file and the prose blueprint disagree, THIS FILE WINS.
+# Ingest order: this file -> phases[].tasks -> schema refs -> invariant rules.
+# =============================================================================
+
+spec_version: "1.0"
+product:
+  name: AI-MOS
+  purpose: >
+    An AI operating system for marketing, sales and growth that acquires, converts
+    and retains customers at a measurable, sustainable cost.
+  primary_objective: acquire and convert customers at competitive cost
+  optimisation_target: business outcome per unit of fully-loaded cost
+  non_goals:
+    - general purpose agent platform
+    - data broker / scraping service
+    - enterprise CRM replacement
+    - autonomous money movement
+    - chat product
+
+invariants:
+  I-1: every tenant row carries a valid organization_id; enforced by NOT NULL + FK + RLS
+  I-2: no external effect without a valid single-use approval, unless the action class
+       is pre-authorised at the agent autonomy level
+  I-3: no logical action executes twice; idempotency key unique per organization
+  I-4: money state is written only from a verified provider webhook
+  I-5: a suppressed address is never contacted on any channel by any agent
+  I-6: every model call writes exactly one model_usage row, including failures
+
+conventions:
+  ids:
+    module: "MOD-nn"
+    service: "SVC-x"
+    agent: "AGT-nn"
+    tool: "TLS-nn"
+    integration: "INT-nn"
+    workflow: "WKF-x"
+    phase: "PH-n"
+    task: "T-n.m"
+    acceptance: "AC-nn"
+    decision: "ADR-nn"
+  normative_keywords: [MUST, MUST_NOT, SHOULD, MAY]
+  money: integer minor units plus ISO-4217 currency; never float
+  timestamps: timestamptz, UTC storage, ISO-8601 on the wire
+  pagination: cursor based; never offset on mutable tables
+
+services:
+  - {id: SVC-platform,          owns: [organizations, users, memberships, invitations, integrations,
+                                      audit_logs, notifications]}
+  - {id: SVC-growth-strategy,   owns: [brands, brand_documents, brand_chunks, agents, agent_tools,
+                                      commands, plans, tasks, task_dependencies, approvals, strategies]}
+  - {id: SVC-acquisition,       owns: [companies, contacts, prospects, leads, suppressions,
+                                      sequences, outreach_drafts, conversations, messages, meetings]}
+  - {id: SVC-content,           owns: [content_items, creatives, campaign_assets, campaigns]}
+  - {id: SVC-revenue,           owns: [customers, subscriptions, payments, invoices,
+                                      onboarding_flows, support_threads, health_scores]}
+  - {id: SVC-automation,        owns: [workflows, workflow_runs, triggers]}
+  - {id: SVC-insights,          owns: [analytics_events, metric_snapshots, model_usage, budgets,
+                                      learning_records]}
+
+# ---------------------------------------------------------------------------
+# Delivery phases. Gates are contractual; calendar estimates are intentionally
+# absent because the main risks are external (provider approval, deliverability).
+# ---------------------------------------------------------------------------
+phases:
+  - id: PH-0
+    name: Decisions and spikes
+    objective: close the four risks that can invalidate the build
+    gate_in: none
+    gate_out: [merchant account or documented alternative exists, authenticated mail
+               reaches inbox, one priced completion per tier, brand content written]
+    tasks:
+      - {id: T-0.1, deliverable: payment provider viability, depends: [],
+           dod: "account exists or ADR-01 alternative chosen"}
+      - {id: T-0.2, deliverable: openrouter account and credit, depends: [],
+           dod: "completion obtained and priced per tier"}
+      - {id: T-0.3, deliverable: model benchmark, depends: [T-0.2],
+           dod: "50 real examples scored on 3 candidates"}
+      - {id: T-0.4, deliverable: sending domain and DNS, depends: [],
+           dod: "SPF DKIM DMARC verified"}
+      - {id: T-0.5, deliverable: deliverability spike, depends: [T-0.4],
+           dod: "5 of 5 seed messages land in inbox"}
+      - {id: T-0.6, deliverable: legal basis and suppression, depends: [],
+           dod: "policy written per jurisdiction; fields agreed"}
+      - {id: T-0.7, deliverable: brand brain content, depends: [],
+           dod: "ICP pricing claims supplied by the business"}
+      - {id: T-0.8, deliverable: evaluation dataset, depends: [T-0.7],
+           dod: "100 outreach + 200 replies labelled"}
+      - {id: T-0.9, deliverable: cost model worksheet, depends: [T-0.2, T-0.4],
+           dod: "filled with real prices"}
+      - {id: T-0.10, deliverable: decision log, depends: [],
+           dod: "ADR-01..ADR-12 closed or owned"}
+
+  - id: PH-1
+    name: Foundation
+    objective: one agent task runs end to end, costed and audited
+    gate_in: PH-0 gate_out
+    gate_out: [task executes with validated output, cost recorded, audit entry written,
+               second organization sees nothing]
+    tasks:
+      - {id: T-1.1, deliverable: repo CI compose stack, depends: [],
+           dod: "one command ups api worker pg redis; CI green"}
+      - {id: T-1.2, deliverable: auth orgs memberships, depends: [T-1.1],
+           dod: "signup creates org and owner; roles enforced"}
+      - {id: T-1.3, deliverable: migrations 01-06 with RLS, depends: [T-1.2],
+           dod: "AC-01 and AC-02 pass for every table"}
+      - {id: T-1.4, deliverable: ai gateway registry ledger, depends: [T-1.1],
+           dod: "AC-08 passes including forced timeout"}
+      - {id: T-1.5, deliverable: task runtime and scheduler, depends: [T-1.3],
+           dod: "AC-04 passes; DAG executes in order"}
+      - {id: T-1.6, deliverable: tool gateway and read tools, depends: [T-1.5],
+           dod: "unregistered tool rejected and audited"}
+      - {id: T-1.7, deliverable: brand brain, depends: [T-1.3],
+           dod: "retrieval returns passages with citations"}
+      - {id: T-1.8, deliverable: approvals model and api, depends: [T-1.5],
+           dod: "AC-05 passes"}
+      - {id: T-1.9, deliverable: audit logs tracing logging, depends: [T-1.2],
+           dod: "every gateway decision traceable"}
+      - {id: T-1.10, deliverable: budgets and enforcement, depends: [T-1.4],
+           dod: "AC-07 passes"}
+      - {id: T-1.11, deliverable: settings roles emergency stop, depends: [T-1.2],
+           dod: "AC-12 passes"}
+      - {id: T-1.12, deliverable: usage and cost screens, depends: [T-1.4],
+           dod: "cost by agent, type and day with drill-down"}
+
+  - id: PH-2
+    name: Marketing intelligence
+    objective: a command becomes an approved, costed plan
+    gate_in: PH-1 gate_out
+    gate_out: [one sentence becomes a structured plan with tasks, owners, cost,
+               approvals and metrics, reviewed and approved by a human]
+    tasks:
+      - {id: T-2.1, deliverable: command center parse confirm, depends: [T-1.7],
+           dod: "ambiguous input returns missing fields"}
+      - {id: T-2.2, deliverable: planner (CMO), depends: [T-2.1],
+           dod: "plan conforms to schemas/plan.json"}
+      - {id: T-2.3, deliverable: task graph execution, depends: [T-1.5],
+           dod: "20-task plan runs; cycle refused at write"}
+      - {id: T-2.4, deliverable: research agent, depends: [T-2.2],
+           dod: "no uncited claim passes validation"}
+      - {id: T-2.5, deliverable: strategy agent, depends: [T-2.4],
+           dod: "budget ranges grounded in brand pricing"}
+      - {id: T-2.6, deliverable: content agent, depends: [T-1.7],
+           dod: "AC-14 passes; prohibited claims blocked"}
+      - {id: T-2.7, deliverable: approval center ui, depends: [T-1.8],
+           dod: "batch above cap refused"}
+      - {id: T-2.8, deliverable: overview and analytics v1, depends: [T-1.12],
+           dod: "every figure traces to a query"}
+
+  - id: PH-3
+    name: Acquisition
+    objective: real messages to real people under governance
+    gate_in: PH-2 gate_out
+    gate_out: [10 approved emails delivered to real prospects, 2 replies classified,
+               1 approved response sent, 1 opt-out honoured and suppressed]
+    tasks:
+      - {id: T-3.1, deliverable: prospect data adapter, depends: [T-0.9],
+           dod: "source and confidence stored; cost per record"}
+      - {id: T-3.2, deliverable: dedupe and enrichment, depends: [T-3.1],
+           dod: "AC-06 passes"}
+      - {id: T-3.3, deliverable: qualification scoring, depends: [T-3.2],
+           dod: "deterministic given model version; 85% label match"}
+      - {id: T-3.4, deliverable: crm entities and pipeline, depends: [T-3.3],
+           dod: "stage change writes activity with actor"}
+      - {id: T-3.5, deliverable: mailbox connection read, depends: [T-1.2],
+           dod: "incremental sync with provider thread ids"}
+      - {id: T-3.6, deliverable: send path suppression and caps, depends: [T-1.8, T-0.4],
+           dod: "AC-03 passes"}
+      - {id: T-3.7, deliverable: outreach drafting claim check, depends: [T-2.6],
+           dod: "ungrounded claim fails then retries once"}
+      - {id: T-3.8, deliverable: dispatch with approval, depends: [T-3.6, T-2.7],
+           dod: "edit voids approval; caps atomic"}
+      - {id: T-3.9, deliverable: reply sync and classification, depends: [T-3.5],
+           dod: "opt-out suppresses before any other work"}
+      - {id: T-3.10, deliverable: reply drafting and L4 option, depends: [T-3.9],
+           dod: "low confidence never auto-sends"}
+
+  - id: PH-4
+    name: Conversation and revenue
+    objective: close the loop from interest to money without inferring payment
+    gate_in: PH-3 gate_out
+    gate_out: [demo booked in both calendars, checkout completed, verified webhook,
+               customer and subscription created, onboarding started, refund escalates]
+    tasks:
+      - {id: T-4.1, deliverable: calendar adapter availability, depends: [T-1.2],
+           dod: "free/busy normalized, cached under 60s"}
+      - {id: T-4.2, deliverable: meeting propose confirm book, depends: [T-4.1],
+           dod: "AC-09 passes"}
+      - {id: T-4.3, deliverable: payment adapter and webhook, depends: [T-0.1],
+           dod: "AC-10 passes"}
+      - {id: T-4.4, deliverable: customers subscriptions gating, depends: [T-4.3],
+           dod: "agent has no write path to these tables"}
+      - {id: T-4.5, deliverable: checkout link tool, depends: [T-4.4],
+           dod: "returns url only, never marks paid"}
+      - {id: T-4.6, deliverable: onboarding triggers, depends: [T-4.3],
+           dod: "starts only from verified payment event"}
+      - {id: T-4.7, deliverable: automation center v1, depends: [T-1.5],
+           dod: "loops impossible; runs traceable"}
+
+  - id: PH-5
+    name: Measurement and learning
+    objective: make economics legible and the system self-improving
+    gate_in: PH-4 gate_out
+    gate_out: [cost per won customer computed from real money split by cost line,
+               one learned lesson demonstrably changes a later plan]
+    tasks:
+      - {id: T-5.1, deliverable: attribution, depends: [T-3.4, T-4.4],
+           dod: "every customer traces to lead and campaign"}
+      - {id: T-5.2, deliverable: cost per outcome, depends: [T-5.1],
+           dod: "CPL and CAC include data, sending and review"}
+      - {id: T-5.3, deliverable: evaluation in CI, depends: [T-0.8],
+           dod: "regressing prompt fails the build"}
+      - {id: T-5.4, deliverable: learning records, depends: [T-5.2],
+           dod: "lesson needs evidence and effect size"}
+      - {id: T-5.5, deliverable: support and retention, depends: [T-4.4],
+           dod: "refunds and disputes always escalate"}
+      - {id: T-5.6, deliverable: seo social creative, depends: [T-2.6],
+           dod: "each is a manifest plus a tool"}
+
+  - id: PH-6
+    name: Scale and hardening
+    objective: prove isolation, durability and extensibility
+    gate_in: PH-5 gate_out
+    gate_out: [two tenants isolated under audit, restore drill timed and documented,
+               new agent role addable in under a day]
+    tasks:
+      - {id: T-6.1, deliverable: second tenant audit, depends: [PH-3],
+           dod: "zero cross-tenant paths found"}
+      - {id: T-6.2, deliverable: load and queue tuning, depends: [PH-3],
+           dod: "10x burst without duplicate sends"}
+      - {id: T-6.3, deliverable: backup and restore drill, depends: [PH-1],
+           dod: "AC-13 passes"}
+      - {id: T-6.4, deliverable: security review, depends: [PH-4],
+           dod: "scope, rotation, deps, abuse cases checked"}
+      - {id: T-6.5, deliverable: P1 P2 agent rollout, depends: [PH-5],
+           dod: "each role ships with manifest and golden set"}
+
+# ---------------------------------------------------------------------------
+# Modules are navigation; services are deployment. One service per group.
+# ---------------------------------------------------------------------------
+modules:
+  - {id: MOD-01, name: Overview, service: SVC-insights, phase: PH-2, entities: []}
+  - {id: MOD-02, name: Command Center, service: SVC-growth-strategy, phase: PH-2,
+     entities: [commands, objectives]}
+  - {id: MOD-03, name: AI Manager, service: SVC-growth-strategy, phase: PH-2,
+     entities: [plans, tasks, task_dependencies]}
+  - {id: MOD-04, name: AI Agents, service: SVC-growth-strategy, phase: PH-1,
+     entities: [agents, agent_tools]}
+  - {id: MOD-05, name: Marketing Strategy, service: SVC-growth-strategy, phase: PH-2,
+     entities: [strategies, research_reports]}
+  - {id: MOD-06, name: Lead Generation, service: SVC-acquisition, phase: PH-3,
+     entities: [prospects, leads, lead_sources]}
+  - {id: MOD-07, name: CRM, service: SVC-acquisition, phase: PH-3,
+     entities: [companies, contacts, pipeline_stages, activities]}
+  - {id: MOD-08, name: Outreach Studio, service: SVC-acquisition, phase: PH-3,
+     entities: [sequences, sequence_steps, outreach_drafts]}
+  - {id: MOD-09, name: AI Sales Inbox, service: SVC-acquisition, phase: PH-3,
+     entities: [conversations, messages]}
+  - {id: MOD-10, name: Meeting Scheduler, service: SVC-acquisition, phase: PH-4,
+     entities: [meetings, availability_rules]}
+  - {id: MOD-11, name: Content Studio, service: SVC-content, phase: PH-2,
+     entities: [content_items]}
+  - {id: MOD-12, name: Creative Studio, service: SVC-content, phase: PH-5,
+     entities: [creatives, asset_files]}
+  - {id: MOD-13, name: Campaign Manager, service: SVC-content, phase: PH-3,
+     entities: [campaigns, campaign_assets, campaign_metrics]}
+  - {id: MOD-14, name: Customer Onboarding, service: SVC-revenue, phase: PH-4,
+     entities: [onboarding_flows, activation_steps]}
+  - {id: MOD-15, name: Customer Support, service: SVC-revenue, phase: PH-5,
+     entities: [support_threads]}
+  - {id: MOD-16, name: Retention Center, service: SVC-revenue, phase: PH-5,
+     entities: [health_scores, churn_risks]}
+  - {id: MOD-17, name: Analytics, service: SVC-insights, phase: PH-2,
+     entities: [analytics_events, metric_snapshots]}
+  - {id: MOD-18, name: Brand Brain, service: SVC-growth-strategy, phase: PH-1,
+     entities: [brands, brand_documents, brand_chunks]}
+  - {id: MOD-19, name: Automation Center, service: SVC-automation, phase: PH-4,
+     entities: [workflows, workflow_runs, triggers]}
+  - {id: MOD-20, name: Approval Center, service: SVC-growth-strategy, phase: PH-2,
+     entities: [approvals, approval_rules]}
+  - {id: MOD-21, name: Integrations, service: SVC-platform, phase: PH-1,
+     entities: [integrations, oauth_tokens]}
+  - {id: MOD-22, name: Usage and Cost, service: SVC-insights, phase: PH-1,
+     entities: [model_usage, budgets]}
+  - {id: MOD-23, name: Settings, service: SVC-platform, phase: PH-1,
+     entities: [organizations, memberships, invitations]}
+
+# ---------------------------------------------------------------------------
+# Agents are manifests executed by one engine. tier = default model tier.
+# ceiling = maximum autonomy the role may ever request.
+# ---------------------------------------------------------------------------
+agents:
+  - {id: AGT-01, name: AI CMO, tier: T2, ceiling: L2, priority: P0, phase: PH-2,
+     tools: [TLS-02, TLS-17]}
+  - {id: AGT-02, name: Research Agent, tier: T2, ceiling: L1, priority: P0, phase: PH-2,
+     tools: [TLS-01, TLS-02, TLS-03]}
+  - {id: AGT-03, name: Strategy Agent, tier: T2, ceiling: L2, priority: P0, phase: PH-2,
+     tools: [TLS-02, TLS-17]}
+  - {id: AGT-04, name: Lead Generation Agent, tier: T1, ceiling: L2, priority: P0,
+     phase: PH-3, tools: [TLS-03, TLS-05]}
+  - {id: AGT-05, name: Lead Qualification Agent, tier: T1, ceiling: L1, priority: P0,
+     phase: PH-3, tools: [TLS-04]}
+  - {id: AGT-06, name: Content Agent, tier: T1, ceiling: L2, priority: P0, phase: PH-2,
+     tools: [TLS-02, TLS-06]}
+  - {id: AGT-07, name: Outreach Agent, tier: T1, ceiling: L3, priority: P0, phase: PH-3,
+     tools: [TLS-02, TLS-05, TLS-07, TLS-13]}
+  - {id: AGT-08, name: Sales Agent, tier: T1, ceiling: L4, priority: P0, phase: PH-3,
+     tools: [TLS-02, TLS-11, TLS-12, TLS-13]}
+  - {id: AGT-09, name: Follow-up Agent, tier: T1, ceiling: L3, priority: P0, phase: PH-3,
+     tools: [TLS-07, TLS-13]}
+  - {id: AGT-10, name: Analytics Agent, tier: T1, ceiling: L1, priority: P0, phase: PH-2,
+     tools: [TLS-17]}
+  - {id: AGT-11, name: Meeting Agent, tier: T1, ceiling: L3, priority: P1, phase: PH-4,
+     tools: [TLS-08, TLS-09, TLS-13]}
+  - {id: AGT-12, name: Campaign Agent, tier: T2, ceiling: L3, priority: P1, phase: PH-3,
+     tools: [TLS-15, TLS-13]}
+  - {id: AGT-13, name: SEO Agent, tier: T1, ceiling: L2, priority: P1, phase: PH-5,
+     tools: [TLS-01, TLS-06]}
+  - {id: AGT-14, name: Social Media Agent, tier: T1, ceiling: L3, priority: P1, phase: PH-5,
+     tools: [TLS-06, TLS-13]}
+  - {id: AGT-15, name: Creative Agent, tier: T2, ceiling: L2, priority: P1, phase: PH-5,
+     tools: [TLS-06]}
+  - {id: AGT-16, name: Advertising Agent, tier: T2, ceiling: L3, priority: P1, phase: PH-6,
+     tools: [TLS-13, TLS-17]}
+  - {id: AGT-17, name: Onboarding Agent, tier: T1, ceiling: L3, priority: P1, phase: PH-4,
+     tools: [TLS-06, TLS-13]}
+  - {id: AGT-18, name: Support Agent, tier: T1, ceiling: L4, priority: P1, phase: PH-5,
+     tools: [TLS-02, TLS-12, TLS-13]}
+  - {id: AGT-19, name: Retention Agent, tier: T2, ceiling: L3, priority: P2, phase: PH-5,
+     tools: [TLS-17, TLS-13]}
+  - {id: AGT-20, name: Learning Agent, tier: T2, ceiling: L2, priority: P2, phase: PH-5,
+     tools: [TLS-17, TLS-18]}
+
+# ---------------------------------------------------------------------------
+# Tools are the only egress. class determines the gate sequence applied.
+# ---------------------------------------------------------------------------
+tools:
+  - {id: TLS-01, name: search_web, class: read, min_level: L1}
+  - {id: TLS-02, name: read_brand_brain, class: read, min_level: L1}
+  - {id: TLS-03, name: lookup_company, class: read, min_level: L1}
+  - {id: TLS-04, name: score_lead, class: compute, min_level: L1}
+  - {id: TLS-05, name: create_lead, class: write, min_level: L2,
+     idempotent_on: [organization_id, domain, contact_hash]}
+  - {id: TLS-06, name: draft_content, class: write, min_level: L2}
+  - {id: TLS-07, name: update_crm, class: write, min_level: L2, field_allowlist: true}
+  - {id: TLS-08, name: check_availability, class: read, min_level: L1}
+  - {id: TLS-09, name: book_meeting, class: external, min_level: L3,
+     requires: [approval, availability_recheck]}
+  - {id: TLS-10, name: read_inbox, class: read, min_level: L1}
+  - {id: TLS-11, name: classify_reply, class: compute, min_level: L1}
+  - {id: TLS-12, name: draft_reply, class: write, min_level: L2}
+  - {id: TLS-13, name: create_approval, class: write, min_level: L1}
+  - {id: TLS-14, name: send_email, class: external, min_level: L3,
+     requires: [approval, suppression_check, consent_check, daily_cap, idempotency]}
+  - {id: TLS-15, name: send_bulk_campaign, class: external, min_level: L3,
+     requires: [owner_approval, per_message_idempotency, global_cap]}
+  - {id: TLS-16, name: create_checkout_link, class: external, min_level: L2,
+     requires: [no_payment_inference]}
+  - {id: TLS-17, name: read_metrics, class: read, min_level: L1}
+  - {id: TLS-18, name: write_learning, class: write, min_level: L2,
+     requires: [evidence_ref, effect_size]}
+
+gate_sequence: [schema, permission, policy, budget, approval, idempotency, execute, persist, emit]
+
+# ---------------------------------------------------------------------------
+# Model registry. Identifiers and prices below are UNVERIFIED placeholders
+# taken from the source brief. Prompt: confirm against the live catalogue and
+# stamp verified_at before any promotion. Never inline a model string in code.
+# ---------------------------------------------------------------------------
+model_registry:
+  - {tier: T1, model_id: "z-ai/glm-5.3-flash", status: unverified, use: routine volume,
+     price_in_per_mtok: 0.0399, price_out_per_mtok: 0.0784}
+  - {tier: T2, model_id: "meta/muse-ember",     status: unverified, use: planning and reasoning,
+     price_in_per_mtok: 0.10,   price_out_per_mtok: 0.50}
+  - {tier: T3, model_id: "benchmark_required",  status: unverified, use: high impact fallback}
+routing:
+  resolve_from: [task_class, impact, uncertainty, required_quality, prior_attempts]
+  never_resolve_from: [agent_name]
+  promotion_requires: [golden_set_pass, cost_per_passing_task, approver, verified_at]
+
+budgets:
+  scopes: [task, workflow_run, agent_day, organization_month]
+  # Founder-stage defaults. Normal use should land far below the org ceiling;
+  # the ceiling exists to stop a runaway loop, not to authorise spending.
+  defaults_usd:
+    task: 0.02
+    workflow_run: 0.50
+    agent_day: 0.10
+    organization_month: 2.00
+  operating_target:
+    inference_usd_per_month: 1.00
+    note: routine task about $0.0002; 200 leads end to end about $0.10-0.30
+  check_before_dispatch: true
+  on_breach: block_and_notify
+  fail_closed: true
+
+state_machines:
+  task: [created, ready, running, awaiting_approval, succeeded, failed, blocked, cancelled, expired]
+  lead: [discovered, enriched, scored, qualified, disqualified, contacted, replied,
+         meeting_set, converted, dormant, suppressed]
+  message: [drafted, pending_approval, queued, sending, sent, delivered, bounced,
+            complained, failed]
+  campaign: [draft, planned, pending_approval, approved, active, paused, completed,
+             cancelled, rejected]
+  approval: [pending, approved, rejected, expired, revoked, executed]
+  conversation: [new, triaged, drafting, auto_replied, awaiting_human, awaiting_prospect,
+                 meeting_offered, closed_won, closed_lost, opted_out]
+  meeting: [proposed, confirmed, booked, completed, no_show, cancelled]
+  subscription: [trialing, active, past_due, cancelled, expired]
+
+autonomy:
+  L1: read and analyse
+  L2: create drafts and internal writes
+  L3: external effects with approval
+  L4: limited pre-authorised effects, off by default, never for money
+  always_human: [ad_spend, budget_increase, discount_beyond_limit, bulk_campaign,
+                 contract_commitment, price_change, refund, data_deletion, dispute]
+
+approval_matrix:
+  send_single_email:   {L1: deny, L2: deny, L3: approve, L4: allow_if_enabled}
+  send_bulk_campaign:  {L1: deny, L2: deny, L3: approve, L4: approve}
+  book_meeting:        {L1: deny, L2: deny, L3: approve, L4: allow_if_enabled}
+  publish_content:     {L1: deny, L2: deny, L3: approve, L4: approve}
+  change_ad_spend:     {L1: deny, L2: deny, L3: approve, L4: deny}
+  offer_discount:      {L1: deny, L2: deny, L3: approve, L4: deny}
+  refund:              {L1: deny, L2: deny, L3: deny, L4: deny}
+
+acceptance_tests:
+  - {id: AC-01, name: tenant scoping on create}
+  - {id: AC-02, name: tenant isolation every table}
+  - {id: AC-03, name: suppression blocks send}
+  - {id: AC-04, name: duplicate execution prevented}
+  - {id: AC-05, name: approval integrity}
+  - {id: AC-06, name: lead deduplication}
+  - {id: AC-07, name: budget enforcement}
+  - {id: AC-08, name: ledger completeness}
+  - {id: AC-09, name: meeting race}
+  - {id: AC-10, name: webhook authenticity}
+  - {id: AC-11, name: agent permission ceiling}
+  - {id: AC-12, name: emergency stop}
+  - {id: AC-13, name: restore drill}
+  - {id: AC-14, name: claim grounding}
+
+definition_of_done:
+  - matches the spec row, entity or endpoint it references
+  - boundary validation on user input and provider responses
+  - happy path covered by a test named after its AC or task id
+  - named failure path covered; failure classified not swallowed
+  - tenant scoping verified on every new query or job
+  - external effects routed through the tool gateway with an idempotency key
+  - cost attributable to org, task, agent and campaign where applicable
+  - audit entry for privileged or refused actions
+  - logs carry org, task, agent and trace id
+  - demonstrated once by a human and recorded
+
+workflows:
+  WKF-A:
+    name: marketing campaign
+    sequence: [intent, research, strategy, content, qa, approval, execute, measure, learn]
+  WKF-B:
+    name: lead generation
+    sequence: [discover, dedupe, enrich, score, save, research, personalise,
+               compliance, approval, send, monitor, report]
+  WKF-C:
+    name: sales conversation
+    sequence: [detect, identify, ground, draft, policy_check, send_or_escalate,
+               follow_up, offer_meeting]
+  WKF-D:
+    name: meeting
+    sequence: [availability, propose, confirm, recheck, book, remind, update_crm]
+  WKF-E:
+    name: payment onboarding
+    sequence: [checkout, webhook_verify, create_customer, assign_plan, onboard, track_activation]
+
+# ---------------------------------------------------------------------------
+# Intent labels — the closed set returned by TLS-11 classify_reply.
+# Exactly one primary label per inbound message. Never free text.
+# ---------------------------------------------------------------------------
+intents:
+  labels:
+    - {id: interested,        route: reply_draft,        escalate: false, stops_sequence: true}
+    - {id: meeting_request,   route: meeting_offer,      escalate: false, stops_sequence: true}
+    - {id: pricing_question,  route: human,              escalate: true,  stops_sequence: true}
+    - {id: objection,         route: reply_draft_or_human, escalate: true, stops_sequence: true}
+    - {id: not_now,           route: follow_up_later,    escalate: false, stops_sequence: true}
+    - {id: not_interested,    route: close_lost,         escalate: false, stops_sequence: true}
+    - {id: wrong_person,      route: human,              escalate: true,  stops_sequence: true}
+    - {id: referral,          route: human,              escalate: true,  stops_sequence: true}
+    - {id: unsubscribe,       route: suppress,           escalate: false, stops_sequence: true}
+    - {id: complaint,         route: suppress_and_human, escalate: true,  stops_sequence: true}
+    - {id: auto_reply,        route: ignore,             escalate: false, stops_sequence: false}
+    - {id: bounce_notice,     route: send_path,          escalate: false, stops_sequence: false}
+    - {id: vendor_pitch,      route: ignore,             escalate: false, stops_sequence: false}
+    - {id: unrelated,         route: human,              escalate: true,  stops_sequence: true}
+    - {id: needs_human,       route: human,              escalate: true,  stops_sequence: true}
+  rules:
+    - exactly one primary label per message; no free text, no multi-label
+    - confidence below 0.70 resolves to needs_human regardless of label
+    - unsubscribe and complaint write a suppression before any other processing
+    - auto_reply and bounce_notice never advance a sequence and never trigger a reply
+    - pricing_question, wrong_person, referral and unrelated always reach a human
+    - the label set is versioned; changing it requires re-running the reply golden set
+
+# ---------------------------------------------------------------------------
+# Event catalogue — the only event names the system may emit.
+# Every event carries organization_id, occurred_at, actor_type and actor_id.
+# Analytics, the CRM timeline and the weekly digest all read from these names.
+# ---------------------------------------------------------------------------
+events:
+  platform:
+    - {name: org.created,          emitter: platform, props: [org_id, plan]}
+    - {name: member.invited,       emitter: platform, props: [org_id, email, role]}
+    - {name: integration.connected, emitter: platform, props: [provider, account_ref]}
+    - {name: integration.expired,  emitter: platform, props: [provider, account_ref]}
+    - {name: emergency_stop.set,   emitter: platform, props: [org_id, enabled]}
+  knowledge:
+    - {name: brand.updated,        emitter: growth_strategy, props: [brand_id, fields]}
+    - {name: document.indexed,     emitter: growth_strategy, props: [document_id, chunks]}
+  orchestration:
+    - {name: command.parsed,       emitter: growth_strategy, props: [command_id, status]}
+    - {name: plan.created,         emitter: growth_strategy, props: [plan_id, task_count, cost_estimate]}
+    - {name: task.started,         emitter: growth_strategy, props: [task_id, agent_id, type]}
+    - {name: task.succeeded,       emitter: growth_strategy, props: [task_id, cost_usd]}
+    - {name: task.failed,          emitter: growth_strategy, props: [task_id, error_code]}
+    - {name: task.blocked,         emitter: growth_strategy, props: [task_id, reason]}
+  approval:
+    - {name: approval.requested,   emitter: growth_strategy, props: [approval_id, action_class]}
+    - {name: approval.decided,     emitter: growth_strategy, props: [approval_id, decision, decided_by]}
+    - {name: approval.expired,     emitter: growth_strategy, props: [approval_id]}
+  acquisition:
+    - {name: lead.discovered,      emitter: acquisition, props: [lead_id, source, source_confidence]}
+    - {name: lead.qualified,       emitter: acquisition, props: [lead_id, campaign_id, score, score_model]}
+    - {name: lead.disqualified,    emitter: acquisition, props: [lead_id, score]}
+    - {name: lead.suppressed,      emitter: acquisition, props: [lead_id, reason]}
+    - {name: message.sent,         emitter: acquisition, props: [message_id, campaign_id, lead_id, provider_id]}
+    - {name: message.delivered,    emitter: acquisition, props: [message_id, provider_id]}
+    - {name: message.bounced,      emitter: acquisition, props: [message_id, bounce_type]}
+    - {name: message.complained,   emitter: acquisition, props: [message_id]}
+    - {name: message.replied,      emitter: acquisition, props: [message_id, conversation_id, intent, confidence]}
+    - {name: conversation.closed,  emitter: acquisition, props: [conversation_id, outcome]}
+  meetings:
+    - {name: meeting.proposed,     emitter: acquisition, props: [meeting_id, lead_id, slots]}
+    - {name: meeting.booked,       emitter: acquisition, props: [meeting_id, starts_at]}
+    - {name: meeting.completed,    emitter: acquisition, props: [meeting_id]}
+    - {name: meeting.no_show,      emitter: acquisition, props: [meeting_id]}
+  revenue:
+    - {name: customer.created,     emitter: revenue, props: [customer_id, lead_id]}
+    - {name: subscription.activated, emitter: revenue, props: [subscription_id, plan_code]}
+    - {name: subscription.past_due,  emitter: revenue, props: [subscription_id]}
+    - {name: subscription.cancelled, emitter: revenue, props: [subscription_id, reason_code]}
+    - {name: payment.succeeded,    emitter: revenue, props: [payment_id, amount_minor, currency]}
+    - {name: payment.failed,       emitter: revenue, props: [payment_id, error_code]}
+  cost:
+    - {name: budget.threshold,     emitter: insights, props: [scope, pct_used]}
+    - {name: budget.exhausted,     emitter: insights, props: [scope, limit_usd]}
+    - {name: model.call.failed,    emitter: ai_gateway, props: [model_id, status, task_id]}
+  event_rules:
+    - names are entity.past_tense and may not be invented ad hoc
+    - emit after commit, never before
+    - an event carries ids, counts and enums; never message bodies or personal data
+    - the digest and attribution read only from this list

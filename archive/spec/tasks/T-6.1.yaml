@@ -1,0 +1,24 @@
+# T-6.1 — Second tenant audit
+# Generated from spec/ai-mos.spec.yaml + blueprint/tasks.js. Do not edit alone.
+
+id: T-6.1
+phase: PH-6
+kind: security
+blocking: true
+title: Second tenant audit
+context_budget_tokens: 6000
+load_only:
+  - master §2.6
+  - master §10.1
+files_create:
+  - docs/security/tenant-audit.md
+  - backend/tests/test_tenant_isolation.py
+steps:
+  - review every query, cache key and job for tenant scoping
+  - run two orgs side by side
+done_when:
+  - zero cross-tenant paths found; documented
+do_not:
+  - caching without a tenant key is a defect
+  - do not start another task in this session
+  - do not invent a table, endpoint, tool or model id

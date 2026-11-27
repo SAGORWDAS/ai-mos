@@ -1,0 +1,25 @@
+# T-6.4 — Security review
+# Generated from spec/ai-mos.spec.yaml + blueprint/tasks.js. Do not edit alone.
+
+id: T-6.4
+phase: PH-6
+kind: security
+blocking: true
+title: Security review
+context_budget_tokens: 6000
+load_only:
+  - master §10.1
+  - master §10.4
+files_create:
+  - docs/security/review.md
+steps:
+  - OAuth scope review
+  - secret rotation test
+  - dependency audit
+  - abuse-case checklist
+done_when:
+  - rotation works without a deploy; no high findings open
+do_not:
+  - never ship a shared admin credential
+  - do not start another task in this session
+  - do not invent a table, endpoint, tool or model id
