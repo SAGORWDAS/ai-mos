@@ -12,8 +12,19 @@ async function api(path, body, method) {
     body: body ? JSON.stringify(body) : undefined,
   });
   const data = await res.json().catch(() => ({}));
+  if (res.status === 401 && data.error === 'login') { showLogin(); throw new Error('Please log in'); }
   if (!res.ok) throw new Error(data.error || 'Something went wrong');
   return data;
+}
+function showLogin() {
+  if ($('#login')) return;
+  $('#view').innerHTML = `<form id="login" class="card" style="max-width:380px;margin:12vh auto"><h1 style="font-size:28px">Welcome back</h1><p class="sub" style="margin-bottom:18px">Enter your app password.</p>
+    <input type="password" name="password" autofocus required style="margin-bottom:14px"><button class="btn p">Log in</button></form>`;
+  $('#login').onsubmit = async (e) => {
+    e.preventDefault();
+    const r = await fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.fromEntries(new FormData(e.target))) });
+    r.ok ? go() : toast('Wrong password', true);
+  };
 }
 function toast(msg, err) {
   const d = document.createElement('div');
@@ -388,6 +399,7 @@ pages.settings = () => {
     ${f('max_followups', 'Follow-ups per lead', '', 'number')}</div>
     ${f('footer', 'Footer on outreach emails', 'Keep an opt-out line. Anti-spam laws require it.')}</div>
   <button class="btn p">Save settings</button></form>
+  ${S.cronPath ? `<div class="card"><h2>Keep it running (hosting)</h2><p class="mute" style="margin-top:0">In your hosting panel, add a cron job that runs every 10 minutes and opens this link. It wakes the app so autopilot never pauses. Keep the link private.</p><code style="word-break:break-all">${esc(location.origin + S.cronPath)}</code></div>` : ''}
   <p class="mute" style="margin-top:22px">Total AI spend so far: $${S.usage.total.toFixed(3)}, across ${plural(S.usage.calls, 'task')}.</p>`;
 };
 pages.settings.on = () => {
@@ -410,7 +422,7 @@ async function go() {
   const page = pages[p] || pages.home;
   $$('#nav a').forEach((a) => a.classList.toggle('on', a.dataset.p === (pages[p] ? p : 'home')));
   try { await refresh(); $('#view').innerHTML = await page(); page.on && page.on(); }
-  catch (e) { $('#view').innerHTML = `<div class="card empty">${esc(e.message)}</div>`; }
+  catch (e) { if (!$('#login')) $('#view').innerHTML = `<div class="card empty">${esc(e.message)}</div>`; }
 }
 addEventListener('hashchange', go);
 go();

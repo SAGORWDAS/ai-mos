@@ -25,7 +25,7 @@ function state() {
   const c = (sql) => get(sql).n;
   const usage = get("SELECT COALESCE(SUM(cost),0) total, COALESCE(SUM(CASE WHEN created>=datetime('now','-30 days') THEN cost END),0) month, COUNT(*) calls FROM usage");
   return {
-    settings: s, brand, channels: team.CHANNELS, sources: get('SELECT COUNT(*) n FROM sources WHERE active=1').n,
+    settings: s, brand, channels: team.CHANNELS, cronPath: CRON ? '/api/cron?key=' + CRON : '', sources: get('SELECT COUNT(*) n FROM sources WHERE active=1').n,
     stats: {
       leads: c('SELECT COUNT(*) n FROM leads'),
       contacted: c("SELECT COUNT(*) n FROM leads WHERE status NOT IN ('new','skipped','call')"),
@@ -152,10 +152,32 @@ const table = Object.entries(routes).map(([k, fn]) => {
 
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.ico': 'image/x-icon' };
 
+// Password login: required whenever the app is reachable from outside this PC.
+const LOCAL = HOST === '127.0.0.1' || HOST === 'localhost';
+const PASSWORD = process.env.APP_PASSWORD || '';
+const TOKEN = PASSWORD && require('node:crypto').createHmac('sha256', PASSWORD).update('mt-session-v1').digest('hex');
+const CRON = TOKEN && TOKEN.slice(0, 24);
+const authed = (req) => !PASSWORD || (req.headers.cookie || '').split(/;\s*/).includes('mt=' + TOKEN);
+
 const server = http.createServer(async (req, res) => {
   const host = (req.headers.host || '').split(':')[0];
-  if (HOST === '127.0.0.1' && !['localhost', '127.0.0.1'].includes(host)) { res.writeHead(403); return res.end(); }
+  if (LOCAL && !['localhost', '127.0.0.1'].includes(host)) { res.writeHead(403); return res.end(); }
   const url = new URL(req.url, 'http://x');
+
+  if (url.pathname === '/api/login' && req.method === 'POST') {
+    let raw = ''; for await (const c of req) { raw += c; if (raw.length > 2000) break; }
+    const ok = PASSWORD && JSON.parse(raw || '{}').password === PASSWORD;
+    if (!ok) await sleep(1500); // slow down guessing
+    const secure = req.headers['x-forwarded-proto'] === 'https' ? '; Secure' : '';
+    res.writeHead(ok ? 200 : 401, { 'Content-Type': 'application/json', ...(ok ? { 'Set-Cookie': `mt=${TOKEN}; HttpOnly; SameSite=Strict; Path=/; Max-Age=2592000${secure}` } : {}) });
+    return res.end(JSON.stringify(ok ? { ok: true } : { error: 'Wrong password' }));
+  }
+  if (url.pathname === '/api/cron') { // for a hosting cron job: wakes the app and runs one autopilot cycle
+    const ok = CRON && url.searchParams.get('key') === CRON;
+    if (ok) engine.tick().catch((e) => console.error('cron:', e.message));
+    res.writeHead(ok ? 200 : 403); return res.end(ok ? 'ok' : 'forbidden');
+  }
+  if (url.pathname.startsWith('/api/') && !authed(req)) { res.writeHead(401, { 'Content-Type': 'application/json' }); return res.end('{"error":"login"}'); }
 
   if (url.pathname.startsWith('/api/')) {
     const r = table.find((t) => t.method === req.method && t.re.test(url.pathname));
@@ -188,6 +210,10 @@ const server = http.createServer(async (req, res) => {
 });
 
 if (require.main === module) {
+  if (!LOCAL && PASSWORD.length < 8) {
+    console.error('\n  Refusing to start on a public address without a password.\n  Set the APP_PASSWORD environment variable (8+ characters).\n');
+    process.exit(1);
+  }
   server.listen(PORT, HOST, () => console.log(`\n  AI Marketing Team is running → http://localhost:${PORT}\n  (keep this window open; press Ctrl+C to stop)\n`));
   // Autopilot: every 10 minutes check replies, find leads, send, follow up, report.
   setInterval(() => engine.tick().catch((e) => console.error('tick:', e.message)), 10 * 60 * 1000);

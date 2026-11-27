@@ -65,3 +65,13 @@ It respects each site's robots.txt, pauses between requests, and never reads the
 - To use a different model, change it in Settings and use **Test OpenAI** to check it. Update the two price fields so the cost tracking stays accurate.
 - `npm test` runs an end-to-end check with OpenAI and Gmail faked.
 - The original planning documents (blueprint, spec, PDFs) are in `archive/`.
+
+## Hosting online (e.g. Hostinger Business → Web Apps)
+
+1. Push this folder to GitHub (or upload it as a zip), and create a **Node.js Web App** from it. Choose Node 22 or newer, start command `npm start`.
+2. Set these environment variables:
+   - `HOST=0.0.0.0`
+   - `APP_PASSWORD=` a strong password, which you'll use to log in. The app refuses to start online without one.
+   - optionally `DATA_DIR=` a folder outside the app, so redeploys keep your data
+3. Open the app, log in, and follow the setup steps. Use **Test Gmail** to confirm the host allows Gmail connections (ports 465 and 993).
+4. In **Settings → Keep it running**, copy the private link, and add a hosting **cron job** that opens it every 10 minutes (`curl -s "<link>"`).
