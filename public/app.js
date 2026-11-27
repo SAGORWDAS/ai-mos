@@ -428,7 +428,8 @@ pages.settings = () => {
     ${f('daily_new_leads', 'New leads per day', '', 'number')}
     ${f('min_score', 'Only email leads scoring at least', 'Fit score, 0–100.', 'number')}
     ${f('work_start', 'Send emails from (hour)', 'Monday to Friday.', 'number')}
-    ${f('work_end', 'Until (hour)', 'Your daily report is sent then.', 'number')}</div></div>
+    ${f('work_end', 'Until (hour)', 'Your daily report is sent then.', 'number')}
+    ${f('timezone', 'Time zone', 'Hours follow this zone, e.g. Australia/Adelaide, Australia/Sydney.')}</div></div>
   <div class="card"><h2>Sending rules</h2><div class="grid g3">
     ${f('daily_cap', 'Max emails a day', '20–40 is safe for a normal Gmail account.', 'number')}
     ${f('followup_days', 'Follow up after (days)', '', 'number')}
