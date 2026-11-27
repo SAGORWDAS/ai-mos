@@ -2,7 +2,7 @@
 const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
-const { all, get, run, getSetting, setSetting, allSettings, getJSON, setJSON } = require('./lib/db');
+const { all, get, run, log, getSetting, setSetting, allSettings, getJSON, setJSON } = require('./lib/db');
 const ai = require('./lib/ai');
 const mail = require('./lib/mail');
 const team = require('./lib/agents');
@@ -12,11 +12,9 @@ const HOST = process.env.HOST || '127.0.0.1';
 const PUB = path.join(__dirname, 'public');
 const SECRETS = ['openai_key', 'gmail_pass'];
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const firstName = () => (getSetting('sender_name') || '').split(' ')[0];
 
 // ---------- helpers ----------
 const mask = (v) => (v ? '•'.repeat(8) + v.slice(-4) : '');
-const sentToday = () => get("SELECT COUNT(*) n FROM messages WHERE direction='out' AND status='sent' AND date(sent_at,'localtime')=date('now','localtime')").n;
 const thread = (leadId) => all('SELECT direction,subject,body FROM messages WHERE lead_id=? AND status IN (\'sent\',\'received\',\'handled\') ORDER BY id', leadId)
   .map((m) => `${m.direction === 'out' ? 'US' : 'THEM'}: ${m.subject ? `[${m.subject}] ` : ''}${m.body}`).join('\n---\n').slice(-3500);
 
@@ -30,97 +28,25 @@ function state() {
     settings: s, brand, channels: team.CHANNELS,
     stats: {
       leads: c('SELECT COUNT(*) n FROM leads'),
-      contacted: c("SELECT COUNT(*) n FROM leads WHERE status NOT IN ('new')"),
-      replied: c("SELECT COUNT(*) n FROM leads WHERE status IN ('replied','interested','won','lost','unsubscribed')"),
-      interested: c("SELECT COUNT(*) n FROM leads WHERE status IN ('interested','won')"),
+      contacted: c("SELECT COUNT(*) n FROM leads WHERE status NOT IN ('new','skipped')"),
+      replied: c("SELECT COUNT(*) n FROM leads WHERE status IN ('replied','interested','meeting','won','lost','unsubscribed')"),
+      interested: c("SELECT COUNT(*) n FROM leads WHERE status IN ('interested','meeting','won')"),
       won: c("SELECT COUNT(*) n FROM leads WHERE status='won'"),
       drafts: c("SELECT COUNT(*) n FROM messages WHERE status='draft'"),
       unread: c("SELECT COUNT(*) n FROM messages WHERE status='received'"),
-      sentToday: sentToday(), cap: +s.daily_cap,
+      sentToday: engine.sentToday(), meetings: c("SELECT COUNT(*) n FROM leads WHERE status='meeting'"), cap: +s.daily_cap,
       plans: c('SELECT COUNT(*) n FROM plans'), content: c('SELECT COUNT(*) n FROM content'),
     },
     usage,
     ready: { openai: !!getSetting('openai_key'), gmail: !!(getSetting('gmail_user') && getSetting('gmail_pass')), brand: !!brand.name },
-    lastInboxCheck: getSetting('last_inbox_check'),
+    lastInboxCheck: getSetting('last_inbox_check'), workHours: engine.inWorkHours(),
+    activity: all('SELECT * FROM activity ORDER BY id DESC LIMIT 40'),
   };
 }
 
-// ---------- outreach ----------
-async function draftFirst(ids) {
-  const sender = firstName();
-  let made = 0;
-  for (const id of ids) {
-    const l = get('SELECT * FROM leads WHERE id=?', id);
-    if (!l || l.status !== 'new' || get("SELECT 1 FROM messages WHERE lead_id=? AND status='draft'", id)) continue;
-    const r = await team.firstEmail(l, sender);
-    run("INSERT INTO messages(lead_id,direction,kind,subject,body,status) VALUES(?,'out','first',?,?,'draft')", id, r.subject, r.body);
-    made++;
-  }
-  return made;
-}
-
-async function draftFollowups() {
-  const days = +getSetting('followup_days'), max = +getSetting('max_followups');
-  const due = all(`SELECT * FROM leads WHERE status='contacted' AND followups < ? AND last_contacted <= datetime('now', ?)
-    AND id NOT IN (SELECT lead_id FROM messages WHERE status='draft')`, max, `-${days} days`);
-  for (const l of due) {
-    const r = await team.followUp(l, thread(l.id), l.followups + 1, firstName());
-    const first = get("SELECT subject FROM messages WHERE lead_id=? AND kind='first' ORDER BY id LIMIT 1", l.id);
-    const last = get("SELECT message_id FROM messages WHERE lead_id=? AND direction='out' AND status='sent' ORDER BY id DESC LIMIT 1", l.id);
-    run("INSERT INTO messages(lead_id,direction,kind,subject,body,status,in_reply_to) VALUES(?,'out','followup',?,?,'draft',?)",
-      l.id, 'Re: ' + (first?.subject || '').replace(/^re:\s*/i, ''), r.body, last?.message_id || null);
-  }
-  return due.length;
-}
-
-async function sendOne(id) {
-  const m = get("SELECT m.*, l.email, l.status lstatus FROM messages m JOIN leads l ON l.id=m.lead_id WHERE m.id=? AND m.status='draft'", id);
-  if (!m) throw new Error('Draft not found.');
-  if (m.lstatus === 'unsubscribed') throw new Error(`${m.email} unsubscribed — not sent.`);
-  if (sentToday() >= +getSetting('daily_cap')) throw new Error(`Daily limit of ${getSetting('daily_cap')} emails reached (protects your Gmail). Change it in Settings.`);
-  const footer = getSetting('footer').trim();
-  const text = m.body.trim() + (footer && m.kind !== 'reply' ? `\n\n--\n${footer}` : '');
-  try {
-    const messageId = await mail.send({ to: m.email, subject: m.subject, text, inReplyTo: m.in_reply_to });
-    run("UPDATE messages SET status='sent', sent_at=datetime('now'), message_id=?, error=NULL WHERE id=?", messageId, id);
-    const lead = { first: "status='contacted'", followup: "status='contacted', followups=followups+1", reply: 'status=status' }[m.kind] || 'status=status';
-    run(`UPDATE leads SET ${lead}, last_contacted=datetime('now') WHERE id=?`, m.lead_id);
-  } catch (e) {
-    run("UPDATE messages SET error=? WHERE id=?", e.message, id);
-    throw e;
-  }
-}
-
-const STATUS_BY_INTENT = { interested: 'interested', question: 'interested', not_interested: 'lost', unsubscribe: 'unsubscribed', not_now: 'replied', out_of_office: 'contacted', other: 'replied' };
-
-let checking = false;
-async function checkInbox() {
-  if (checking) return { found: 0, busy: true };
-  checking = true;
-  try {
-    const leads = all("SELECT * FROM leads WHERE status NOT IN ('new')");
-    const byEmail = new Map(leads.map((l) => [l.email.toLowerCase(), l]));
-    const msgs = await mail.fetchFrom(new Set(byEmail.keys()));
-    let found = 0;
-    for (const m of msgs) {
-      if (!m.messageId || get('SELECT 1 FROM messages WHERE message_id=?', m.messageId)) continue;
-      const l = byEmail.get(m.from);
-      const history = thread(l.id);
-      const ins = run("INSERT INTO messages(lead_id,direction,kind,subject,body,status,message_id,in_reply_to,created) VALUES(?,'in','inbound',?,?,'received',?,?,COALESCE(?,datetime('now')))",
-        l.id, m.subject, m.text, m.messageId, m.inReplyTo || null, m.date ? m.date.replace('T', ' ').slice(0, 19) : null);
-      found++;
-      run("DELETE FROM messages WHERE lead_id=? AND status='draft' AND kind='followup'", l.id); // they replied: stop follow-ups
-      let t = { intent: 'other', summary: '', reply: '' };
-      try { t = await team.triage(l, history, m.text, firstName()); } catch (e) { t.summary = 'AI triage failed: ' + e.message; }
-      run('UPDATE messages SET intent=?, summary=? WHERE id=?', t.intent, t.summary, ins.lastInsertRowid);
-      if (l.status !== 'won') run('UPDATE leads SET status=? WHERE id=?', STATUS_BY_INTENT[t.intent] || 'replied', l.id);
-      if (t.reply) run("INSERT INTO messages(lead_id,direction,kind,subject,body,status,in_reply_to) VALUES(?,'out','reply',?,?,'draft',?)",
-        l.id, /^re:/i.test(m.subject) ? m.subject : 'Re: ' + m.subject, t.reply, m.messageId);
-    }
-    setSetting('last_inbox_check', new Date().toISOString());
-    return { found };
-  } finally { checking = false; }
-}
+const engine = require('./lib/engine');
+const finder = require('./lib/finder');
+const { draftFirst, draftFollowups, sendOne, checkInbox } = engine;
 
 // ---------- routes ----------
 const routes = {
@@ -139,6 +65,10 @@ const routes = {
 
   'POST /api/brand': (b) => { setJSON('brand', b); return state(); },
   'POST /api/brand/autofill': async (b) => team.brandFromWebsite(String(b.url || '').trim()),
+  'POST /api/onboard': async (b) => { const brand = await team.brandFromWebsite(String(b.url || '').trim()); setJSON('brand', brand); log('setup', 'Learned your product from ' + brand.website); return state(); },
+  'POST /api/leads/find': async () => ({ added: await engine.prospect() }),
+  'POST /api/autopilot/run': async () => { await engine.tick(); return state(); },
+  'GET /api/report': () => engine.report(),
 
   'GET /api/plans': () => all('SELECT * FROM plans ORDER BY id DESC'),
   'POST /api/plans': async (b) => { const body = await team.plan(b.goal); run('INSERT INTO plans(goal,body) VALUES(?,?)', b.goal || '', body); return all('SELECT * FROM plans ORDER BY id DESC'); },
@@ -245,10 +175,9 @@ const server = http.createServer(async (req, res) => {
 
 if (require.main === module) {
   server.listen(PORT, HOST, () => console.log(`\n  AI Marketing Team is running → http://localhost:${PORT}\n  (keep this window open; press Ctrl+C to stop)\n`));
-  // Check Gmail for replies every 10 minutes while the app is open.
-  setInterval(() => {
-    if (getSetting('auto_inbox') === '1' && getSetting('gmail_pass')) checkInbox().catch((e) => console.error('inbox:', e.message));
-  }, 10 * 60 * 1000);
+  // Autopilot: every 10 minutes check replies, find leads, send, follow up, report.
+  setInterval(() => engine.tick().catch((e) => console.error('tick:', e.message)), 10 * 60 * 1000);
+  setTimeout(() => engine.tick().catch(() => {}), 15000);
 }
 
 module.exports = { server, routes };

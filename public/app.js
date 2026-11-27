@@ -37,7 +37,7 @@ function md(src) {
 }
 const ago = (t) => { if (!t) return ''; const d = new Date(t.includes('T') ? t : t.replace(' ', 'T') + 'Z'); return d.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); };
 const copy = (text) => navigator.clipboard.writeText(text).then(() => toast('Copied'));
-const STATUS_PILL = { new: '', contacted: 'acc', replied: 'warn', interested: 'ok', won: 'ok', lost: 'bad', unsubscribed: 'bad' };
+const STATUS_PILL = { new: '', contacted: 'acc', replied: 'warn', interested: 'ok', meeting: 'ok', won: 'ok', lost: 'bad', unsubscribed: 'bad', bounced: 'bad', skipped: '' };
 const INTENT_PILL = { interested: 'ok', question: 'ok', not_now: 'warn', not_interested: 'bad', unsubscribe: 'bad', out_of_office: '', other: '' };
 
 async function refresh() {
@@ -50,45 +50,47 @@ async function refresh() {
 // ---------------- pages ----------------
 const pages = {};
 
-pages.home = () => {
-  const r = S.ready, st = S.stats;
-  const steps = [
-    [r.openai && r.gmail, 'Connect OpenAI and Gmail', '#/settings', 'Settings'],
-    [r.brand, 'Tell the team about your business', '#/brand', 'Brand'],
-    [st.plans > 0, 'Get a 30-day marketing plan', '#/strategy', 'Strategy'],
-    [st.leads > 0, 'Add people you want to reach', '#/leads', 'Leads'],
-    [st.contacted > 0, 'Review and send your first emails', '#/outreach', 'Outreach'],
-  ];
-  const done = steps.filter((s) => s[0]).length;
+pages.home = async () => {
+  const r = S.ready, st = S.stats, s = S.settings, on = s.autopilot === '1';
+  const keys = r.openai && r.gmail;
+  if (!keys || !r.brand) return `
+  <h1>Set up your AI sales team</h1><p class="sub">Two steps. After that it finds customers, emails them, follows up and replies on its own, and hands you the ones ready for a meeting.</p>
+  <ol class="steps card">
+    <li class="${keys ? 'done' : ''}"><span class="sp"><b>Connect OpenAI and Gmail</b><div class="mute">Your OpenAI key and a Gmail App Password</div></span><a class="btn ${keys ? 's' : 'p'}" href="#/settings">${keys ? 'Edit' : 'Open Settings'}</a></li>
+    <li class="${r.brand ? 'done' : ''}"><div class="sp"><b>Paste your website or SaaS link</b><div class="mute">The team reads it to learn what you sell and who buys it</div>
+      <div class="row" style="margin-top:10px"><input id="url" placeholder="https://yourproduct.com" style="flex:1" ${keys ? '' : 'disabled'}><button class="btn p" id="ob" ${keys ? '' : 'disabled'}>Learn my product</button></div></div></li>
+  </ol>`;
+
+  const hot = (await api('/leads')).filter((l) => l.status === 'meeting');
+  const ACT = { sent: '✉', reply: '↩', hot: '🔥', human: '✋', find: '🔎', bounce: '⚠', error: '⚠', report: '📊', setup: '◆' };
   return `
-  <h1>Good to see you${S.settings.sender_name ? ', ' + esc(S.settings.sender_name.split(' ')[0]) : ''}</h1>
-  <p class="sub">Your AI marketing team writes, sends and follows up. You approve every email before it goes out.</p>
+  <div class="row"><div class="sp"><h1>${on ? 'Your team is working' : 'Your team is paused'}</h1>
+    <p class="sub">${on ? `Finds ${s.daily_new_leads} leads a day, emails Mon–Fri ${s.work_start}:00–${s.work_end}:00 (max ${s.daily_cap}/day), replies any time, and emails you a report at ${s.work_end}:00.` : 'Turn on Autopilot and it will find, email, follow up and reply on its own.'}</p></div>
+    <label class="switch"><input type="checkbox" id="ap" ${on ? 'checked' : ''}><span></span><b>Autopilot</b></label></div>
+  ${!s.booking_link ? `<div class="card" style="border-color:var(--warn)"><b>Add your booking link</b> <span class="mute">(Calendly, Cal.com or a Google Calendar booking page). Interested leads get it automatically.</span> <a href="#/settings">Add it →</a></div>` : ''}
   <div class="grid g4">
-    ${[['Leads', st.leads], ['Contacted', st.contacted], ['Replied', st.replied], ['Interested', st.interested]].map(([k, v]) => `<div class="card stat"><b>${v}</b><span>${k}</span></div>`).join('')}
+    ${[['Leads found', st.leads], ['Emailed', st.contacted], ['Replied', st.replied], ['Ready for a meeting', st.meetings]].map(([k, v], i) => `<div class="card stat" ${i === 3 && v ? 'style="border-color:var(--ok)"' : ''}><b>${v}</b><span>${k}</span></div>`).join('')}
   </div>
   <div class="grid g2">
-    <div class="card">
-      <div class="row"><h2 class="sp">Getting started</h2><span class="pill ${done === 5 ? 'ok' : 'acc'}">${done}/5</span></div>
-      <ol class="steps">${steps.map(([ok, t, href, b]) => `<li class="${ok ? 'done' : ''}"><span class="sp">${t}</span><a class="btn s" href="${href}">${b}</a></li>`).join('')}</ol>
+    <div class="card"><div class="row"><h2 class="sp">🔥 Your meetings to take over</h2></div>
+      ${hot.length ? hot.map((l) => `<div class="row" style="padding:10px 0;border-bottom:1px solid var(--line)"><div class="sp"><b>${esc(l.name || l.company)}</b> <span class="mute">${esc(l.company)}</span><div class="mute">${esc(l.email)}</div></div>
+        <button class="btn s" data-th="${l.id}">Thread</button><button class="btn s p" data-won="${l.id}">Won</button></div>`).join('')
+        : '<div class="empty">No one yet. When a lead wants to talk you\'ll get an email and they\'ll appear here.</div>'}
     </div>
-    <div class="card">
-      <h2>Today</h2>
-      <ol class="steps">
-        <li class="${st.drafts ? '' : 'done'}"><span class="sp">${st.drafts} email draft${st.drafts === 1 ? '' : 's'} waiting for approval</span><a class="btn s" href="#/outreach">Review</a></li>
-        <li class="${st.unread ? '' : 'done'}"><span class="sp">${st.unread} new repl${st.unread === 1 ? 'y' : 'ies'}</span><a class="btn s" href="#/inbox">Open</a></li>
-        <li class="done"><span class="sp">${st.sentToday}/${st.cap} emails sent today</span></li>
-      </ol>
-      <div class="row" style="margin-top:12px">
-        <button class="btn" id="fu">Draft due follow-ups</button>
-        <button class="btn" id="ck">Check Gmail for replies</button>
-      </div>
-      <p class="mute">${S.lastInboxCheck ? 'Last checked ' + ago(S.lastInboxCheck) : 'Replies are checked every 10 minutes while the app is open.'}</p>
+    <div class="card"><div class="row"><h2 class="sp">Activity</h2><button class="btn s" id="run">Run now</button><button class="btn s" id="rep">Today's report</button></div>
+      <div style="max-height:330px;overflow:auto">${S.activity.length ? S.activity.map((a) => `<div class="row" style="padding:7px 0;font-size:14px;align-items:flex-start"><span style="width:20px">${ACT[a.kind] || '•'}</span><span class="sp">${esc(a.text)}</span><span class="mute">${ago(a.created)}</span></div>`).join('') : '<div class="empty">Nothing yet.</div>'}</div>
+      <p class="mute">${st.sentToday}/${st.cap} emails today · ${S.lastInboxCheck ? 'inbox checked ' + ago(S.lastInboxCheck) : 'inbox checked every 10 min'}</p>
     </div>
   </div>`;
 };
 pages.home.on = () => {
-  $('#fu').onclick = (e) => act(e.target, async () => { const r = await api('/outreach/followups', {}); toast(`${r.drafted} follow-up${r.drafted === 1 ? '' : 's'} drafted`); go(); });
-  $('#ck').onclick = (e) => act(e.target, async () => { const r = await api('/inbox/check', {}); toast(r.busy ? 'Already checking…' : `${r.found} new repl${r.found === 1 ? 'y' : 'ies'}`); go(); });
+  $('#ob') && ($('#ob').onclick = (e) => act(e.target, async () => { S = await api('/onboard', { url: $('#url').value }); toast('Got it. Check the Brand page, then turn on Autopilot.'); go(); }));
+  if (!$('#ap')) return;
+  $('#ap').onchange = async (e) => { await api('/settings', { autopilot: e.target.checked ? '1' : '0' }); toast(e.target.checked ? 'Autopilot on. First run starts now.' : 'Autopilot paused'); if (e.target.checked) api('/autopilot/run', {}).then(go).catch((x) => toast(x.message, true)); go(); };
+  $('#run').onclick = (e) => act(e.target, async () => { await api('/autopilot/run', {}); toast('Done'); go(); });
+  $('#rep').onclick = async () => { const r = await api('/report'); modal(esc(r.subject), `<div class="pre">${esc(r.text)}</div>`); };
+  document.querySelectorAll('[data-th]').forEach((b) => (b.onclick = () => showThread(b.dataset.th)));
+  document.querySelectorAll('[data-won]').forEach((b) => (b.onclick = async () => { await api('/leads/' + b.dataset.won, { status: 'won' }, 'PATCH'); toast('🎉 Marked as won'); go(); }));
 };
 
 const BRAND_FIELDS = [
@@ -101,7 +103,8 @@ const BRAND_FIELDS = [
   ['proof', 'Proof: clients, results, reviews (only real ones)', '300+ office orders in 2025'],
   ['tone', 'Voice / tone', 'Warm, friendly, simple English'],
   ['avoid', 'Words or claims to never use', 'cheapest, guaranteed'],
-  ['cta', 'Main call to action', 'Reply to book a free tasting / 15-min call'],
+  ['cta', 'Main call to action', 'Book a 15-min demo'],
+  ['search_hint', 'Where should the team look for buyers?', 'e.g. Shopify stores in the US/UK selling apparel, 5-50 staff'],
 ];
 pages.brand = () => `
   <h1>Brand</h1><p class="sub">Everything the team writes comes from this. Be specific and honest — the AI never invents claims beyond it.</p>
@@ -109,8 +112,8 @@ pages.brand = () => `
     <div class="row"><input id="url" placeholder="yourbusiness.com" value="${esc(S.brand.website || '')}" style="flex:1"><button class="btn" id="auto">Auto-fill</button></div>
     <div class="hint">Reads your homepage and drafts the fields below. Check them before saving.</div></div>
   <div class="card"><form id="bf" class="grid g2">
-    ${BRAND_FIELDS.map(([k, l, ph]) => `<div class="f" ${['offer', 'audience', 'usp', 'proof'].includes(k) ? 'style="grid-column:1/-1"' : ''}><label>${l}</label>
-      ${['offer', 'audience', 'usp', 'proof'].includes(k) ? `<textarea name="${k}" placeholder="${ph}" style="min-height:64px">${esc(S.brand[k] || '')}</textarea>` : `<input name="${k}" placeholder="${ph}" value="${esc(S.brand[k] || '')}">`}</div>`).join('')}
+    ${BRAND_FIELDS.map(([k, l, ph]) => `<div class="f" ${['offer', 'audience', 'usp', 'proof', 'search_hint'].includes(k) ? 'style="grid-column:1/-1"' : ''}><label>${l}</label>
+      ${['offer', 'audience', 'usp', 'proof', 'search_hint'].includes(k) ? `<textarea name="${k}" placeholder="${ph}" style="min-height:64px">${esc(S.brand[k] || '')}</textarea>` : `<input name="${k}" placeholder="${ph}" value="${esc(S.brand[k] || '')}">`}</div>`).join('')}
     <div><button class="btn p">Save brand</button></div></form></div>`;
 pages.brand.on = () => {
   $('#auto').onclick = (e) => act(e.target, async () => {
@@ -184,9 +187,9 @@ pages.leads = async () => {
   const leads = await api('/leads');
   const shown = leads.filter((l) => leadFilter === 'all' || l.status === leadFilter);
   const counts = leads.reduce((a, l) => ((a[l.status] = (a[l.status] || 0) + 1), a), {});
-  return `<div class="row"><div class="sp"><h1>Leads</h1><p class="sub">People you want to reach. Import a CSV or add them one by one.</p></div>
-    <button class="btn" id="add">+ Add lead</button><label class="btn" style="margin:0;color:var(--ink)">Import CSV<input type="file" id="csv" accept=".csv,.txt" hidden></label></div>
-  <div class="tabs">${['all', 'new', 'contacted', 'replied', 'interested', 'won', 'lost', 'unsubscribed'].map((s) => `<button class="btn s ${leadFilter === s ? 'on' : ''}" data-f="${s}">${s} ${s === 'all' ? leads.length : counts[s] || 0}</button>`).join('')}</div>
+  return `<div class="row"><div class="sp"><h1>Leads</h1><p class="sub">The team finds these on the web every day. You can also import a CSV or add people yourself.</p></div>
+    <button class="btn p" id="find">Find leads now</button><button class="btn" id="add">+ Add lead</button><label class="btn" style="margin:0;color:var(--ink)">Import CSV<input type="file" id="csv" accept=".csv,.txt" hidden></label></div>
+  <div class="tabs">${['all', 'new', 'contacted', 'replied', 'meeting', 'won', 'lost', 'unsubscribed', 'bounced', 'skipped'].map((s) => `<button class="btn s ${leadFilter === s ? 'on' : ''}" data-f="${s}">${s} ${s === 'all' ? leads.length : counts[s] || 0}</button>`).join('')}</div>
   <div class="card">
     <div class="row" style="margin-bottom:10px"><span class="mute sp"><span id="selc">0</span> selected</span>
       <button class="btn s" id="score">AI score fit</button><button class="btn s p" id="draft">Write emails for selected</button></div>
@@ -221,6 +224,7 @@ pages.leads.on = () => {
     <div><button class="btn p">Add</button></div></form>`, (d) => {
     $('#lf', d).onsubmit = async (e) => { e.preventDefault(); const r = await api('/leads', { leads: [Object.fromEntries(new FormData(e.target))] }); toast(r.added ? 'Lead added' : 'Already exists or invalid email', !r.added); d.close(); go(); };
   });
+  $('#find').onclick = (e) => act(e.target, async () => { const r = await api('/leads/find', {}); toast(`Found ${r.added} new lead${r.added === 1 ? '' : 's'}`); go(); });
   $('#score').onclick = (e) => act(e.target, async () => { const r = await api('/leads/score', { ids: sel() }); toast(`Scored ${r.scored} leads`); go(); });
   $('#draft').onclick = (e) => act(e.target, async () => {
     const ids = sel(); if (!ids.length) throw new Error('Select at least one new lead.');
@@ -303,6 +307,13 @@ pages.settings = () => {
       ${f('sender_name', 'Your name (shown as sender)', '', 'text', 'Jane Doe')}
       <button type="button" class="btn s" id="tg">Test Gmail</button></div>
   </div>
+  <div class="card"><h2>Autopilot</h2><div class="grid g3">
+    ${f('booking_link', 'Your booking link', 'Calendly, Cal.com or Google Calendar booking page. Sent to interested leads.', 'url', 'https://calendly.com/you/demo')}
+    ${f('report_to', 'Send alerts and daily report to', 'Leave empty to use your Gmail.', 'email')}
+    ${f('daily_new_leads', 'New leads to find per day', 'Each search costs about $0.03.', 'number')}
+    ${f('min_score', 'Only email leads scoring at least', '0–100 fit score.', 'number')}
+    ${f('work_start', 'Send emails from (hour)', '', 'number')}
+    ${f('work_end', 'until (hour), report sent then', 'Mon–Fri only.', 'number')}</div></div>
   <div class="card"><h2>Sending rules</h2><div class="grid g3">
     ${f('daily_cap', 'Max emails per day', 'Keep 20–40 for a normal Gmail account to avoid spam flags.', 'number')}
     ${f('followup_days', 'Follow up after (days)', '', 'number')}
