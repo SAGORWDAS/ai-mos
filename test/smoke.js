@@ -6,6 +6,7 @@ const realFetch = global.fetch;
 global.fetch = async (url, opt) => {
   url = String(url);
   if (url.includes('/v1/responses')) return new Response(JSON.stringify({ output: [{ content: [{ type: 'output_text', text: 'Here: [{"company":"Bolt Co","website":"https://boltco.io","contact_name":"Ben","email":"","why":"growing team"}]' }] }], usage: { input_tokens: 500, output_tokens: 200 } }));
+  if (url.startsWith('https://janedoe.design')) return new Response(url.endsWith('/about-me') ? 'Email me: jane.doe.design@gmail.com or hello@janedoe.design. logo@2x.png' : 'portfolio');
   if (url.startsWith('https://boltco.io')) return new Response(url.endsWith('/contact') ? '<a href="mailto:hello@boltco.io">x</a> privacy@boltco.io' : 'no email here');
   if (!url.includes('api.openai.com')) return realFetch(url, opt);
   const sys = JSON.parse(opt.body).messages[0].content;
@@ -79,6 +80,10 @@ const call = (k, b = {}, id = 0, q = '') => routes[k](b, id, new URLSearchParams
   await engine.checkInbox();
   assert.equal(call('GET /api/leads').find((l) => l.email === 'gone@x.com').status, 'bounced');
   assert.ok(/emails sent/.test(engine.report().subject));
+  // individuals: personal address on their own site wins over generic inbox
+  const { findEmail } = require('../lib/finder');
+  assert.equal(await findEmail('janedoe.design', '', 'Jane Doe'), 'jane.doe.design@gmail.com');
+  assert.equal(await findEmail('janedoe.design', 'guess@gmail.com', ''), 'hello@janedoe.design', 'never trusts unseen free-mail');
   console.log('smoke test passed ✓');
   process.exit(0);
 })().catch((e) => { console.error(e); process.exit(1); });

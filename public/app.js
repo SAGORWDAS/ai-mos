@@ -308,6 +308,7 @@ pages.settings = () => {
       <button type="button" class="btn s" id="tg">Test Gmail</button></div>
   </div>
   <div class="card"><h2>Autopilot</h2><div class="grid g3">
+    <div class="f"><label>Who should it find?</label><select name="target"><option value="both" >Both: people and companies</option><option value="people" >People: freelancers, consultants, coaches…</option><option value="companies" >Companies only</option></select><div class="hint">People = individuals selling services on their own website.</div></div>
     ${f('booking_link', 'Your booking link', 'Calendly, Cal.com or Google Calendar booking page. Sent to interested leads.', 'url', 'https://calendly.com/you/demo')}
     ${f('report_to', 'Send alerts and daily report to', 'Leave empty to use your Gmail.', 'email')}
     ${f('daily_new_leads', 'New leads to find per day', 'Each search costs about $0.03.', 'number')}

@@ -43,7 +43,7 @@ Use the **Test** buttons in Settings to confirm both work.
 
 - All data, including your keys, stays in the `data/` folder on this PC. Delete that folder to reset.
 - The app only accepts connections from this computer (localhost).
-- Leads come from public company websites (e.g. hello@, founder@, sales@). The AI never guesses emails. You can also import your own CSV.
+- Leads are companies and/or individuals (freelancers, consultants, coaches…) found on the web; choose in Settings → "Who should it find?". It uses the email each one publishes on their own website, preferring a personal address (jane@…) over generic inboxes (hello@…). It never guesses emails. You can also import your own CSV.
 - To use a different model, change it in Settings and use **Test OpenAI** to check it. Update the two price fields so the cost tracking stays accurate.
 - `npm test` runs an end-to-end check with OpenAI and Gmail faked.
 - The original planning documents (blueprint, spec, PDFs) are in `archive/`.
