@@ -48,6 +48,7 @@ function md(src) {
   return html + (list ? '</ul>' : '');
 }
 const ago = (t) => { if (!t) return ''; const d = new Date(t.includes('T') ? t : t.replace(' ', 'T') + 'Z'); return d.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); };
+const bgMsg = (r, what) => toast(r.started ? `${what} started. Results show on Home in a few minutes.` : `Busy: ${r.busy}. Try again shortly.`, !r.started);
 const copy = (text) => navigator.clipboard.writeText(text).then(() => toast('Copied'));
 const host = (u) => { try { return new URL(u).host.replace(/^www\./, ''); } catch { return u; } };
 const STATUS = { new: '', call: 'gold', contacted: 'acc', replied: 'warn', interested: 'ok', meeting: 'gold', won: 'ok', lost: 'bad', unsubscribed: 'bad', bounced: 'bad', skipped: '' };
@@ -105,10 +106,10 @@ pages.home.on = () => {
   $('#ap').onchange = async (e) => {
     await api('/settings', { autopilot: e.target.checked ? '1' : '0' });
     toast(e.target.checked ? 'Autopilot is on. The first run starts now.' : 'Autopilot paused');
-    if (e.target.checked) api('/autopilot/run', {}).then(go).catch((x) => toast(x.message, true));
+    if (e.target.checked) api('/autopilot/run', {}).catch((x) => toast(x.message, true));
     go();
   };
-  $('#run').onclick = (e) => act(e.target, async () => { await api('/autopilot/run', {}); toast('Done'); go(); });
+  $('#run').onclick = (e) => act(e.target, async () => bgMsg(await api('/autopilot/run', {}), 'Autopilot run'));
   $('#rep').onclick = async () => { const r = await api('/report'); modal(esc(r.subject), `<div class="pre">${esc(r.text)}</div>`); };
   bindThreads();
   $$('[data-won]').forEach((b) => (b.onclick = async () => { await api('/leads/' + b.dataset.won, { status: 'won' }, 'PATCH'); toast('Marked as won 🎉'); go(); }));
@@ -118,8 +119,13 @@ pages.home.on = () => {
 let catCache = { url: '', list: [] };
 pages.sources = async () => {
   const list = await api('/sources'), s = S.settings;
-  return `${head('Lead sources', 'Where the team looks for genuine buyers. Business directories give real, local businesses with their own websites. Web search fills any gap.')}
-  <div class="card"><h2>Add a business directory</h2>
+  return `${head('Lead sources', 'Where the team looks for genuine, well-paying buyers. Target markets are the main source; directories are optional extras.')}
+  <div class="card"><h2>Target markets</h2>
+    <div class="hint" style="margin-top:0">Each search takes the next business type and city, so leads stay fresh and varied. Businesses whose customers are worth a lot (clinics, law, finance, building, real estate) pay most for a better website. Sites that already look modern are skipped.</div>
+    <div class="grid g2" style="margin-top:14px"><div><label>Business types (one per line)</label><textarea id="ni" style="min-height:220px">${esc(s.niches || '')}</textarea></div>
+    <div><label>Cities or regions (one per line)</label><textarea id="pl" style="min-height:220px">${esc(s.places || '')}</textarea></div></div>
+    <div class="row" style="margin-top:12px"><span class="mute sp">Leave business types empty to use “Who should it find?” below.</span><button class="btn p" id="mk">Save markets</button></div></div>
+  <div class="card"><h2>Add a business directory <span class="mute" style="font-size:14px;font-weight:400">optional</span></h2>
     <div class="row"><input id="dir" placeholder="https://riverlandlink.com.au/" value="${esc(catCache.url)}" style="flex:1"><button class="btn" id="load">Load categories</button></div>
     <div class="hint">Any site where businesses list themselves, such as a local business directory, chamber of commerce or industry association. The team opens each listing, then the business’s own website, and uses the email they publish. Businesses with no website or email go on your call list.</div>
     <div id="cats"></div></div>
@@ -164,9 +170,10 @@ pages.sources.on = () => {
     if (!list.length) throw new Error('No category pages found on that site. Try pasting a category page link instead.');
     catCache = { url: /^https?:/.test(url) ? url : 'https://' + url, list, picked: new Map() }; renderCats();
   });
-  $$('[data-run]').forEach((b) => (b.onclick = () => act(b, async () => { const r = await api(`/sources/${b.dataset.run}/run`, {}); toast(`${plural(r.emails, 'new email lead')}, ${r.calls} to call`); go(); })));
+  $$('[data-run]').forEach((b) => (b.onclick = () => act(b, async () => { bgMsg(await api(`/sources/${b.dataset.run}/run`, {}), 'Directory run'); })));
   $$('[data-act]').forEach((c) => (c.onchange = () => api('/sources/' + c.dataset.act, { active: c.checked }, 'PATCH')));
   $$('[data-del]').forEach((b) => (b.onclick = () => act(b, async () => { await api('/sources/' + b.dataset.del, null, 'DELETE'); go(); })));
+  $('#mk').onclick = (e) => act(e.target, async () => { await api('/settings', { niches: $('#ni').value.trim(), places: $('#pl').value.trim() }); await refresh(); toast('Target markets saved'); });
   $('#ws').onchange = (e) => api('/settings', { web_search: e.target.checked ? '1' : '0' });
   $('#tg').onchange = (e) => api('/settings', { target: e.target.value });
   $('#sh').onchange = (e) => api('/brand', { ...S.brand, search_hint: e.target.value });
@@ -231,7 +238,7 @@ pages.leads.on = () => {
     try { await api('/leads/' + b.dataset.em, { email: email.trim().toLowerCase(), status: 'new' }, 'PATCH'); toast('Added. The team will email them.'); go(); } catch (e) { toast(e.message, true); }
   }));
   bindThreads();
-  $('#find').onclick = (e) => act(e.target, async () => { const r = await api('/leads/find', {}); toast(`Found ${plural(r.added, 'new lead')}`); go(); });
+  $('#find').onclick = (e) => act(e.target, async () => { bgMsg(await api('/leads/find', {}), 'Lead search'); });
   $('#csv').onchange = async (e) => {
     try { const r = await api('/leads', { leads: parseCSV(await e.target.files[0].text()) }); toast(`${r.added} added, ${r.skipped} skipped (duplicates or invalid)`); go(); } catch (err) { toast(err.message, true); }
   };
@@ -304,6 +311,7 @@ pages.inbox.on = () => {
 const BRAND = [
   ['name', 'Business name', 'Acme Studio'], ['website', 'Website', 'https://…'],
   ['offer', 'What do you sell?', 'Websites for local trades, $990 flat, live in 7 days', 1],
+  ['services', 'All your services (one per line: service, who needs it)', 'Website redesign: dated or slow sites\nBooking forms: clinics with no online booking', 1],
   ['audience', 'Who buys it?', 'Plumbers, electricians and cafés with no website or an old one', 1],
   ['usp', 'Why you?', 'Fixed price, done in a week, no tech skills needed', 1],
   ['hook', 'Free offer that gets a first “yes”', 'Free homepage mockup of their business in 48 hours', 1],
