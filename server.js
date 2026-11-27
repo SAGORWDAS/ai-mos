@@ -25,10 +25,11 @@ function state() {
   const c = (sql) => get(sql).n;
   const usage = get("SELECT COALESCE(SUM(cost),0) total, COALESCE(SUM(CASE WHEN created>=datetime('now','-30 days') THEN cost END),0) month, COUNT(*) calls FROM usage");
   return {
-    settings: s, brand, channels: team.CHANNELS,
+    settings: s, brand, channels: team.CHANNELS, sources: get('SELECT COUNT(*) n FROM sources WHERE active=1').n,
     stats: {
       leads: c('SELECT COUNT(*) n FROM leads'),
-      contacted: c("SELECT COUNT(*) n FROM leads WHERE status NOT IN ('new','skipped')"),
+      contacted: c("SELECT COUNT(*) n FROM leads WHERE status NOT IN ('new','skipped','call')"),
+      calls: c("SELECT COUNT(*) n FROM leads WHERE status='call'"),
       replied: c("SELECT COUNT(*) n FROM leads WHERE status IN ('replied','interested','meeting','won','lost','unsubscribed')"),
       interested: c("SELECT COUNT(*) n FROM leads WHERE status IN ('interested','meeting','won')"),
       won: c("SELECT COUNT(*) n FROM leads WHERE status='won'"),
@@ -46,6 +47,7 @@ function state() {
 
 const engine = require('./lib/engine');
 const finder = require('./lib/finder');
+const sources = require('./lib/sources');
 const { draftFirst, draftFollowups, sendOne, checkInbox } = engine;
 
 // ---------- routes ----------
@@ -69,6 +71,18 @@ const routes = {
   'POST /api/leads/find': async () => ({ added: await engine.prospect() }),
   'POST /api/autopilot/run': async () => { await engine.tick(); return state(); },
   'GET /api/report': () => engine.report(),
+  'GET /api/sources': () => all('SELECT * FROM sources ORDER BY id DESC'),
+  'POST /api/sources/categories': async (b) => sources.listCategories(String(b.url || '').trim()),
+  'POST /api/sources': (b) => {
+    const url = String(b.url || '').trim();
+    if (!/^https?:\/\//.test(url)) throw new Error('Paste the full directory link, starting with https://');
+    run('INSERT INTO sources(url,categories) VALUES(?,?)', url, JSON.stringify(b.categories || []));
+    log('setup', 'Added lead source ' + new URL(url).host + ' (' + (b.categories || []).length + ' categories)');
+    return all('SELECT * FROM sources ORDER BY id DESC');
+  },
+  'PATCH /api/sources/:id': (b, id) => { if ('active' in b) run('UPDATE sources SET active=? WHERE id=?', b.active ? 1 : 0, id); if (b.categories) run('UPDATE sources SET categories=? WHERE id=?', JSON.stringify(b.categories), id); return { ok: true }; },
+  'DELETE /api/sources/:id': (b, id) => { run('DELETE FROM sources WHERE id=?', id); return { ok: true }; },
+  'POST /api/sources/:id/run': async (b, id) => sources.runSource(get('SELECT * FROM sources WHERE id=?', id), 15),
 
   'GET /api/plans': () => all('SELECT * FROM plans ORDER BY id DESC'),
   'POST /api/plans': async (b) => { const body = await team.plan(b.goal); run('INSERT INTO plans(goal,body) VALUES(?,?)', b.goal || '', body); return all('SELECT * FROM plans ORDER BY id DESC'); },
@@ -95,7 +109,7 @@ const routes = {
     return { added, skipped };
   },
   'PATCH /api/leads/:id': (b, id) => {
-    for (const k of ['name', 'company', 'role', 'website', 'notes', 'status']) if (k in b) run(`UPDATE leads SET ${k}=? WHERE id=?`, b[k], id);
+    for (const k of ['name', 'email', 'phone', 'company', 'role', 'website', 'notes', 'status']) if (k in b) run(`UPDATE leads SET ${k}=? WHERE id=?`, b[k], id);
     return get('SELECT * FROM leads WHERE id=?', id);
   },
   'DELETE /api/leads/:id': (b, id) => { run('DELETE FROM leads WHERE id=?', id); return { ok: true }; },

@@ -6,6 +6,19 @@ const realFetch = global.fetch;
 global.fetch = async (url, opt) => {
   url = String(url);
   if (url.includes('/v1/responses')) return new Response(JSON.stringify({ output: [{ content: [{ type: 'output_text', text: 'Here: [{"company":"Bolt Co","website":"https://boltco.io","contact_name":"Ben","email":"","why":"growing team"}]' }] }], usage: { input_tokens: 500, output_tokens: 200 } }));
+  if (url.startsWith('https://dir.test')) {
+    const pages = {
+      '/': '<a href="/about/">About</a><a href="/categories/">Cats</a>',
+      '/categories/': '<a href="/categories/plumbers/">Plumbers</a><a href="/categories/cafes/">Cafes</a>',
+      '/categories/plumbers/': '<a href="/about/">About</a><a href="/fast-plumbing/">Fast</a><a href="/fast-plumbing">Fast</a><a href="/no-site-plumbing/">NoSite</a>',
+      '/fast-plumbing/': '<h1>Fast Plumbing</h1><a href="https://facebook.com/x">fb</a><a href="https://fastplumb.com.au">site</a><a href="tel:0400111222">call</a>',
+      '/no-site-plumbing/': '<h1>No Site Plumbing</h1><a href="tel:0400333444">call</a>',
+      '/robots.txt': 'User-agent: *' + String.fromCharCode(10) + 'Disallow: /login',
+    };
+    const p = new URL(url).pathname;
+    return pages[p] ? new Response(pages[p]) : new Response('nf', { status: 404 });
+  }
+  if (url.startsWith('https://fastplumb.com.au')) return new Response(url.endsWith('/contact') ? 'mail office@fastplumb.com.au' : '<html>© 2019 Fast</html>');
   if (url.startsWith('https://janedoe.design')) return new Response(url.endsWith('/about-me') ? 'Email me: jane.doe.design@gmail.com or hello@janedoe.design. logo@2x.png' : 'portfolio');
   if (url.startsWith('https://boltco.io')) return new Response(url.endsWith('/contact') ? '<a href="mailto:hello@boltco.io">x</a> privacy@boltco.io' : 'no email here');
   if (!url.includes('api.openai.com')) return realFetch(url, opt);
@@ -84,6 +97,19 @@ const call = (k, b = {}, id = 0, q = '') => routes[k](b, id, new URLSearchParams
   const { findEmail } = require('../lib/finder');
   assert.equal(await findEmail('janedoe.design', '', 'Jane Doe'), 'jane.doe.design@gmail.com');
   assert.equal(await findEmail('janedoe.design', 'guess@gmail.com', ''), 'hello@janedoe.design', 'never trusts unseen free-mail');
+  // directories: category → listings → website email; no-website → call list
+  const src = require('../lib/sources');
+  const cats = await src.listCategories('https://dir.test/');
+  assert.equal(cats.length, 2);
+  run('INSERT INTO sources(url,categories) VALUES(?,?)', 'https://dir.test/', JSON.stringify([cats.find((c) => c.name === 'Plumbers')]));
+  const res = await src.runSource(call('GET /api/sources')[0], 10);
+  assert.deepEqual([res.emails, res.calls, res.checked], [1, 1, 2]);
+  const fp = call('GET /api/leads').find((l) => l.email === 'office@fastplumb.com.au');
+  assert.ok(fp && fp.company === 'Fast Plumbing' && fp.phone === '0400111222');
+  assert.ok(call('GET /api/leads').some((l) => l.status === 'call' && l.company === 'No Site Plumbing'));
+  assert.equal((await src.runSource(call('GET /api/sources')[0], 10)).checked, 0, 'never re-reads a listing');
+  const { auditSite } = require('../lib/audit');
+  assert.match(await auditSite('https://fastplumb.com.au'), /2019.*|mobile/);
   console.log('smoke test passed ✓');
   process.exit(0);
 })().catch((e) => { console.error(e); process.exit(1); });

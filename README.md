@@ -5,7 +5,8 @@ A low-cost AI marketing team that runs on your own computer. You need just two t
 **Paste your website. It does the rest:**
 
 ```
-learns your product → finds matching companies on the web daily → emails them from your Gmail
+learns your product → finds genuine leads (business directories you choose + web search)
+→ checks each lead's website → emails them with one real, specific observation + a free offer
 → follows up → answers questions → interested? sends your booking link + emails you 🔥
 → daily report to your inbox
 ```
@@ -33,6 +34,23 @@ Mac/Linux: `npm install` and then `npm start`.
 - **Gmail App Password:** go to myaccount.google.com → Security → turn on 2-Step Verification → search for "App passwords" → create one. Paste the 16-letter code into Settings. This is **not** your normal password.
 
 Use the **Test** buttons in Settings to confirm both work.
+
+## Lead sources (best leads)
+
+Open **Lead sources**, paste a business directory (for example a local business listing site), click **Load categories**, choose the ones that buy from you (or click **Suggest for my product**), and save. Every day the team:
+
+1. opens each listing in those categories,
+2. visits the business's own website and uses the email it publishes,
+3. puts businesses with **no website or email** on your **call list** with their phone number (great prospects if you sell websites).
+
+It respects each site's robots.txt, pauses between requests, and never reads the same listing twice. Web search tops up the rest, and you can turn it off.
+
+## How it wins clients
+
+- **A free, specific offer** (Brand → Free offer), such as a free homepage mockup, a mini audit or a trial, as the easy first "yes".
+- **One real observation** from a quick check of their site: not mobile-friendly, no HTTPS, slow, an old © year, no booking form.
+- **A narrow, local focus**: a few categories in one region.
+- **Your booking link** goes to anyone interested, so meetings land in your calendar.
 
 ## What you do
 
